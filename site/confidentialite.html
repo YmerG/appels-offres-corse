@@ -13,7 +13,7 @@
 <body>
   <header class="entete entete-court">
     <div class="cadre">
-      <p class="marque"><a class="retour" href="index.html"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a></p>
+      <p class="marque"><a class="retour" href="index.html"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><a class="lien-compte" href="compte.html">Compte</a></p>
       <h1>Confidentialité et données personnelles</h1>
     </div>
   </header>
@@ -23,29 +23,38 @@
 
     <h2>En bref</h2>
     <ul>
-      <li>Consulter le site ne demande <strong>aucun compte</strong> et ne dépose <strong>aucun cookie</strong>.</li>
+      <li>Consulter les avis ne demande <strong>aucun compte</strong> et ne dépose <strong>aucun cookie</strong>.</li>
+      <li>Publier une demande demande un <strong>compte Particulier</strong>, et y répondre un <strong>compte Entreprise de travaux</strong>, avec un e-mail vérifié. Votre profil n'est <strong>jamais public</strong>.</li>
       <li>Si vous publiez une demande de travaux, ou si vous répondez à une demande en tant que professionnel, vos <strong>coordonnées ne sont jamais affichées</strong> sur le site. Seul l'administrateur les voit.</li>
-      <li>Vous pouvez demander à tout moment leur <strong>suppression</strong>.</li>
+      <li>Vous pouvez <strong>supprimer votre compte</strong> vous-même à tout moment (page Compte), et demander la suppression de vos autres données.</li>
     </ul>
 
     <h2>Qui est responsable de vos données ?</h2>
     <p>L'éditeur du site : Accordu (nom provisoire) <em>[à compléter : adresse]</em>. Contact pour vos données : <a href="mailto:maitreagent@gmail.com">maitreagent@gmail.com</a>.</p>
 
     <h2>Quelles données, et pourquoi ?</h2>
+    <p>Quand vous créez un compte, nous enregistrons :</p>
+    <ul>
+      <li><strong>votre e-mail et votre mot de passe</strong>, gérés par Firebase Authentication (le mot de passe est chiffré : personne, pas même l'administrateur, ne peut le lire). L'e-mail sert à vous connecter, à vérifier votre adresse et à réinitialiser votre mot de passe ;</li>
+      <li><strong>votre profil</strong> : particulier, nom et commune ; entreprise de travaux, raison sociale, numéro SIRET, métiers et départements d'intervention ; dans les deux cas, un téléphone si vous le donnez, et la date de création. Il sert à pré-remplir vos formulaires et à réserver la publication aux particuliers et les réponses aux entreprises. Seuls vous et l'administrateur pouvez le lire ;</li>
+      <li>le <strong>lien entre votre compte et vos demandes ou réponses</strong> : un identifiant technique du compte (une suite de lettres et de chiffres, sans nom ni coordonnée). Il sert à retrouver vos demandes dans « Mes demandes ». <strong>Il reste visible sur une demande publiée</strong> : il ne donne aucun accès à votre compte ni à vos coordonnées, mais il permet de voir que deux demandes viennent du même compte ;</li>
+      <li>le <strong>type de votre compte</strong> (particulier ou entreprise), avec ce même identifiant, pour qu'il ne puisse pas être changé. Il ne contient ni nom ni coordonnée et il est conservé même après la suppression du compte.</li>
+    </ul>
     <p>Quand vous publiez une demande, nous enregistrons :</p>
     <ul>
       <li><strong>la demande elle-même</strong> : type (société ou particulier), métier, titre, description, commune, département, budget indicatif et date limite. Elle est publiée sur le site après vérification, <strong>sans aucun nom ni coordonnée</strong>. N'écrivez pas d'informations personnelles dans la description.</li>
       <li><strong>vos coordonnées</strong> : nom ou société, téléphone et/ou e-mail. Elles servent uniquement à vous mettre en relation avec des professionnels qui souhaitent répondre à votre demande, et à vous contacter à son sujet.</li>
     </ul>
-    <p>Quand un professionnel clique sur « Je suis intéressé » sous une demande, nous enregistrons :</p>
+    <p>Quand un professionnel (compte Entreprise) clique sur « Je suis intéressé » sous une demande, nous enregistrons :</p>
     <ul>
-      <li><strong>son message</strong> et <strong>ses coordonnées</strong> (nom ou société, téléphone et/ou e-mail). Rien n'est publié sur le site : l'administrateur transmet le message au demandeur, qui choisit de recontacter ou non le professionnel.</li>
+      <li><strong>son message</strong>, <strong>ses coordonnées</strong> (nom ou société, téléphone et/ou e-mail) et le lien vers son compte. Rien n'est publié sur le site : l'administrateur transmet le message au demandeur, qui choisit de recontacter ou non le professionnel.</li>
     </ul>
-    <p>Base légale : votre <strong>consentement</strong>, donné en cochant la case de chaque formulaire. Vous pouvez le retirer à tout moment.</p>
+    <p>Base légale : votre <strong>consentement</strong>, donné en cochant la case de chaque formulaire (création du compte, demande, réponse). Vous pouvez le retirer à tout moment.</p>
     <p>Les avis de marchés publics de l'onglet « Public » viennent du BOAMP (Licence Ouverte) ; nous n'en reprenons aucune coordonnée de personne.</p>
 
     <h2>Combien de temps ?</h2>
     <p>Votre demande et vos coordonnées sont supprimées <strong>au plus tard 3 mois après la date limite</strong> que vous avez choisie, ou dès que vous le demandez. Une demande refusée à la vérification est supprimée aussitôt. Les messages des professionnels sont supprimés en même temps que la demande à laquelle ils répondent, ou plus tôt sur simple demande.</p>
+    <p>Votre <strong>compte et votre profil</strong> sont conservés tant que vous les gardez. Vous pouvez les supprimer vous-même, définitivement, depuis la page <a href="compte.html">Compte</a> (« Supprimer mon compte »). Les demandes et messages déjà envoyés suivent alors la règle ci-dessus : ils sont supprimés au plus tard 3 mois après leur date limite, ou dès que vous le demandez par e-mail. <em>[À décider : suppression des comptes restés inutilisés, par exemple après 3 ans.]</em></p>
 
     <h2>Qui y a accès ?</h2>
     <p>L'administrateur du site ; le demandeur, pour les messages des professionnels qui lui sont transmis ; et notre hébergeur de données, Google (service Firebase), qui les conserve pour notre compte <em>[à compléter : région de stockage, en Europe de préférence]</em>. Vos données ne sont ni vendues ni cédées.</p>
@@ -54,7 +63,7 @@
     <p>Vous pouvez demander l'accès à vos données, leur correction ou leur suppression, et retirer votre consentement, en écrivant à <a href="mailto:maitreagent@gmail.com">maitreagent@gmail.com</a>. Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la <a href="https://www.cnil.fr/fr/plaintes" rel="noopener">CNIL</a>.</p>
 
     <h2>Cookies</h2>
-    <p>Aucun cookie de mesure d'audience ni de publicité. Seule la page réservée à l'administrateur garde sa connexion dans le navigateur.</p>
+    <p>Aucun cookie de mesure d'audience ni de publicité. Quand vous vous connectez à votre compte (ou à la page de l'administrateur), Firebase garde votre connexion dans le stockage de votre navigateur. C'est nécessaire pour rester connecté, et cela s'efface quand vous vous déconnectez.</p>
 
     <p><a class="bouton-publier" href="index.html">Retour aux avis</a></p>
   </main>

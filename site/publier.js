@@ -1,5 +1,7 @@
-// Formulaire « Publier une demande » : contrôle, puis écriture groupée sur Firestore (demande « en attente » + coordonnées privées).
+// Formulaire « Publier une demande » : réservé aux comptes Particulier à l'e-mail vérifié (les règles Firestore l'imposent aussi).
+// Contrôle, puis écriture groupée sur Firestore (demande « en attente » liée au compte + coordonnées privées).
 (function () {
+  var m; // { f, user, profil } (firebase-config.js)
   var form = document.getElementById('form');
   var erreur = document.getElementById('erreur');
   var envoyer = document.getElementById('envoyer');
@@ -42,6 +44,28 @@
     window.scrollTo(0, 0);
   }
 
+  // compte : pas connecté (ou sans profil) → page Compte ; mauvais type ou e-mail pas vérifié → explication ; sinon formulaire pré-rempli
+  function garde(html) { document.getElementById('garde-texte').innerHTML = html; }
+  AOC_FB.moi().then(function (r) {
+    m = r;
+    // garde ?type=prive pour le retour (encodé : il passe aussi dans le lien ci-dessous)
+    var compte = 'compte.html?retour=' + encodeURIComponent('publier.html' + location.search);
+    if (!m.user || !m.profil) return location.replace(compte);
+    if (m.profil.type !== 'particulier') return garde('Publier une demande est réservé aux comptes <strong>Particulier</strong>. Votre compte est un compte Entreprise : vous pouvez répondre aux demandes. <a href="index.html#onglet=particulier">Voir les demandes</a>');
+    if (!m.user.emailVerified) return garde("Vérifiez d'abord votre e-mail : cliquez sur le lien reçu à l'inscription. <a href=\"" + compte + "\">Renvoyer le lien</a>");
+    form.nom.value = m.profil.nom;
+    form.commune.value = m.profil.commune || '';
+    form.telephone.value = m.profil.telephone || '';
+    form.email.value = m.user.email;
+    if (!type) form.type.value = 'particulier';
+    majRetour();
+    document.getElementById('garde').hidden = true;
+    form.hidden = false;
+  }, function (e) {
+    console.warn('Compte indisponible :', e && e.message);
+    garde('Le service est injoignable. Vérifiez votre connexion et rechargez la page.');
+  });
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     erreur.hidden = true;
@@ -56,14 +80,14 @@
 
     envoyer.disabled = true;
     envoyer.textContent = 'Envoi…';
-    AOC_FB.ouvrir(false).then(function (f) {
+    Promise.resolve(m.f).then(function (f) {
       var fs = f.fs;
       var ref = fs.doc(fs.collection(f.db, 'demandes'));
       var demande = {
         type: form.type.value, metier: v('metier'), titre: v('titre'), description: v('description'),
         commune: v('commune'), departement: form.departement.value,
         delai: fs.Timestamp.fromDate(new Date(v('delai') + 'T18:00:00')),
-        statut: 'en_attente', cree: fs.serverTimestamp()
+        statut: 'en_attente', cree: fs.serverTimestamp(), uid: m.user.uid
       };
       if (v('budget')) demande.budget = form.budget.valueAsNumber; // « 1e3 » = 1000 ; entier garanti par step="1"
       var contact = { nom: v('nom'), consentement: true, cree: fs.serverTimestamp() };
@@ -77,7 +101,7 @@
       console.warn('Envoi refusé :', err && err.message);
       // refus des règles Firestore (champ que le navigateur a laissé passer) : ne pas parler de connexion
       dire(err && err.code === 'permission-denied'
-        ? "Votre demande n'a pas été acceptée : vérifiez l'e-mail, le téléphone et la date, puis réessayez."
+        ? "Votre demande n'a pas été acceptée : vérifiez l'e-mail, le téléphone et la date, puis réessayez. Si c'est bon, vérifiez votre compte (page Compte)."
         : "L'envoi n'a pas abouti. Vérifiez votre connexion et réessayez dans un instant.");
     });
   });

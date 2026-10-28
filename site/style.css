@@ -150,6 +150,30 @@ html:not(.js) .onglets { display: none; }
 .contact-prive { padding: 10px 12px; border-radius: 12px; background: var(--tuile); margin-bottom: 12px; overflow-wrap: anywhere; }
 .contact-prive p { margin: 0 0 4px; }
 .contact-prive .titre-outil { margin: 0 0 4px; }
+/* Compte */
+.lien-compte { margin-left: auto; flex: none; font: 650 .85rem/1 var(--sans); color: #f3efe7; text-decoration: none; padding: 7px 12px; border-radius: 99px; background: rgba(243, 239, 231, .14); }
+.lien-compte:hover { background: rgba(243, 239, 231, .24); }
+.proto + .lien-compte { margin-left: 0; }
+/* téléphone, accueil : « Prototype » + « Compte » ne tiennent pas sur la ligne ; la mention reste dans le pied de page */
+@media (max-width: 479px) { .entete:not(.entete-court) .proto { display: none; } .entete:not(.entete-court) .proto + .lien-compte { margin-left: auto; } }
+/* en-tête court : badge masqué sous 420 px (le bandeau « Version de test » reste) ; 320 px : on resserre */
+@media (max-width: 419px) { .proto { display: none; } .proto + .lien-compte { margin-left: auto; } }
+@media (max-width: 359px) { .marque { font-size: .95rem; } .marque, .retour { gap: 6px; } .lien-compte { padding: 7px 10px; } }
+.bascule { margin: 20px 0 14px; }
+.bascule .filtre { flex: 1; justify-content: center; }
+#form .cases { display: grid; gap: 8px; margin-top: 6px; }
+@media (min-width: 520px) { #form .cases { grid-template-columns: 1fr 1fr; } }
+#form .cases label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 12px; background: var(--fond); font-weight: 500; cursor: pointer; }
+.cases input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; flex: none; }
+.cases label:has(:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+#garde p, .a-verifier p { margin: 0 0 8px; }
+.a-verifier { margin-top: 12px; }
+.publiee { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.supprimer-compte { margin-top: 32px; }
+.supprimer-compte summary { cursor: pointer; color: var(--urgent); font-weight: 650; padding: 6px 0; }
+.comptes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.comptes li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 10px 12px; background: var(--carte); border: 1px solid var(--filet); border-radius: 12px; overflow-wrap: anywhere; }
+.comptes .aide { margin-left: 0; }
 .interets { margin-bottom: 12px; }
 .interets .titre-outil { margin: 0 0 6px; }
 .interets .contact-prive { margin-bottom: 8px; }

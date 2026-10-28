@@ -21,6 +21,17 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
 - `collecte.py` lit ce fichier mais ne l'écrit jamais. Les dates y sont relatives (« publié il y a 3 jours, réponse dans 18 jours ») et recalculées à chaque collecte : les exemples ne périment pas.
 - Les filtres métier, département, recherche et tri marchent dans chaque onglet ; les compteurs suivent l'onglet. Adresse directe : `index.html#onglet=prive` ou `#onglet=particulier&metier=plomberie-cvc`. Le haut de page ne compte que les avis publics.
 
+### Comptes (version de test)
+- **`site/compte.html`** (lien « Compte » dans l'en-tête de chaque page) : créer un compte, se connecter, « Mot de passe oublié ? », se déconnecter, modifier son profil, **supprimer son compte** (mot de passe demandé). Firebase Authentication, méthode E-mail/Mot de passe ; un **e-mail de vérification** part à l'inscription (en français), avec un bouton « Renvoyer le lien ».
+- Deux types, choisis à l'inscription et **non modifiables** ensuite :
+  - **Particulier** (nom, commune) : il publie des demandes et les retrouve dans **« Mes demandes »** (`compte.html#mes-demandes`), avec leur état : en attente, publiée ou close ;
+  - **Entreprise de travaux** (raison sociale, SIRET, métiers, départements 2A/2B) : elle répond aux demandes. Le **SIRET** doit avoir 14 chiffres et une clé de contrôle juste (calcul de Luhn, exception La Poste) ; le navigateur le vérifie, les règles vérifient les 14 chiffres. On ne vérifie pas encore que l'entreprise existe vraiment (piste : l'API publique annuaire-entreprises).
+  - Les deux peuvent ajouter un téléphone facultatif, qui sert seulement à pré-remplir les formulaires.
+- **Profil `users/{uid}`** : lisible par son titulaire et par l'admin seulement, jamais par le public. Chacun ne modifie que le sien, sans pouvoir changer son type ni sa date de création. Le type est aussi figé dans `types/{uid}`, écrit une seule fois avec le premier profil et jamais modifié ni supprimé. Supprimer son profil puis le recréer ne change donc pas le type.
+- **Pas de dépôt sans compte :** `publier.html` renvoie vers `compte.html` si l'on n'est pas connecté, puis ramène au formulaire après la connexion. Publier est réservé aux comptes **Particulier** à l'e-mail vérifié, et « Je suis intéressé » aux comptes **Entreprise** vérifiés. Les formulaires sont pré-remplis depuis le profil. Les règles Firestore l'imposent aussi : connexion, `email_verified`, bon type de profil, et champ `uid` égal au compte.
+- **Admin :** liste des comptes en lecture seule (type, nom, date, SIRET, métiers et zone). Les e-mails ne sont visibles que dans la console Firebase.
+- **À savoir :** le champ `uid` d'une demande publiée est lisible publiquement, comme le reste de la demande. C'est un identifiant technique, sans nom ni coordonnée. Il permet seulement de voir que deux demandes viennent du même compte.
+
 ### Publier une demande de travaux (version de test)
 - Dans les onglets Privé et Particuliers, le bouton **« Publier une demande de travaux »** ouvre `site/publier.html`. Le formulaire est pensé pour le téléphone et demande : société ou particulier, métier (les 12), titre, description, commune, département, budget facultatif, date limite (de demain à 90 jours), nom, téléphone ou e-mail, et une case de consentement.
 - **Stockage : Firebase Firestore** (offre gratuite Spark). Chaque demande arrive **« en attente »**. Elle n'apparaît sur le site qu'après validation sur `site/admin.html` (connexion Firebase Auth, un seul compte admin).
@@ -30,17 +41,17 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
 - **« Je suis intéressé » (contact artisan → demandeur) :** chaque demande publiée (pas les exemples) a ce bouton. Il ouvre `site/interesse.html?d=<id>` : message (10 à 1 000 caractères), nom ou société, téléphone ou e-mail, consentement, champ piège. Le message est rangé dans `demandes/{id}/interets/`, **lisible par l'admin seulement**, jamais affiché sur le site. Pas d'e-mail automatique (offre gratuite, sans Cloud Functions) : l'admin voit les messages sous chaque demande dans `admin.html` et les **transmet lui-même au demandeur**. Les règles refusent un message sur une demande en attente, retirée ou close. L'admin peut supprimer un message (spam).
 - **Durée de conservation :** une demande est « échue » 3 mois après sa date limite. La page admin la signale et propose un bouton « Supprimer les demandes échues », ce qui tient la promesse de la page Confidentialité. Pour l'instant, cette suppression se fait à la main. Si on l'oublie trop souvent, on pourra passer à une suppression automatique (règle TTL de Firestore).
 - **`site/confidentialite.html` :** la page RGPD. Éditeur « Accordu (nom provisoire) », contact maitreagent@gmail.com. Restent « à compléter » : l'adresse de l'éditeur et la région de stockage.
-- **Mode test :** les bandeaux « Version de test : ne publiez pas de vraies coordonnées » sont écrits en dur dans `index.html`, `publier.html`, `interesse.html`, `admin.html` et `confidentialite.html`. Il faudra les retirer à l'ouverture.
+- **Mode test :** les bandeaux « Version de test : ne publiez pas de vraies coordonnées » sont écrits en dur dans `index.html`, `publier.html`, `interesse.html`, `compte.html`, `admin.html` et `confidentialite.html`. Il faudra les retirer à l'ouverture.
 - **Fichiers :**
   - `site/firebase-config.js` : configuration ; Firebase est chargé à la demande, et la page s'ouvre toujours d'un double-clic ;
   - `site/demandes.js` : affiche les demandes validées ;
-  - `site/publier.js`, `site/interesse.js` et `site/admin.js` : les deux formulaires et la page admin ;
+  - `site/publier.js`, `site/interesse.js`, `site/compte.js` et `site/admin.js` : les formulaires, la page Compte et la page admin ;
   - `firestore.rules`, `firebase.json`, `.firebaserc` : règles de sécurité et réglages de l'émulateur.
 
 **Tester en local (émulateur Firebase, rien en ligne) :**
-- Lancer le test des règles : `npx -y firebase-tools@latest emulators:exec --only firestore,auth "python3 outils/test_regles.py"`.
-- Pour essayer les pages : lancer `npx -y firebase-tools@latest emulators:start --only firestore,auth`, puis `python3 outils/test_regles.py --demo` (compte admin `admin@test.local` / `admin-test-1234`), et ouvrir le site sur `http://localhost:…`. Sur localhost, le site se branche tout seul sur l'émulateur.
-- Tant que `firebase-config.js` contient le projet `demo-appels-offres-corse`, la version en ligne ne contacte pas Firebase. Elle n'affiche que les avis publics et les exemples, et le formulaire répond « L'envoi n'a pas abouti ».
+- Lancer le test des règles : `npx -y firebase-tools@latest emulators:exec --project demo-appels-offres-corse --only firestore,auth "python3 outils/test_regles.py"`.
+- Pour essayer les pages : lancer `npx -y firebase-tools@latest emulators:start --project demo-appels-offres-corse --only firestore,auth`, puis `python3 outils/test_regles.py --demo`, et ouvrir le site sur `http://localhost:…`. Comptes prêts, e-mails déjà vérifiés : admin `admin@test.local` / `admin-test-1234`, particulier `particulier@test.local` / `particulier-1234`, entreprise `entreprise@test.local` / `entreprise-1234`.
+- Sur localhost (ou un domaine `.test`), le site se branche tout seul sur l'émulateur, avec le projet `demo-appels-offres-corse`. Il ne touche donc jamais au vrai projet. Avec l'émulateur, les e-mails (vérification, mot de passe) ne partent pas : leurs liens s'affichent dans le terminal de l'émulateur.
 
 **Pour passer sur un vrai projet Firebase** (le Master, avec l'accord de Rémy) :
 1. Créer le projet `appels-offres-corse` sur le compte de Roulette Combo, en offre Spark gratuite, **sans activer la facturation**.

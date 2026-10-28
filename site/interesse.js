@@ -1,4 +1,5 @@
-// « Je suis intéressé » : un artisan répond à une demande validée. Son message va dans demandes/{id}/interets, lisible par l'admin seulement.
+// « Je suis intéressé » : un compte Entreprise à l'e-mail vérifié répond à une demande validée (les règles Firestore l'imposent aussi).
+// Son message va dans demandes/{id}/interets, lisible par l'admin seulement.
 (function () {
   var form = document.getElementById('form');
   var erreur = document.getElementById('erreur');
@@ -6,7 +7,7 @@
   var msg = document.getElementById('message');
   var texte = document.getElementById('demande-texte');
   var id = new URLSearchParams(location.search).get('d') || '';
-  var f;
+  var f, m;
 
   msg.addEventListener('input', function () {
     var n = msg.value.trim().length;
@@ -22,9 +23,12 @@
   }
 
   // la demande (champs publics seulement) : titre, lieu, date limite ; refusée par les règles si elle n'est pas validée
-  AOC_FB.ouvrir(false).then(function (r) {
-    f = r;
+  // pas connecté (ou sans profil) : page Compte, qui ramène ici après connexion
+  AOC_FB.moi().then(function (r) {
+    m = r;
+    f = r.f;
     if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) throw { code: 'not-found' }; // « .. », « / », vide : adresse abîmée
+    if (!m.user || !m.profil) { location.replace('compte.html?retour=' + encodeURIComponent('interesse.html?d=' + id)); throw { code: 'redirection' }; }
     return f.fs.getDoc(f.fs.doc(f.db, 'demandes', id));
   }).then(function (s) {
     if (!s.exists()) throw { code: 'not-found' };
@@ -39,8 +43,23 @@
       limite.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) +
       (limite.getHours() ? ', ' + limite.getHours() + ' h' : '');
     if (limite < new Date()) { texte.append(document.createElement('br'), 'Cette demande est close : elle ne reçoit plus de réponses.'); return; }
+    var lien = document.createElement('a');
+    lien.href = 'compte.html?retour=' + encodeURIComponent('interesse.html?d=' + id);
+    if (m.profil.type !== 'entreprise') {
+      lien.href = 'compte.html';
+      lien.textContent = 'Mon compte';
+      return texte.append(document.createElement('br'), 'Répondre est réservé aux comptes Entreprise de travaux. ', lien);
+    }
+    if (!m.user.emailVerified) {
+      lien.textContent = 'Renvoyer le lien';
+      return texte.append(document.createElement('br'), "Vérifiez d'abord votre e-mail : cliquez sur le lien reçu à l'inscription. ", lien);
+    }
+    form.nom.value = m.profil.nom;
+    form.telephone.value = m.profil.telephone || '';
+    form.email.value = m.user.email;
     form.hidden = false;
   }).catch(function (e) {
+    if (e && e.code === 'redirection') return;
     console.warn('Demande indisponible :', e && (e.message || e.code));
     texte.textContent = e && (e.code === 'not-found' || e.code === 'permission-denied')
       ? "Cette demande est introuvable : elle a peut-être été retirée. Revenez à la liste des demandes."
@@ -70,7 +89,7 @@
 
     envoyer.disabled = true;
     envoyer.textContent = 'Envoi…';
-    var interet = { nom: v('nom'), message: v('message'), consentement: true, cree: f.fs.serverTimestamp() };
+    var interet = { nom: v('nom'), message: v('message'), consentement: true, cree: f.fs.serverTimestamp(), uid: m.user.uid };
     if (v('telephone')) interet.telephone = v('telephone');
     if (v('email')) interet.email = v('email');
     f.fs.addDoc(f.fs.collection(f.db, 'demandes', id, 'interets'), interet).then(merci, function (err) {

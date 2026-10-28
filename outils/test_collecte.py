@@ -92,7 +92,8 @@ assert datetime.fromisoformat(ex[0]["date_limite"]).hour == 12
 racine = Path(__file__).resolve().parent.parent
 assert re.findall(r'<option value="([\w-]+)"', (racine / "site" / "publier.html").read_text(encoding="utf-8")) == list(METIERS)
 regles = (racine / "firestore.rules").read_text(encoding="utf-8")
-assert re.findall(r"'([\w-]+)'", regles[regles.index("d.metier in"):regles.index("texte(d.titre")]) == list(METIERS)
+debut = regles.index("function metiersConnus()")
+assert re.findall(r"'([\w-]+)'", regles[debut:regles.index("}", debut)]) == list(METIERS)
 admin = (racine / "site" / "admin.js").read_text(encoding="utf-8")
 assert re.findall(r"'?([\w-]+)'?: ['\"]", admin[admin.index("METIERS = {"):admin.index("};")]) == list(METIERS)
 print("OK : lecture des avis, exemples et métiers")

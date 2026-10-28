@@ -1,8 +1,11 @@
 rules_version = '2';
-// Demandes de travaux publiées par les visiteurs (onglets Privé – sociétés et Particuliers).
-// demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans.
+// Demandes de travaux publiées par des comptes Particulier vérifiés (onglets Privé – sociétés et Particuliers).
+// demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans (uid = compte auteur).
+// Son auteur la voit aussi en attente (« Mes demandes »).
 // demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
-// demandes/{id}/interets/{iid} : messages d'artisans « Je suis intéressé », lisibles par l'administrateur seulement.
+// demandes/{id}/interets/{iid} : messages « Je suis intéressé » des comptes Entreprise vérifiés, lisibles par l'administrateur seulement.
+// users/{uid} : profil du compte (particulier ou entreprise de travaux), lisible par son titulaire et l'admin seulement.
+// types/{uid} : type du compte, figé pour toujours (même si le profil est supprimé puis recréé).
 // config/admins : { uids: [...] }, créé à la main dans la console Firebase (aucune écriture possible depuis le site).
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -17,12 +20,43 @@ service cloud.firestore {
       return v is string && v.size() >= min && v.size() <= max;
     }
 
+    function connecte(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // compte connecté, e-mail vérifié, et profil du bon type (particulier pour publier, entreprise pour répondre)
+    function compteVerifie(type) {
+      return request.auth != null && request.auth.token.email_verified == true
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == type;
+    }
+
+    function metiersConnus() {
+      return ['gros-oeuvre', 'second-oeuvre', 'electricite', 'plomberie-cvc', 'voirie-vrd', 'espaces-verts',
+              'nettoyage', 'informatique', 'etudes', 'restauration', 'services', 'fournitures'];
+    }
+
+    function telephoneValide(c) {
+      return !('telephone' in c) || (c.telephone is string && c.telephone.matches('[+0-9 .()-]{6,20}'));
+    }
+
+    // shortcut: la clé de contrôle du SIRET (Luhn) n'est vérifiée que dans le navigateur ; ici, 14 chiffres. À revoir si de faux SIRET passent.
+    function profilValide(p) {
+      return telephoneValide(p) && texte(p.nom, 2, 80) && (
+        (p.type == 'particulier' && p.keys().hasOnly(['type', 'nom', 'commune', 'telephone', 'cree']) && texte(p.commune, 2, 60))
+        || (p.type == 'entreprise' && p.keys().hasOnly(['type', 'nom', 'siret', 'metiers', 'zone', 'telephone', 'cree'])
+          && p.siret is string && p.siret.matches('[0-9]{14}')
+          && p.metiers is list && p.metiers.size() >= 1 && p.metiers.size() <= 12 && p.metiers.toSet().size() == p.metiers.size()
+          && p.metiers.hasOnly(metiersConnus())
+          && p.zone is list && p.zone.size() >= 1 && p.zone.size() <= 2 && p.zone.toSet().size() == p.zone.size()
+          && p.zone.hasOnly(['2A', '2B'])));
+    }
+
     function demandeValide(d) {
-      return d.keys().hasOnly(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree'])
-        && d.keys().hasAll(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'delai', 'statut', 'cree'])
+      return d.keys().hasOnly(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree', 'uid'])
+        && d.keys().hasAll(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'delai', 'statut', 'cree', 'uid'])
+        && d.uid == request.auth.uid
         && d.type in ['prive', 'particulier']
-        && d.metier in ['gros-oeuvre', 'second-oeuvre', 'electricite', 'plomberie-cvc', 'voirie-vrd', 'espaces-verts',
-                        'nettoyage', 'informatique', 'etudes', 'restauration', 'services', 'fournitures']
+        && d.metier in metiersConnus()
         && texte(d.titre, 5, 120)
         && texte(d.description, 20, 1500)
         && texte(d.commune, 2, 60)
@@ -37,7 +71,7 @@ service cloud.firestore {
     function coordonneesValides(c) {
       return texte(c.nom, 2, 80)
         && ('telephone' in c || 'email' in c)
-        && (!('telephone' in c) || (c.telephone is string && c.telephone.matches('[+0-9 .()-]{6,20}')))
+        && telephoneValide(c)
         && (!('email' in c) || (texte(c.email, 6, 120) && c.email.matches('[^@ ]+@[^@ ]+[.][^@ ]+')))
         && c.consentement == true
         && c.cree == request.time;
@@ -48,15 +82,17 @@ service cloud.firestore {
     }
 
     function interetValide(i) {
-      return i.keys().hasOnly(['nom', 'telephone', 'email', 'message', 'consentement', 'cree'])
+      return i.keys().hasOnly(['nom', 'telephone', 'email', 'message', 'consentement', 'cree', 'uid'])
+        && i.uid == request.auth.uid
         && coordonneesValides(i)
         && texte(i.message, 10, 1000);
     }
 
     match /demandes/{id} {
-      allow get, list: if resource.data.statut == 'validee' || estAdmin();
+      allow get, list: if resource.data.statut == 'validee' || estAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
       // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), toujours « en attente »
-      allow create: if demandeValide(request.resource.data)
+      allow create: if compteVerifie('particulier') && demandeValide(request.resource.data)
         && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
       allow update: if estAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut'])
@@ -75,10 +111,29 @@ service cloud.firestore {
       // Seulement sur une demande validée et pas encore close.
       match /interets/{iid} {
         allow get, list, delete: if estAdmin();
-        allow create: if interetValide(request.resource.data)
+        allow create: if compteVerifie('entreprise') && interetValide(request.resource.data)
           && get(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee'
           && get(/databases/$(database)/documents/demandes/$(id)).data.delai > request.time;
       }
+    }
+
+    // Comptes : chacun lit et écrit seulement son profil ; le type ne change plus après la création ; l'admin lit tout ; aucune lecture publique.
+    match /users/{uid} {
+      allow get: if connecte(uid) || estAdmin();
+      allow list: if estAdmin();
+      // le type doit être celui de types/{uid} : supprimer puis recréer son profil ne change pas le type
+      allow create: if connecte(uid) && profilValide(request.resource.data) && request.resource.data.cree == request.time
+        && getAfter(/databases/$(database)/documents/types/$(uid)).data.type == request.resource.data.type;
+      allow update: if connecte(uid) && profilValide(request.resource.data)
+        && request.resource.data.type == resource.data.type && request.resource.data.cree == resource.data.cree;
+      allow delete: if connecte(uid);
+    }
+
+    // types/{uid} : { type }, écrit une seule fois avec le premier profil, jamais modifié ni supprimé (sans nom ni coordonnée)
+    match /types/{uid} {
+      allow get: if connecte(uid) || estAdmin();
+      allow create: if connecte(uid) && request.resource.data.keys().hasOnly(['type'])
+        && request.resource.data.type in ['particulier', 'entreprise'];
     }
   }
 }

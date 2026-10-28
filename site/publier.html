@@ -16,7 +16,7 @@
 <body>
   <header class="entete entete-court">
     <div class="cadre">
-      <p class="marque"><a class="retour" href="index.html#onglet=particulier"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><span class="proto">Test</span></p>
+      <p class="marque"><a class="retour" href="index.html#onglet=particulier"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><span class="proto">Test</span><a class="lien-compte" href="compte.html">Compte</a></p>
       <h1>Publier une demande de travaux</h1>
       <p class="chapo">Gratuit. Votre demande est vérifiée avant d'être publiée. Vos coordonnées ne sont jamais affichées sur le site.</p>
     </div>
@@ -25,7 +25,9 @@
   <main class="cadre page-form">
     <p class="bandeau-test bandeau-test-fort">Version de test : ne publiez pas de vraies coordonnées.</p>
 
-    <form id="form" novalidate>
+    <div class="merci" id="garde" role="status"><p id="garde-texte">Vérification de votre compte…</p></div>
+
+    <form id="form" novalidate hidden>
       <fieldset>
         <legend>Vous êtes</legend>
         <div class="choix-2">
@@ -87,7 +89,7 @@
 
       <fieldset>
         <legend>Vos coordonnées <span class="aide">jamais publiées</span></legend>
-        <p class="aide-bloc">Seul l'administrateur du site les voit, pour vous mettre en relation avec des professionnels. Un téléphone ou un e-mail suffit.</p>
+        <p class="aide-bloc">Seul l'administrateur du site les voit, pour vous mettre en relation avec des professionnels. Un téléphone ou un e-mail suffit. Pré-remplies depuis votre compte, modifiables pour cette demande.</p>
         <label for="nom">Nom ou société</label>
         <input id="nom" name="nom" required minlength="2" maxlength="80" autocomplete="name">
         <label for="telephone">Téléphone</label>
@@ -113,7 +115,8 @@
     <div class="merci" id="merci" hidden tabindex="-1">
       <h2>Merci, votre demande est bien arrivée</h2>
       <p>Elle sera publiée après vérification, en général sous 48&nbsp;h. Vos coordonnées restent privées.</p>
-      <a class="bouton-publier" id="retour" href="index.html">Voir les demandes</a>
+      <p class="actions-admin"><a class="bouton-publier" href="compte.html#mes-demandes">Suivre dans Mes demandes</a>
+        <a class="lien-bouton" id="retour" href="index.html">Voir les demandes</a></p>
     </div>
   </main>
 

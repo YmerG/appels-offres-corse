@@ -110,6 +110,27 @@
     p.then(charger, function (e) { erreur('erreur', 'Action refusée : ' + (e && e.code || e)); });
   }
 
+  // comptes (users/{uid}) : lecture seule, les plus récents d'abord
+  function comptes() {
+    return f.fs.getDocs(f.fs.collection(f.db, 'users')).then(function (res) {
+      var ul = $('comptes');
+      ul.textContent = '';
+      var docs = res.docs.map(function (s) { return s.data(); });
+      docs.sort(function (x, y) { return (y.cree ? y.cree.toMillis() : 0) - (x.cree ? x.cree.toMillis() : 0); });
+      $('nb-comptes').textContent = docs.length;
+      docs.forEach(function (p) {
+        var ent = p.type === 'entreprise';
+        var li = el('li');
+        li.append(el('span', 'dep', ent ? 'Entreprise' : 'Particulier'), ' ', el('strong', '', p.nom),
+          el('span', 'aide', ent ? 'SIRET ' + p.siret + ' · ' + p.metiers.map(function (m) { return METIERS[m] || m; }).join(', ') + ' · ' + p.zone.join(', ')
+            : p.commune),
+          el('span', 'aide', 'créé le ' + date(p.cree)));
+        ul.append(li);
+      });
+      if (!docs.length) ul.append(el('li', 'vide', 'Aucun compte pour le moment.'));
+    }, function (e) { erreur('erreur', 'Comptes illisibles : ' + (e && e.code || e)); });
+  }
+
   function charger() {
     erreur('erreur', '');
     return f.fs.getDocs(f.fs.collection(f.db, 'demandes')).then(function (res) {
@@ -136,6 +157,7 @@
       $('nb-publiees').textContent = $('publiees').children.length;
       if (!$('attente').children.length) $('attente').append(el('p', 'vide', 'Aucune demande en attente.'));
       montrer('espace');
+      return comptes();
     }, function (e) {
       montrer('espace');
       erreur('erreur', e && e.code === 'permission-denied' ? "Ce compte n'est pas administrateur." : 'Lecture impossible : ' + (e && e.message));
