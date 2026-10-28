@@ -8,6 +8,8 @@
   <meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#13212c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2313212c'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23e8a87c' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
   <script>document.documentElement.classList.add('js');</script>
@@ -70,18 +72,19 @@
         <label for="p-nom">Nom</label>
         <input id="p-nom" name="p-nom" required minlength="2" maxlength="80" autocomplete="name">
         <label for="p-commune">Commune</label>
-        <input id="p-commune" name="p-commune" required minlength="2" maxlength="60" autocomplete="address-level2" placeholder="Ex. : Corte">
+        <input id="p-commune" name="p-commune" required minlength="2" maxlength="60" autocomplete="address-level2" placeholder="Ex. : Corte" list="communes">
       </fieldset>
 
       <fieldset id="f-ent" hidden disabled>
         <legend>Votre entreprise</legend>
-        <label for="e-nom">Raison sociale</label>
-        <input id="e-nom" name="e-nom" required minlength="2" maxlength="80" autocomplete="organization">
         <label for="siret">SIRET <span class="aide">14 chiffres, vérifié dans l'annuaire officiel des entreprises</span></label>
         <input id="siret" name="siret" required inputmode="numeric" maxlength="17" pattern="[0-9 ]{14,17}" autocomplete="off" placeholder="Ex. : 123 456 780 00014">
+        <p class="info-ok" id="siret-ok" role="status" hidden></p>
+        <label for="e-nom">Raison sociale <span class="aide">remplie depuis l'annuaire, modifiable</span></label>
+        <input id="e-nom" name="e-nom" required minlength="2" maxlength="80" autocomplete="organization">
         <fieldset class="dep-form" id="f-metiers">
           <legend>Vos métiers</legend>
-          <div class="cases">
+          <div class="cases pastilles">
             <label><input type="checkbox" name="metiers" value="gros-oeuvre"> Gros œuvre, bâtiment</label>
             <label><input type="checkbox" name="metiers" value="second-oeuvre"> Second œuvre, finitions</label>
             <label><input type="checkbox" name="metiers" value="electricite"> Électricité, éclairage</label>
@@ -174,6 +177,7 @@
     </div>
   </footer>
 
+  <script src="communes.js"></script>
   <script src="compte.js"></script>
 </body>
 </html>

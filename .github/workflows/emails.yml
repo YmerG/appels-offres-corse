@@ -1,0 +1,49 @@
+# Toutes les 30 min : e-mails automatiques (demande publiée, réponses transmises, alertes par métier). Voir ETUDE-EMAILS.md.
+# Ne fait rien tant que le secret FIREBASE_SERVICE_ACCOUNT (compte de service en LECTURE SEULE), le secret BREVO_API_KEY
+# et la variable EXPEDITEUR (adresse validée dans Brevo) n'existent pas. Firestore est seulement lu.
+name: E-mails automatiques
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+    inputs:
+      sans_envoi:
+        description: "Essai sur les vraies données : compter, sans rien envoyer"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: emails   # jamais deux passages en même temps (sinon doubles envois)
+  cancel-in-progress: false
+jobs:
+  emails:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CONFIGURE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 outils/test_emails.py
+      # ce qui est déjà envoyé (etat-emails.json, sans adresse) : gardé d'un passage à l'autre dans le cache GitHub
+      - uses: actions/cache/restore@v4
+        with:
+          path: etat-emails.json
+          key: etat-emails-${{ github.run_id }}
+          restore-keys: etat-emails-
+      - if: env.CONFIGURE == 'true'
+        run: pip install --quiet "firebase-admin==7.7.0"
+      - run: python3 outils/envoyer_emails.py ${{ inputs.sans_envoi && '--sans-envoi' || '' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          EXPEDITEUR: ${{ vars.EXPEDITEUR }}
+          SITE_URL: ${{ vars.SITE_URL }}   # facultatif : sinon l'adresse GitHub Pages du dépôt
+      - if: always() && hashFiles('etat-emails.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: etat-emails.json
+          key: etat-emails-${{ github.run_id }}

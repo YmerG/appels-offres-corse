@@ -80,7 +80,18 @@
   var NOMS = { metier: 'le métier', titre: 'le titre (5 caractères au moins)', description: 'la description (20 caractères au moins)',
     commune: 'la commune', departement: 'le département', budget: 'le budget (un nombre entier)', delai: 'la date (entre demain et dans 90 jours)',
     nom: 'votre nom', telephone: 'le téléphone', email: "l'e-mail", consentement: "l'accord sur vos coordonnées" };
-  var MSG = { departement: 'Choisissez le département.', consentement: 'Cochez cette case pour envoyer votre demande.' };
+  var MSG = { metier: 'Choisissez le métier.', departement: 'Choisissez le département.', consentement: 'Cochez cette case pour envoyer votre demande.' };
+
+  // commune de Corse reconnue : nom officiel et département cochés tout seuls (communes.js).
+  // Commune inconnue (Porticcio, Cap Corse…) : on décoche le département coché par le site, la personne le choisit.
+  var depDuSite = false;
+  function depAuto() {
+    var c = AOC_COMMUNE(form.commune.value);
+    if (c) { form.commune.value = c[0]; form.departement.value = c[1]; depDuSite = true; }
+    else if (depDuSite && form.commune.value.trim()) { form.querySelectorAll('[name=departement]').forEach(function (r) { r.checked = false; }); depDuSite = false; }
+  }
+  form.commune.addEventListener('change', depAuto);
+  form.querySelectorAll('[name=departement]').forEach(function (r) { r.addEventListener('change', function () { depDuSite = false; }); });
 
   // premier champ à corriger dans l'étape n : [champ, message] ; le navigateur contrôle longueurs, formats et champs obligatoires
   function aCorriger(n) {
@@ -120,8 +131,9 @@
     if (m.profil.type === 'entreprise') {
       form.type.value = 'prive';
       document.getElementById('f-qui').hidden = true;
-      if (m.profil.zone.length === 1) form.departement.value = m.profil.zone[0];
+      if (m.profil.zone.length === 1) { form.departement.value = m.profil.zone[0]; depDuSite = true; }
     }
+    depAuto();
     document.getElementById('garde').hidden = true;
     form.hidden = false;
     if (!reprendre()) aller(0);
@@ -133,6 +145,7 @@
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
+    depAuto(); // Entrée dans « Commune » : ne pas compter sur l'événement change
     AOC_FB.effacer(form);
     erreur.hidden = true;
     var faux = aCorriger(etape);

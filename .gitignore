@@ -2,3 +2,5 @@ captures/
 __pycache__/
 outils/__pycache__/
 .claude/
+etat-emails.json
+*-debug.log

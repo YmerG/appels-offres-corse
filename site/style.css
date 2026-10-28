@@ -314,4 +314,20 @@ button.lien-compte { border: 0; cursor: pointer; }
 .etat .pastille-neuf { font-family: var(--sans); vertical-align: middle; }
 /* pastille sur « Compte » : posée sur le coin, sans élargir l'en-tête */
 .lien-compte { position: relative; }
+/* Métiers en pastilles à toucher (Publier, inscription Entreprise) ; la case reste au clavier, invisible */
+#form .pastilles { display: flex; flex-wrap: wrap; gap: 8px; }
+#form .pastilles label { position: relative; min-height: 44px; padding: 8px 14px; border-radius: 99px; }
+.pastilles input { position: absolute; opacity: 0; pointer-events: none; }
+#form .pastilles label:has(:checked) { background: var(--accent); color: var(--carte); }
+.pastilles label:has(:checked)::before { content: "✓"; font-weight: 700; }
+.pastilles label:has(:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+#siret-ok { margin: 8px 0 0; font-size: .9rem; }
+
+/* Téléphone : le bouton principal des formulaires reste en bas de l'écran, sous le pouce */
+@media (max-width: 899px) {
+  html { scroll-padding-bottom: 84px; }
+  .nav-etapes, #form > .bouton-publier { position: sticky; bottom: 0; z-index: 2; }
+  .nav-etapes { margin: 0 -6px; padding: 10px 6px; background: var(--fond); box-shadow: 0 -10px 16px -12px rgba(19, 33, 44, .35); }
+  #form > .bouton-publier { bottom: 10px; box-shadow: 0 0 0 10px var(--fond); }
+}
 .pastille-compte { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 99px; background: #e8a87c; color: #13212c; font: 700 .72rem/20px var(--sans); text-align: center; }

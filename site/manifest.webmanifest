@@ -1,0 +1,20 @@
+{
+  "name": "Appels d'offres Corse",
+  "short_name": "AO Corse",
+  "description": "Marchés publics et demandes de travaux en Corse, classés par métier.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#13212c",
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Publier une demande de travaux", "short_name": "Publier", "url": "./publier.html" },
+    { "name": "Mon compte", "short_name": "Compte", "url": "./compte.html" }
+  ]
+}

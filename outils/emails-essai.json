@@ -1,0 +1,32 @@
+{
+  "_lisezmoi": "Données FICTIVES pour python3 outils/envoyer_emails.py --essai outils/emails-essai.json : aucune vraie adresse, rien n'est envoyé.",
+  "demandes": {
+    "d1": { "statut": "validee", "reponses": 2, "uid": "p1", "metier": "electricite", "departement": "2B", "commune": "Corte",
+            "titre": "Changer le tableau <électrique>", "delai": "2027-01-15T18:00:00+01:00", "budget": 8000,
+            "contact": { "nom": "Jeanne Exemple", "email": "jeanne@exemple.invalid" } },
+    "d2": { "statut": "validee", "reponses": 1, "uid": "p2", "metier": "plomberie-cvc", "departement": "2A", "commune": "Ajaccio",
+            "titre": "Remplacer un chauffe-eau", "delai": "2027-01-20T18:00:00+01:00",
+            "contact": { "nom": "Paul Exemple", "telephone": "06 00 00 00 00" } },
+    "d3": { "statut": "en_attente", "uid": "p1", "metier": "electricite", "departement": "2B", "commune": "Bastia",
+            "titre": "Demande pas encore vérifiée", "delai": "2027-01-15T18:00:00+01:00",
+            "contact": { "nom": "Jeanne Exemple", "email": "jeanne@exemple.invalid" } },
+    "d4": { "statut": "validee", "uid": "p2", "metier": "electricite", "departement": "2B", "commune": "Calvi",
+            "titre": "Demande déjà close", "delai": "2026-09-01T18:00:00+02:00",
+            "contact": { "nom": "Paul Exemple", "email": "paul@exemple.invalid" } },
+    "d5": { "statut": "validee", "uid": "e1", "metier": "electricite", "departement": "2B", "commune": "Furiani",
+            "titre": "Demande publiée par l'entreprise abonnée elle-même", "delai": "2027-01-15T18:00:00+01:00",
+            "contact": { "nom": "Élec Exemple", "email": "elec@exemple.invalid" } }
+  },
+  "users": {
+    "e1": { "type": "entreprise", "nom": "Élec Exemple", "metiers": ["electricite"], "zone": ["2B"], "alertes": true },
+    "e2": { "type": "entreprise", "nom": "Sans Alertes", "metiers": ["electricite"], "zone": ["2B"] },
+    "e3": { "type": "entreprise", "nom": "Pas Vérifiée", "metiers": ["electricite", "plomberie-cvc"], "zone": ["2A", "2B"], "alertes": true },
+    "p1": { "type": "particulier", "nom": "Jeanne Exemple", "commune": "Corte", "alertes": true }
+  },
+  "comptes": {
+    "p1": { "email": "jeanne.compte@exemple.invalid", "verifie": true },
+    "p2": { "email": "paul.compte@exemple.invalid", "verifie": true },
+    "e1": { "email": "elec.compte@exemple.invalid", "verifie": true },
+    "e3": { "email": "pasverifiee@exemple.invalid", "verifie": false }
+  }
+}

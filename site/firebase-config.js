@@ -64,17 +64,19 @@ window.AOC_FB = {
     docs.forEach(function (s) { vu[s.id] = window.AOC_FB.etat(s.data()); });
     try { localStorage.setItem('aoc-vu-' + uid, JSON.stringify(vu)); } catch (e) { /* navigation privée : pas de pastille */ }
   },
-  // message d'erreur juste sous le champ (sous son groupe pour les cases), visible au téléphone ; msg vide : efface
+  // message d'erreur juste sous le champ (sous son groupe pour les cases), visible au téléphone ; msg vide : efface.
+  // Liste de cases (métiers) : au-dessus, sous la légende, sinon il tombe hors de l'écran au téléphone.
   sous: function (champ, msg) {
     var ancre = champ.closest('.choix-2, .cases, .consentement') || champ;
-    var p = ancre.nextElementSibling;
+    var dessus = ancre.classList.contains('cases');
+    var p = dessus ? ancre.previousElementSibling : ancre.nextElementSibling;
     if (!p || !p.classList.contains('erreur-champ')) {
       if (!msg) return;
       p = document.createElement('p');
       p.className = 'erreur erreur-champ';
       p.id = 'err-' + (champ.name || champ.id);
       p.setAttribute('role', 'alert');
-      ancre.after(p);
+      if (dessus) ancre.before(p); else ancre.after(p);
     }
     p.textContent = msg;
     p.hidden = !msg;
@@ -82,6 +84,7 @@ window.AOC_FB = {
     champ.setAttribute('aria-invalid', 'true');
     champ.setAttribute('aria-describedby', p.id);
     champ.focus();
+    p.scrollIntoView({ block: 'nearest' }); // message entier visible, pas sous le bouton collé en bas au téléphone
   },
   effacer: function (form) {
     form.querySelectorAll('.erreur-champ').forEach(function (p) { p.hidden = true; });
@@ -106,3 +109,6 @@ window.AOC_FB = {
     });
   }
 };
+
+// site installable comme une appli (manifest.webmanifest + sw.js) ; pas en file://, où les service workers n'existent pas
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {});

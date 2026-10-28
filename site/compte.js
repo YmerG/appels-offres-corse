@@ -27,24 +27,63 @@
   }
   window.siretValide = siretValide; // pour les tests
 
-  // SIRET connu de l'annuaire officiel (API gratuite, sans clé) : 'ok', 'inconnu' ou 'ferme'.
-  // L'API ne répond pas (6 s, quota, panne) : 'ok', pour ne pas bloquer l'inscription ; l'admin vérifie depuis admin.html.
+  // SIRET dans l'annuaire officiel (API gratuite, sans clé) : { etat: 'ok' | 'inconnu' | 'ferme', nom, adresse, dep }.
+  // L'API ne répond pas (6 s, quota, panne) : 'ok' sans nom, pour ne pas bloquer l'inscription ; l'admin vérifie depuis admin.html.
   // shortcut: contrôle fait dans le navigateur seulement (les règles Firestore ne peuvent pas appeler l'API) ; Cloud Function si de faux SIRET passent.
-  function siretExiste(s) {
+  var annuaireVu = {}; // une seule requête par SIRET (saisie puis envoi)
+  function annuaire(s) {
+    if (annuaireVu[s]) return annuaireVu[s];
     var stop = new AbortController();
     setTimeout(function () { stop.abort(); }, 6000);
-    return fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + s + '&per_page=5', { signal: stop.signal })
+    return annuaireVu[s] = fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + s + '&per_page=5', { signal: stop.signal })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) {
-        var trouve = null;
+        var trouve = null, ent = null;
         j.results.forEach(function (e) {
-          (e.matching_etablissements || []).concat(e.siege || []).forEach(function (x) { if (x.siret === s) trouve = x; });
+          (e.matching_etablissements || []).concat(e.siege || []).forEach(function (x) { if (x.siret === s) { trouve = x; ent = e; } });
         });
-        return !trouve ? 'inconnu' : trouve.etat_administratif === 'F' ? 'ferme' : 'ok';
+        if (!trouve) return { etat: 'inconnu' };
+        return { etat: trouve.etat_administratif === 'F' ? 'ferme' : 'ok', nom: (ent.nom_raison_sociale || ent.nom_complet || '').slice(0, 80),
+          adresse: trouve.adresse || '', dep: trouve.departement || depPostal(trouve.code_postal) };
       })
-      .catch(function (e) { console.warn('Annuaire des entreprises injoignable :', e); return 'ok'; });
+      .catch(function (e) { console.warn('Annuaire des entreprises injoignable :', e); delete annuaireVu[s]; return { etat: 'ok' }; });
   }
+  // établissement secondaire : l'annuaire ne donne que le code postal (200xx-201xx Corse-du-Sud, 202xx-206xx Haute-Corse)
+  function depPostal(cp) { return /^20[01]/.test(cp) ? '2A' : /^20[2-6]/.test(cp) ? '2B' : ''; }
+  function siretExiste(s) { return annuaire(s).then(function (r) { return r.etat; }); }
   window.siretExiste = siretExiste; // pour les tests
+  function siretRefuse(etat) {
+    AOC_FB.sous($('siret'), etat === 'ferme'
+      ? "Ce SIRET correspond à un établissement fermé. Indiquez le SIRET de votre établissement en activité."
+      : "Ce SIRET est introuvable dans l'annuaire officiel des entreprises : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr). S'il est juste, écrivez-nous à maitreagent@gmail.com.");
+  }
+
+  // SIRET complet : raison sociale et département pré-remplis depuis l'annuaire (l'adresse est seulement affichée, pas enregistrée)
+  var SIRET_FAUX = "Ce numéro SIRET n'est pas valide : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr).";
+  var nomAnnuaire = '', zoneAnnuaire = null;
+  $('siret').addEventListener('input', function () {
+    var s = this.value.replace(/\s/g, '');
+    dire('siret-ok', '');
+    AOC_FB.sous(this, '');
+    // nom et département remplis pour un SIRET précédent : on les retire
+    if (nomAnnuaire && $('e-nom').value === nomAnnuaire) $('e-nom').value = nomAnnuaire = '';
+    if (zoneAnnuaire && coches('zone').length === 1) zoneAnnuaire.checked = false;
+    zoneAnnuaire = null;
+    if (!siretValide(s)) {
+      if (/^\d{14}$/.test(s)) AOC_FB.sous(this, SIRET_FAUX); // 14 chiffres mais clé de contrôle fausse
+      return;
+    }
+    annuaire(s).then(function (r) {
+      if ($('siret').value.replace(/\s/g, '') !== s) return; // le SIRET a changé entre-temps
+      if (r.etat !== 'ok') return siretRefuse(r.etat);
+      if (!r.nom) return;
+      var nom = $('e-nom');
+      if (!nom.value.trim()) nom.value = nomAnnuaire = r.nom;
+      if (!coches('zone').length && /^2[AB]$/.test(r.dep)) (zoneAnnuaire = form.querySelector('[name=zone][value="' + r.dep + '"]')).checked = true;
+      dire('siret-ok', 'Entreprise trouvée : ' + r.nom + (r.adresse ? ', ' + r.adresse : '') + '. La suite : vérifiez la raison sociale, puis cochez vos métiers.');
+      $('siret-ok').scrollIntoView({ block: 'nearest' }); // sinon caché sous le bouton du bas, au téléphone
+    });
+  });
 
   function montrer(id) { ['chargement', 'hors-ligne', 'espace', 'supprime'].forEach(function (x) { $(x).hidden = x !== id; }); form.hidden = true; }
   function dire(id, msg, champ) { $(id).textContent = msg; $(id).hidden = !msg; if (champ) champ.focus(); }
@@ -98,6 +137,7 @@
     $('f-ent').hidden = $('f-ent').disabled = !ent;
   }
   form.addEventListener('change', function (e) { if (e.target.name === 'type') majType(); });
+  $('p-commune').addEventListener('change', function () { var c = AOC_COMMUNE(this.value); if (c) this.value = c[0]; });
 
   function ouvrirFormulaire(m) {
     mode = m;
@@ -144,7 +184,7 @@
       ? { nom: v('e-nom'), siret: v('siret').replace(/\s/g, ''), metiers: coches('metiers'), zone: coches('zone') }
       : { nom: v('p-nom'), commune: v('p-commune') };
     if (type === 'entreprise') {
-      if (!siretValide(champs.siret)) return AOC_FB.sous($('siret'), "Ce numéro SIRET n'est pas valide : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr).");
+      if (!siretValide(champs.siret)) return AOC_FB.sous($('siret'), SIRET_FAUX);
       if (!champs.metiers.length) return AOC_FB.sous(form.querySelector('[name=metiers]'), 'Cochez au moins un métier.');
       if (!champs.zone.length) return AOC_FB.sous(form.querySelector('[name=zone]'), "Cochez au moins un département d'intervention.");
     }
@@ -161,9 +201,7 @@
     verif.then(function (etat) {
       if (etat === 'ok') return enregistrer(champs, type, tel, fin);
       fin();
-      AOC_FB.sous($('siret'), etat === 'ferme'
-        ? "Ce SIRET correspond à un établissement fermé. Indiquez le SIRET de votre établissement en activité."
-        : "Ce SIRET est introuvable dans l'annuaire officiel des entreprises : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr). S'il est juste, écrivez-nous à maitreagent@gmail.com.");
+      siretRefuse(etat);
     });
   });
 
@@ -274,7 +312,7 @@
     var p = document.createElement('p');
     p.className = 'suite';
     p.textContent = d.statut !== 'validee' ? 'La suite : nous vérifions votre demande, en général sous 48 h, puis elle est publiée.'
-      : n ? (n > 1 ? n + ' entreprises ont répondu' : 'Une entreprise a répondu') + ' : nous vous avons transmis leurs coordonnées par e-mail ou par téléphone.'
+      : n ? (n > 1 ? n + ' entreprises ont répondu : nous vous avons transmis leurs' : 'Une entreprise a répondu : nous vous avons transmis ses') + ' coordonnées par e-mail ou par téléphone.'
       : close ? 'Close depuis le ' + fin + " : elle ne reçoit plus de réponses."
       : 'La suite : les entreprises peuvent répondre jusqu\'au ' + fin + '. Nous vous transmettons leurs coordonnées dès qu\'elles répondent.';
     return [ol, p];
