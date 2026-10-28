@@ -44,7 +44,7 @@
   // Sur ses propres demandes, l'auteur voit « Votre demande » au lieu de « Je suis intéressé ».
   // Auth (157 Ko) n'est chargé que si ce navigateur a déjà une session Firebase ; s'il ne se charge pas, la liste s'affiche sans.
   var f;
-  var session = indexedDB.databases ? indexedDB.databases().then(function (l) {
+  var session = window.indexedDB && indexedDB.databases ? indexedDB.databases().then(function (l) {
     return l.some(function (d) { return d.name === 'firebaseLocalStorageDb'; });
   }, function () { return false; }) : Promise.resolve(false);
   session.then(function (s) {

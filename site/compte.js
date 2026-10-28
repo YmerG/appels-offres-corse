@@ -296,7 +296,7 @@
       return moi.getIdToken(true).then(function () { return afficher(moi); });
     }).catch(function (e) { dire('verif-info', messageAuth(e)); });
   };
-  $('deconnexion').onclick = function () { f.au.signOut(f.auth); };
+  $('deconnexion').onclick = AOC_FB.deconnecter;
 
   $('suppression').addEventListener('submit', function (e) {
     e.preventDefault();

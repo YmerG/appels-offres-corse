@@ -20,10 +20,30 @@ window.AOC_FB = {
         m[1].connectFirestoreEmulator(db, '127.0.0.1', 8080);
         if (auth) m[2].connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
       }
+      // « Se déconnecter » à côté de « Compte » dans l'en-tête, tant qu'une session est ouverte (admin : pas de lien Compte)
+      if (auth) m[2].onAuthStateChanged(auth, function (u) {
+        var c = document.querySelector('.lien-compte'), b = document.getElementById('sortir');
+        if (!c) return;
+        if (!b) {
+          b = document.createElement('button');
+          b.type = 'button';
+          b.id = 'sortir';
+          b.className = 'lien-compte sortir';
+          b.textContent = 'Se déconnecter';
+          b.onclick = F.deconnecter;
+          c.after(b);
+        }
+        b.hidden = !u;
+      });
       return { fs: m[1], db: db, au: m[2], auth: auth };
     });
     F._ouvert.catch(function () { F._ouvert = null; }); // réseau coupé : on pourra réessayer
     return F._ouvert;
+  },
+  // déconnexion depuis n'importe quelle page : retour à l'accueil, qui affiche « Vous êtes déconnecté. »
+  deconnecter: function () {
+    return window.AOC_FB.ouvrir(true).then(function (f) { return f.au.signOut(f.auth); })
+      .then(function () { location.href = 'index.html?deconnecte'; });
   },
   // compte connecté et son profil (users/{uid}) : { f, user, profil } ; user et profil à null si personne n'est connecté
   moi: function () {
