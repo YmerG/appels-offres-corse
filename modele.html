@@ -28,6 +28,12 @@
     </div>
   </header>
 
+  <nav class="cadre onglets" role="group" aria-label="Type d'avis">
+    <button type="button" class="filtre" data-onglet="public" aria-pressed="true">Public <span class="nb"><!--NB--></span></button>
+    <button type="button" class="filtre" data-onglet="prive" aria-pressed="false">Privé – sociétés <span class="nb"></span></button>
+    <button type="button" class="filtre" data-onglet="particulier" aria-pressed="false">Particuliers <span class="nb"></span></button>
+  </nav>
+
   <main id="contenu" class="cadre grille">
     <aside class="panneau" aria-label="Rechercher et filtrer">
       <label class="titre-outil" for="q">Rechercher</label>
@@ -60,6 +66,7 @@
     </aside>
 
     <section class="liste" aria-labelledby="etat">
+      <p class="bandeau-exemple" id="bandeau" hidden><strong>Avis fictifs pour la démonstration.</strong> Aucune de ces annonces n'est réelle : elles montrent à quoi ressemblera cet onglet quand les sociétés et les particuliers pourront publier leurs demandes de travaux.</p>
       <h2 class="etat" id="etat" tabindex="-1"><!--NB--> avis en cours</h2>
       <div class="avis-liste" id="avis" tabindex="-1">
 <!--AVIS-->
@@ -76,6 +83,7 @@
       <p class="source">Données BOAMP (licence ouverte)</p>
       <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <!--MAJ-->.</p>
       <p>Seul l'avis officiel fait foi : vérifiez toujours la date limite et le dossier de consultation sur la plateforme de l'acheteur. Les petits marchés publiés seulement sur le site de l'acheteur, sans passer par le BOAMP, n'apparaissent pas ici.</p>
+      <p>Les onglets « Privé – sociétés » et « Particuliers » ne contiennent que des avis fictifs, marqués « Exemple », pour la démonstration.</p>
       <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun compte, aucun cookie, aucune donnée personnelle. Prototype, étape&nbsp;1.</p>
     </div>
   </footer>

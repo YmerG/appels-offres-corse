@@ -16,6 +16,9 @@
   --accent: #b5532a;
   --urgent: #b42318;
   --urgent-fond: #fdeceb;
+  --exemple: #6a4a00;
+  --exemple-fond: #fff3cc;
+  --exemple-filet: #e9cf7a;
   --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light dark;
@@ -31,6 +34,9 @@
     --accent: #e8a87c;
     --urgent: #ff8a80;
     --urgent-fond: #3a1d1c;
+    --exemple: #f3d27a;
+    --exemple-fond: #33290f;
+    --exemple-filet: #5e4b1a;
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -78,6 +84,18 @@ a { color: inherit; }
 .segments { display: flex; background: var(--carte); border: 1px solid var(--filet); border-radius: 12px; padding: 3px; }
 .segments .filtre { border: 0; border-radius: 9px; padding: 8px 12px; background: none; }
 .segments .filtre[aria-pressed="true"] { background: var(--encre); }
+
+/* Onglets Public / Privé / Particuliers (rien à choisir sans JS : seuls les avis publics sont visibles) */
+html:not(.js) .onglets { display: none; }
+.onglets { display: flex; gap: 4px; margin-top: 16px; padding-top: 3px; padding-bottom: 3px; overflow-x: auto; scrollbar-width: none; }
+.onglets::-webkit-scrollbar { display: none; }
+.onglets .filtre { font-weight: 650; padding: 9px 14px; transition: none; }
+/* petits écrans : les trois onglets tiennent sur la ligne, sans les compteurs */
+@media (max-width: 459px) { .onglets .filtre { flex: 1 1 auto; justify-content: center; padding: 9px 10px; font-size: .86rem; } .onglets .nb { display: none; } }
+.bandeau-exemple { margin: 20px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--exemple-fond); border: 1px solid var(--exemple-filet); color: var(--texte); font-size: .9rem; }
+.bandeau-exemple strong { color: var(--exemple); }
+.exemple { font-size: .74rem; font-weight: 800; line-height: 1; padding: 5px 8px; border-radius: 99px; letter-spacing: .04em; text-transform: uppercase; color: var(--exemple); background: var(--exemple-fond); box-shadow: inset 0 0 0 1px var(--exemple-filet); }
+.avis:not([data-source="public"]) { border-style: dashed; }
 
 /* Liste */
 .etat { font: 700 1.25rem/1.2 var(--serif); margin: 22px 0 12px; }

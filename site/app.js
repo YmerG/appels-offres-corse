@@ -1,12 +1,15 @@
-// Appels d'offres Corse : avis clos retirés, compte à rebours, recherche, filtres métier et département, tri.
+// Appels d'offres Corse : avis clos retirés, compte à rebours, onglets (public / exemples privés), recherche, filtres métier et département, tri.
 (function () {
   var liste = document.getElementById('avis');
   var q = document.getElementById('q');
   var tri = document.getElementById('tri');
   var etat = document.getElementById('etat');
   var vide = document.getElementById('vide');
+  var bandeau = document.getElementById('bandeau');
   var filtres = Array.prototype.slice.call(document.querySelectorAll('.filtre'));
-  var choix = { metier: '', dep: '' };
+  var CLES = ['onglet', 'metier', 'dep'];
+  var DEFAUT = { onglet: 'public', metier: '', dep: '' };
+  var choix = { onglet: 'public', metier: '', dep: '' };
   var JOUR = 864e5;
   var maintenant = new Date();
   var aujourdhui = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
@@ -14,7 +17,7 @@
   function normal(s) {
     return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   }
-  function cle(b) { return 'metier' in b.dataset ? 'metier' : 'dep'; }
+  function cle(b) { return CLES.filter(function (k) { return k in b.dataset; })[0]; }
 
   // La page peut dater de quelques heures : on retire les avis dont la date limite est passée
   var cartes = Array.prototype.slice.call(liste.querySelectorAll('.avis')).filter(function (c) {
@@ -29,19 +32,32 @@
     c._texte = normal(c.querySelector('.corps').textContent);
     return true;
   });
-  document.getElementById('nb-total').textContent = cartes.length;
-  document.getElementById('nb-semaine').textContent = cartes.filter(function (c) { return c.classList.contains('urgent'); }).length;
-  filtres.forEach(function (b) {
-    var nb = b.querySelector('.nb');
-    if (nb && b.dataset.metier) nb.textContent = cartes.filter(function (c) { return c._metiers.indexOf(b.dataset.metier) !== -1; }).length;
-    else if (nb) nb.textContent = cartes.length;
-  });
+  function de(source) { return cartes.filter(function (c) { return c.dataset.source === source; }); }
+  // l'en-tête ne compte que les marchés publics réels
+  var publics = de('public');
+  document.getElementById('nb-total').textContent = publics.length;
+  document.getElementById('nb-semaine').textContent = publics.filter(function (c) { return c.classList.contains('urgent'); }).length;
+  filtres.forEach(function (b) { if (b.dataset.onglet) b.querySelector('.nb').textContent = de(b.dataset.onglet).length; });
+
+  // compteurs des métiers pour l'onglet affiché ; un métier absent de l'onglet est caché (sauf s'il est choisi)
+  function compter() {
+    var ici = de(choix.onglet);
+    filtres.forEach(function (b) {
+      if (!('metier' in b.dataset)) return;
+      var n = b.dataset.metier ? ici.filter(function (c) { return c._metiers.indexOf(b.dataset.metier) !== -1; }).length : ici.length;
+      b.querySelector('.nb').textContent = n;
+      b.hidden = !n && b.dataset.metier !== choix.metier;
+    });
+  }
 
   function appliquer() {
     var mots = normal(q.value).split(/\s+/).filter(Boolean);
     var n = 0;
+    compter();
+    bandeau.hidden = choix.onglet === 'public';
     cartes.forEach(function (c) {
-      var ok = (!choix.metier || c._metiers.indexOf(choix.metier) !== -1) &&
+      var ok = c.dataset.source === choix.onglet &&
+        (!choix.metier || c._metiers.indexOf(choix.metier) !== -1) &&
         (!choix.dep || c.dataset.dep === choix.dep) &&
         mots.every(function (m) { return c._texte.indexOf(m) !== -1; });
       c.hidden = !ok;
@@ -53,10 +69,10 @@
       if (ordre.length > 2) c._ancre.title = ordre.slice(2).map(function (t) { return t.textContent; }).join(', ');
     });
     var filtre = mots.length || choix.metier || choix.dep;
-    etat.textContent = n + ' avis ' + (filtre ? (n > 1 ? 'trouvés' : 'trouvé') : 'en cours');
+    etat.textContent = n + ' avis ' + (filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours' : "d'exemple");
     vide.hidden = n > 0;
-    // l'adresse garde le choix : un artisan peut l'enregistrer (#metier=electricite&dep=2B)
-    var h = ['metier', 'dep'].filter(function (k) { return choix[k]; }).map(function (k) { return k + '=' + choix[k]; }).join('&');
+    // l'adresse garde le choix : un artisan peut l'enregistrer (#onglet=prive&metier=electricite&dep=2B)
+    var h = CLES.filter(function (k) { return choix[k] !== DEFAUT[k]; }).map(function (k) { return k + '=' + choix[k]; }).join('&');
     history.replaceState(null, '', h ? '#' + h : location.pathname + location.search);
   }
 
@@ -93,11 +109,10 @@
 
   // Lien direct, à l'ouverture comme sur une page déjà ouverte (favori, lien collé)
   function depuisAdresse() {
-    choisir('metier', '');
-    choisir('dep', '');
+    CLES.forEach(function (k) { choisir(k, DEFAUT[k]); });
     location.hash.slice(1).split('&').forEach(function (p) {
       var kv = p.split('=');
-      if ((kv[0] === 'metier' || kv[0] === 'dep') && document.querySelector('.filtre[data-' + kv[0] + '="' + CSS.escape(kv[1] || '') + '"]')) choisir(kv[0], kv[1]);
+      if (CLES.indexOf(kv[0]) !== -1 && document.querySelector('.filtre[data-' + kv[0] + '="' + CSS.escape(kv[1] || '') + '"]')) choisir(kv[0], kv[1]);
     });
     appliquer();
   }

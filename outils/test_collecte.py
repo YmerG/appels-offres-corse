@@ -1,11 +1,13 @@
 """Vérifie la lecture des avis sans Internet. Usage : python3 outils/test_collecte.py"""
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from collecte import analyser, avis_de, date_limite, euros, lieu_texte, metier_cpv, metiers_de, nom_lieu, propre  # noqa: E402
+from collecte import (METIERS, analyser, avis_de, carte, date_limite, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
+                      metiers_de, nom_lieu, propre)
 
 # métiers par préfixe CPV, le plus long l'emporte
 assert metier_cpv("45310000") == "electricite"
@@ -71,4 +73,18 @@ lus = avis_de([avis("1", "2026-11-20T12:00:00", dateparution="2026-10-01"),
               datetime(2026, 10, 28, tzinfo=timezone.utc))
 assert [(a["id"], a["rectifie"], a["departement"], a["metiers"], a["lieu"]) for a in lus] == \
     [("2", True, "2B", ["gros-oeuvre"], "Haute-Corse")], lus
-print("OK : lecture des avis")
+
+# exemples fictifs (site/exemples.json) : 8 à 10 par onglet, dates à venir, métiers connus, aucune coordonnée, badge et pas de lien
+maintenant = datetime(2026, 10, 28, 20, tzinfo=timezone.utc)
+ex = exemples_de(maintenant)
+for s in ("prive", "particulier"):
+    assert 8 <= sum(a["source"] == s for a in ex) <= 10, s
+brut = (Path(__file__).resolve().parent.parent / "site" / "exemples.json").read_text(encoding="utf-8")
+assert not re.search(r"@|https?:|www\.|\b0\d(?:[ .]?\d\d){4}\b|\+33", brut), "coordonnée dans exemples.json"
+for a in ex:
+    assert a["date_limite"] > maintenant.isoformat() and a["publie"] <= "2026-10-28" and a["departement"] in ("2A", "2B")
+    assert all(m in METIERS for m in a["metiers"]), a
+    html = carte(a)
+    assert ">Exemple</span>" in html and "href=" not in html and f'data-source="{a["source"]}"' in html and " hidden>" in html
+assert datetime.fromisoformat(ex[0]["date_limite"]).hour == 12
+print("OK : lecture des avis et exemples")

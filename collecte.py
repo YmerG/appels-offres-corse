@@ -247,6 +247,28 @@ def avis_de(brut, maintenant):
     return sorted(gardes.values(), key=lambda a: a["date_limite"])
 
 
+def exemples_de(maintenant, chemin=SORTIE / "exemples.json"):
+    """Avis FICTIFS des onglets Privé et Particuliers (site/exemples.json, écrit à la main) ; dates recalculées à chaque collecte."""
+    if not chemin.exists():
+        return []
+    jour = maintenant.astimezone(PARIS).date()
+    tout = []
+    for source, liste in json.loads(chemin.read_text(encoding="utf-8")).items():
+        if source not in ("prive", "particulier"):
+            continue
+        for x in liste:
+            d = jour + timedelta(days=x["delai_jours"])
+            tout.append({
+                "source": source, "objet": x["objet"], "acheteur": x["demandeur"], "lieu": x["lieu"], "departement": x["departement"],
+                "metiers": [m for m in x["metiers"] if m in METIERS] or ["services"],
+                "montant": x.get("budget"), "montant_type": "budget", "taxe": "TTC" if source == "particulier" else "HT",
+                "duree": x.get("duree"), "procedure": x["demande"], "rectifie": False, "lien": None,
+                "date_limite": datetime(d.year, d.month, d.day, x.get("heure", 12), tzinfo=PARIS).isoformat(),
+                "publie": (jour - timedelta(days=x["publie_jours"])).isoformat(),
+            })
+    return tout
+
+
 def euros(x):
     if x >= 1e6:
         return f"{x / 1e6:.1f}".replace(".", ",").replace(",0", "") + " M€"
@@ -269,16 +291,24 @@ def carte(a):
         noms += f'<span class="metier autres" title="{e(", ".join(METIERS[m][0] for m in a["metiers"][2:]))}">+{len(a["metiers"]) - 2}</span>'
     infos = [("Lieu", e(a["lieu"]))]
     if a["montant"]:
-        infos.append(("Montant max." if a["montant_type"] == "max" else "Montant estimé", euros(a["montant"]) + " HT"))
-    infos.append(("Procédure", e(a["procedure"])))
+        genre = {"max": "Montant max.", "budget": "Budget indicatif"}.get(a["montant_type"], "Montant estimé")
+        infos.append((genre, euros(a["montant"]) + " " + a.get("taxe", "HT")))
+    if a.get("duree"):
+        infos.append(("Durée", e(a["duree"])))
+    infos.append(("Procédure" if a["lien"] else "Demande", e(a["procedure"])))
     dl = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in infos)
     rectif = '<span class="rectif">Rectifié</span>' if a["rectifie"] else ""
-    return (f'<article class="avis" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" '
-            f'data-limite="{e(a["date_limite"])}" data-publie="{e(a["publie"] or "")}" data-montant="{round(a["montant"] or 0)}" style="--c:{METIERS[a["metiers"][0]][1]}">'
+    source = a.get("source", "public")
+    # les exemples n'ont pas d'avis officiel : titre sans lien ; cachés sans JS (ils ne se montrent que dans leur onglet)
+    exemple = '<span class="exemple">Exemple</span>' if source != "public" else ""
+    titre = f'<a href="{e(a["lien"])}" rel="noopener">{e(a["objet"])}</a>' if a["lien"] else e(a["objet"])
+    return (f'<article class="avis" data-source="{source}" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" '
+            f'data-limite="{e(a["date_limite"])}" data-publie="{e(a["publie"] or "")}" data-montant="{round(a["montant"] or 0)}" style="--c:{METIERS[a["metiers"][0]][1]}"'
+            f'{" hidden" if exemple else ""}>'
             f'<div class="echeance" aria-hidden="true"><span class="jour">{d.day}</span><span class="mois">{MOIS[d.month - 1]}</span>'
             f'<span class="reste"></span></div>'
-            f'<div class="corps"><p class="haut">{noms}<span class="dep">{e(a["departement"])}</span>{rectif}</p>'
-            f'<h3><a href="{e(a["lien"])}" rel="noopener">{e(a["objet"])}</a></h3>'
+            f'<div class="corps"><p class="haut">{exemple}{noms}<span class="dep">{e(a["departement"])}</span>{rectif}</p>'
+            f'<h3>{titre}</h3>'
             f'<p class="acheteur">{e(a["acheteur"])}</p><dl class="infos">{dl}</dl>'
             f'<p class="limite"><span class="badge" hidden>Bientôt clos</span>Réponse avant le '
             f'<time datetime="{e(a["date_limite"])}">{date_fr(a["date_limite"])}</time></p></div></article>')
@@ -294,14 +324,16 @@ def main():
     if not avis:
         sys.exit("Aucun avis en cours trouvé : site non modifié.")
 
+    exemples = exemples_de(maintenant)
     nb = {k: sum(k in a["metiers"] for a in avis) for k in METIERS}
+    nb_tous = {k: sum(k in a["metiers"] for a in avis + exemples) for k in METIERS}  # boutons pour tous les onglets ; app.js cache ceux à 0
     boutons = "".join(
-        f'<button type="button" class="filtre" data-metier="{k}" aria-pressed="false" style="--c:{coul}">'
+        f'<button type="button" class="filtre" data-metier="{k}" aria-pressed="false" style="--c:{coul}"{"" if nb[k] else " hidden"}>'
         f'<span class="pastille" aria-hidden="true"></span>{nom} <span class="nb">{nb[k]}</span></button>'
-        for k, (nom, coul) in METIERS.items() if nb[k])
+        for k, (nom, coul) in METIERS.items() if nb_tous[k])
     remplacements = {
         "<!--METIERS-->": boutons,
-        "<!--AVIS-->": "\n".join(carte(a) for a in avis),
+        "<!--AVIS-->": "\n".join(carte(a) for a in avis + exemples),
         "<!--NB-->": str(len(avis)),
         "<!--NB_2A-->": str(sum(a["departement"] == "2A" for a in avis)),
         "<!--NB_2B-->": str(sum(a["departement"] == "2B" for a in avis)),
@@ -315,7 +347,7 @@ def main():
     donnees = {"genere_le": maintenant.isoformat(timespec="seconds"), "source": "BOAMP (DILA), Licence Ouverte 2.0",
                "metiers": {k: v[0] for k, v in METIERS.items()}, "avis": avis}
     (SORTIE / "data.json").write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"{len(brut)} avis lus, {len(avis)} en cours -> {SORTIE / 'index.html'}")
+    print(f"{len(brut)} avis lus, {len(avis)} en cours (+ {len(exemples)} exemples) -> {SORTIE / 'index.html'}")
     for k, (nom, _) in METIERS.items():
         print(f"  {nb[k]:3d}  {nom}")
 

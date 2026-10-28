@@ -15,6 +15,12 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
 - Mention « Données BOAMP (licence ouverte) » dans le pied de page, avec le rappel que seul l'avis officiel fait foi.
 - **Aucune donnée personnelle** : les avis contiennent des noms, téléphones et courriels de correspondants, qui ne sont jamais repris.
 
+### Onglets « Privé – sociétés » et « Particuliers » (démonstration)
+- Trois onglets au-dessus de la liste : **Public** (les vrais avis du BOAMP, inchangés), **Privé – sociétés** et **Particuliers**.
+- Les deux derniers ne contiennent que des **avis fictifs** (10 chacun), écrits à la main dans `site/exemples.json` : chaque carte porte le badge **« Exemple »** et un cadre en pointillés, et l'onglet affiche le bandeau **« Avis fictifs pour la démonstration »**. Aucun nom de société ou de personne, aucune coordonnée, aucun lien (le test automatique le vérifie).
+- `collecte.py` lit ce fichier mais ne l'écrit jamais. Les dates y sont relatives (« publié il y a 3 jours, réponse dans 18 jours ») et recalculées à chaque collecte : les exemples ne périment pas.
+- Les filtres métier, département, recherche et tri marchent dans chaque onglet ; les compteurs suivent l'onglet. Adresse directe : `index.html#onglet=prive` ou `#onglet=particulier&metier=plomberie-cvc`. Le haut de page ne compte que les avis publics.
+
 ## Comment ça marche
 - `collecte.py` (Python, bibliothèque standard) interroge l'API ouverte du BOAMP, puis écrit `site/index.html` (à partir de `modele.html`) et `site/data.json`.
   Lancer : `python3 collecte.py` (environ 5 s). Test sans Internet : `python3 outils/test_collecte.py`.
@@ -44,3 +50,4 @@ Bon à savoir :
 
 ## Captures
 `captures/v1-*.png` : 390 et 360 px (téléphone), 1440 px (ordinateur), clair et sombre, en haut de page et sur la liste des cartes. Aussi `v1-390-clair-filtre.png` (électricité, 2B).
+`captures/v4-*.png` : onglets d'exemples (390, 360, 1440 px, clair et sombre).
