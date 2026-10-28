@@ -32,6 +32,7 @@ window.AOC_FB = {
           b.textContent = 'Se déconnecter';
           b.onclick = F.deconnecter;
           c.after(b);
+          c.parentNode.classList.add('avec-sortir');
         }
         b.hidden = !u;
       });
@@ -40,7 +41,7 @@ window.AOC_FB = {
     F._ouvert.catch(function () { F._ouvert = null; }); // réseau coupé : on pourra réessayer
     return F._ouvert;
   },
-  // déconnexion depuis n'importe quelle page : retour à l'accueil, qui affiche « Vous êtes déconnecté. »
+  // déconnexion depuis n'importe quelle page : retour à l'accueil, qui affiche « Déconnexion réussie. »
   deconnecter: function () {
     return window.AOC_FB.ouvrir(true).then(function (f) { return f.au.signOut(f.auth); })
       .then(function () { location.href = 'index.html?deconnecte'; });

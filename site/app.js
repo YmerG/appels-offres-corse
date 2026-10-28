@@ -1,5 +1,10 @@
 // Appels d'offres Corse : avis clos retirés, compte à rebours, onglets (public / exemples privés), recherche, filtres métier et département, tri.
 (function () {
+  // après « Se déconnecter » (index.html?deconnecte) : message, puis adresse nettoyée pour qu'un rechargement ne le remontre pas
+  if (/[?&]deconnecte\b/.test(location.search)) {
+    document.getElementById('deconnecte').textContent = 'Déconnexion réussie.';
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
   var liste = document.getElementById('avis');
   var q = document.getElementById('q');
   var tri = document.getElementById('tri');

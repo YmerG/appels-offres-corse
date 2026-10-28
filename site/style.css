@@ -51,7 +51,7 @@ a { color: inherit; }
 
 /* En-tête */
 .entete { background: radial-gradient(120% 140% at 100% 0%, #24465a 0%, #13212c 55%) #13212c; color: #f3efe7; padding: 22px 0 26px; }
-.marque { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 1.05rem/1 var(--serif); letter-spacing: .01em; white-space: nowrap; }
+.marque { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0; font: 700 1.05rem/1 var(--serif); letter-spacing: .01em; white-space: nowrap; }
 .marque > span:not([class]) { color: #e8a87c; }
 .logo { width: 28px; height: 28px; border-radius: 8px; background: #e8a87c; position: relative; flex: none; }
 .logo::after { content: ""; position: absolute; inset: 8px 7px 6px; border: 3px solid #13212c; border-width: 3px 3px 0 0; transform: rotate(-45deg) translate(-1px, 3px); border-radius: 1px; }
@@ -155,6 +155,11 @@ html:not(.js) .onglets { display: none; }
 /* 44 px : taille minimale d'une cible tactile */
 .lien-compte { margin-left: auto; flex: none; display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; font: 650 .85rem/1 var(--sans); color: #f3efe7; text-decoration: none; padding: 0 14px; border-radius: 99px; background: rgba(243, 239, 231, .14); }
 .lien-compte:hover { background: rgba(243, 239, 231, .24); }
+button.lien-compte { border: 0; cursor: pointer; }
+.lien-compte + .lien-compte { margin-left: 0; }
+/* écran étroit : « Se déconnecter » passe à la ligne, calé à droite (sur la 1re ligne, la marge auto de « Compte » prend la place) */
+.avec-sortir { justify-content: flex-end; }
+.sortir { background: none; box-shadow: inset 0 0 0 1px rgba(243, 239, 231, .45); }
 .proto + .lien-compte { margin-left: 0; }
 /* téléphone, accueil : « Prototype » + « Compte » ne tiennent pas sur la ligne ; la mention reste dans le pied de page */
 @media (max-width: 479px) { .entete:not(.entete-court) .proto { display: none; } .entete:not(.entete-court) .proto + .lien-compte { margin-left: auto; } }
@@ -185,6 +190,9 @@ html:not(.js) .onglets { display: none; }
 #demande p { margin: 0; }
 .actions-admin { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
 .bouton-refus, .lien-bouton { font: 600 .95rem/1.2 var(--sans); color: var(--urgent); background: none; border: 1px solid currentColor; border-radius: 99px; padding: 11px 18px; cursor: pointer; }
+.bouton-sortir { display: inline-flex; align-items: center; min-height: 44px; font: 650 .95rem/1.2 var(--sans); color: var(--texte); background: none; border: 1px solid var(--doux); border-radius: 99px; padding: 0 18px; cursor: pointer; }
+.info-sortie { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--exemple-fond); border: 1px solid var(--exemple-filet); font-weight: 650; }
+.info-sortie:empty { display: none; }
 .lien-bouton { border: 0; padding: 4px; text-decoration: underline; color: var(--doux); }
 .ligne-admin { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 0; color: var(--doux); font-size: .9rem; }
 .etat .nb { color: var(--doux); font-size: .8em; }
