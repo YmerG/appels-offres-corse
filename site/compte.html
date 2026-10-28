@@ -18,7 +18,7 @@
     <div class="cadre">
       <p class="marque"><a class="retour" href="index.html"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><span class="proto">Test</span></p>
       <h1>Mon compte</h1>
-      <p class="chapo">Gratuit. Particulier : publiez vos demandes de travaux. Entreprise de travaux : répondez-y.</p>
+      <p class="chapo">Gratuit. Particulier : publiez vos demandes de travaux. Entreprise de travaux : répondez-y, ou publiez vos propres demandes.</p>
     </div>
   </header>
 
@@ -62,7 +62,7 @@
           <label><input type="radio" name="type" value="particulier" checked> Particulier</label>
           <label><input type="radio" name="type" value="entreprise"> Entreprise de travaux</label>
         </div>
-        <p class="aide-bloc">Particulier : vous publiez des demandes. Entreprise : vous répondez aux demandes. Ce choix ne pourra plus être changé.</p>
+        <p class="aide-bloc">Particulier : vous publiez des demandes. Entreprise : vous répondez aux demandes et pouvez aussi publier les vôtres (onglet « Privé – sociétés »). Ce choix ne pourra plus être changé.</p>
       </fieldset>
 
       <fieldset id="f-part">
@@ -79,6 +79,7 @@
         <input id="e-nom" name="e-nom" required minlength="2" maxlength="80" autocomplete="organization">
         <label for="siret">SIRET <span class="aide">14 chiffres, vérifié dans l'annuaire officiel des entreprises</span></label>
         <input id="siret" name="siret" required inputmode="numeric" maxlength="17" pattern="[0-9 ]{14,17}" autocomplete="off" placeholder="Ex. : 123 456 780 00014">
+        <p class="erreur" id="siret-erreur" role="alert" hidden></p>
         <fieldset class="dep-form" id="f-metiers">
           <legend>Vos métiers</legend>
           <div class="cases">

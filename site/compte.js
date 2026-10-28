@@ -133,15 +133,17 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     dire('erreur', '');
+    dire('siret-erreur', '');
     var v = function (id) { return $(id).value.trim(); };
     var faux = Array.prototype.find.call(form.elements, function (c) { return c.name && c.willValidate && !c.checkValidity(); });
-    if (faux) return dire('erreur', 'Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.', faux);
+    if (faux) return dire(faux.name === 'siret' ? 'siret-erreur' : 'erreur', 'Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.', faux);
     var type = form.type.value;
     var champs = type === 'entreprise'
       ? { nom: v('e-nom'), siret: v('siret').replace(/\s/g, ''), metiers: coches('metiers'), zone: coches('zone') }
       : { nom: v('p-nom'), commune: v('p-commune') };
     if (type === 'entreprise') {
-      if (!siretValide(champs.siret)) return dire('erreur', "Ce numéro SIRET n'est pas valide : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr).", $('siret'));
+      // message sous le champ SIRET : #erreur, en bas du formulaire, serait hors de l'écran du téléphone
+      if (!siretValide(champs.siret)) return dire('siret-erreur', "Ce numéro SIRET n'est pas valide : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr).", $('siret'));
       if (!champs.metiers.length) return dire('erreur', 'Cochez au moins un métier.', form.querySelector('[name=metiers]'));
       if (!champs.zone.length) return dire('erreur', "Cochez au moins un département d'intervention.", form.querySelector('[name=zone]'));
     }
@@ -157,7 +159,7 @@
     verif.then(function (etat) {
       if (etat === 'ok') return enregistrer(champs, type, tel, fin);
       fin();
-      dire('erreur', etat === 'ferme'
+      dire('siret-erreur', etat === 'ferme'
         ? "Ce SIRET correspond à un établissement fermé. Indiquez le SIRET de votre établissement en activité."
         : "Ce SIRET est introuvable dans l'annuaire officiel des entreprises : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr). S'il est juste, écrivez-nous à maitreagent@gmail.com.", $('siret'));
     });

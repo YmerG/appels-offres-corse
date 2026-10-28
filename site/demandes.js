@@ -41,10 +41,26 @@
     return a;
   }
 
-  AOC_FB.ouvrir(false).then(function (f) {
+  // Sur ses propres demandes, l'auteur voit « Votre demande » au lieu de « Je suis intéressé ».
+  // Auth (157 Ko) n'est chargé que si ce navigateur a déjà une session Firebase ; s'il ne se charge pas, la liste s'affiche sans.
+  var f;
+  var session = indexedDB.databases ? indexedDB.databases().then(function (l) {
+    return l.some(function (d) { return d.name === 'firebaseLocalStorageDb'; });
+  }, function () { return false; }) : Promise.resolve(false);
+  session.then(function (s) {
+    return AOC_FB.ouvrir(s).catch(function () { return AOC_FB.ouvrir(false); });
+  }).then(function (r) {
+    f = r;
     return f.fs.getDocs(f.fs.query(f.fs.collection(f.db, 'demandes'), f.fs.where('statut', '==', 'validee')));
   }).then(function (res) {
-    window.ajouterAvis(res.docs.map(function (d) { return carte(d.data(), d.id); }));
+    var cartes = res.docs.map(function (d) { return carte(d.data(), d.id); });
+    window.ajouterAvis(cartes);
+    if (f.auth) return f.auth.authStateReady().then(function () {
+      var u = f.auth.currentUser;
+      if (u) res.docs.forEach(function (d, i) {
+        if (d.data().uid === u.uid) cartes[i].querySelector('.interesse').innerHTML = '<a class="lien-bouton" href="compte.html#mes-demandes">Votre demande : suivre dans Mes demandes</a>';
+      });
+    });
   }).catch(function (e) {
     console.warn('Demandes publiées indisponibles :', e && e.message);
   });

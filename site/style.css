@@ -138,6 +138,7 @@ html:not(.js) .onglets { display: none; }
 .piege { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .consentement { display: flex; gap: 12px; align-items: flex-start; font-size: .9rem; }
 .consentement input { width: 22px; height: 22px; flex: none; margin: 1px 0 0; accent-color: var(--accent); }
+#siret-erreur { margin-top: 8px; }
 .erreur { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--urgent-fond); color: var(--urgent); font-weight: 650; }
 #form .bouton-publier { width: 100%; }
 .merci { margin-top: 20px; padding: 22px; background: var(--carte); border: 1px solid var(--filet); border-radius: 16px; }
