@@ -90,7 +90,7 @@ assert datetime.fromisoformat(ex[0]["date_limite"]).hour == 12
 
 # les 12 métiers sont les mêmes dans le formulaire, les règles Firestore et la page admin
 racine = Path(__file__).resolve().parent.parent
-assert re.findall(r'<option value="([\w-]+)"', (racine / "site" / "publier.html").read_text(encoding="utf-8")) == list(METIERS)
+assert re.findall(r'name="metier" value="([\w-]+)"', (racine / "site" / "publier.html").read_text(encoding="utf-8")) == list(METIERS)
 regles = (racine / "firestore.rules").read_text(encoding="utf-8")
 debut = regles.index("function metiersConnus()")
 assert re.findall(r"'([\w-]+)'", regles[debut:regles.index("}", debut)]) == list(METIERS)
