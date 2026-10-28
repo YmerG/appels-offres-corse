@@ -1,0 +1,26 @@
+# Deux fois par jour : lecture de l'API du BOAMP, puis (quand Rémy l'aura autorisé) publication du dossier site/.
+name: Collecte des appels d'offres
+on:
+  schedule:
+    - cron: "15 5,12 * * *"   # 6 h 15 et 13 h 15 (heure d'hiver) : le BOAMP publie une fois par jour
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  collecte:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 outils/test_collecte.py
+      - run: python3 collecte.py
+      # Mise en ligne de test sur GitHub Pages (accord de Rémy du 28/10/2026)
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4

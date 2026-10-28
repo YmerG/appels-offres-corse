@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Appels d'offres en Corse · marchés publics ouverts par métier</title>
+  <meta name="description" content="Tous les appels d'offres publics en cours en Corse-du-Sud et en Haute-Corse, classés par métier : bâtiment, électricité, plomberie, voirie, espaces verts, nettoyage, informatique… Date limite, acheteur, lieu, montant, lien vers l'avis officiel du BOAMP.">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#13212c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2313212c'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23e8a87c' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preload" href="polices/source-serif-4-gras.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="evitement" href="#avis">Aller aux avis</a>
+
+  <header class="entete">
+    <div class="cadre">
+      <p class="marque"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span><span class="proto">Prototype</span></p>
+      <h1>Les marchés publics ouverts en Corse, classés par métier</h1>
+      <p class="chiffres">
+        <span><strong id="nb-total"><!--NB--></strong> avis en cours</span>
+        <span><strong id="nb-semaine">–</strong> clôturent sous 7&nbsp;jours</span>
+        <span>Corse-du-Sud <strong><!--NB_2A--></strong> · Haute-Corse <strong><!--NB_2B--></strong></span>
+      </p>
+    </div>
+  </header>
+
+  <main id="contenu" class="cadre grille">
+    <aside class="panneau" aria-label="Rechercher et filtrer">
+      <label class="titre-outil" for="q">Rechercher</label>
+      <input id="q" type="search" placeholder="Toiture, Bastia, assurance…" autocomplete="off">
+
+      <p class="titre-outil" id="t-metier">Métier</p>
+      <div class="metiers" role="group" aria-labelledby="t-metier">
+        <button type="button" class="filtre" data-metier="" aria-pressed="true">Tous les métiers <span class="nb"><!--NB--></span></button>
+        <!--METIERS-->
+      </div>
+
+      <div class="ligne-outils">
+        <div>
+          <p class="titre-outil" id="t-dep">Département</p>
+          <div class="segments" role="group" aria-labelledby="t-dep">
+            <button type="button" class="filtre" data-dep="" aria-pressed="true">Tous</button>
+            <button type="button" class="filtre" data-dep="2A" aria-pressed="false" title="Corse-du-Sud">2A</button>
+            <button type="button" class="filtre" data-dep="2B" aria-pressed="false" title="Haute-Corse">2B</button>
+          </div>
+        </div>
+        <div>
+          <label class="titre-outil" for="tri">Trier par</label>
+          <select id="tri">
+            <option value="limite">Date limite</option>
+            <option value="publie">Plus récents</option>
+            <option value="montant">Montant</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+
+    <section class="liste" aria-labelledby="etat">
+      <h2 class="etat" id="etat" tabindex="-1"><!--NB--> avis en cours</h2>
+      <div class="avis-liste" id="avis" tabindex="-1">
+<!--AVIS-->
+      </div>
+      <div class="vide" id="vide" hidden>
+        <p>Aucun avis ne correspond à votre recherche.</p>
+        <button type="button" id="effacer">Effacer les filtres</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p class="source">Données BOAMP (licence ouverte)</p>
+      <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <!--MAJ-->.</p>
+      <p>Seul l'avis officiel fait foi : vérifiez toujours la date limite et le dossier de consultation sur la plateforme de l'acheteur. Les petits marchés publiés seulement sur le site de l'acheteur, sans passer par le BOAMP, n'apparaissent pas ici.</p>
+      <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun compte, aucun cookie, aucune donnée personnelle. Prototype, étape&nbsp;1.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
