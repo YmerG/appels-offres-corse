@@ -239,6 +239,13 @@ def main():
     assert maj("demandes/ok1", admin_jeton, {"statut": "validee", "titre": "Titre changé"}) == 403
     assert maj("demandes/ok1", admin_jeton, {"statut": "publiee-partout"}) == 403
     assert maj("demandes/ok1", admin_jeton, {"statut": "validee"}) == 200
+    # réponses transmises : l'admin seulement, un entier de 0 à 1000
+    for jeton in (intrus_jeton, part_jeton, ent_jeton, None):
+        assert maj("demandes/ok1", jeton, {"reponses": 2}) == 403, "réponses notées par un non-admin"
+    assert maj("demandes/ok1", admin_jeton, {"reponses": "2"}) == 403
+    assert maj("demandes/ok1", admin_jeton, {"reponses": -1}) == 403
+    assert maj("demandes/ok1", admin_jeton, {"reponses": 1001}) == 403
+    assert maj("demandes/ok1", admin_jeton, {"reponses": 2}) == 200
 
     # une fois validée : la demande est lisible par tous, les coordonnées toujours pas
     code, doc = appel(FS + "/demandes/ok1")

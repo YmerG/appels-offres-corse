@@ -96,9 +96,12 @@ service cloud.firestore {
       allow create: if (compteVerifie('particulier') || (compteVerifie('entreprise') && request.resource.data.type == 'prive'))
         && demandeValide(request.resource.data)
         && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
+      // reponses : nombre de réponses d'artisans que l'admin a transmises au demandeur (étape « Réponses reçues » de Mes demandes)
       allow update: if estAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut'])
-        && request.resource.data.statut in ['en_attente', 'validee'];
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'reponses'])
+        && request.resource.data.statut in ['en_attente', 'validee']
+        && (!('reponses' in request.resource.data)
+          || (request.resource.data.reponses is int && request.resource.data.reponses >= 0 && request.resource.data.reponses <= 1000));
       allow delete: if estAdmin();
 
       match /prive/{doc} {

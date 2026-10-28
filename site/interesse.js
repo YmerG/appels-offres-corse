@@ -14,10 +14,10 @@
     document.getElementById('reste-msg').textContent = n < 10 ? 'encore ' + (10 - n) + ' caractères au moins' : n + ' / 1 000';
   });
 
+  // erreur de saisie sous son champ ; erreur d'envoi au-dessus du bouton
   function dire(m, champ) {
-    erreur.textContent = m;
-    erreur.hidden = false;
-    if (champ) champ.focus();
+    if (champ) AOC_FB.sous(champ, m);
+    else { erreur.textContent = m; erreur.hidden = false; }
     envoyer.disabled = false;
     envoyer.textContent = 'Envoyer mon message';
   }
@@ -81,9 +81,10 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     erreur.hidden = true;
+    AOC_FB.effacer(form);
     var v = function (n) { return (form[n].value || '').trim(); };
     var faux = Array.prototype.find.call(form.elements, function (c) { return c.name && c.willValidate && !c.checkValidity(); });
-    if (faux) return dire('Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.', faux);
+    if (faux) return dire(faux.name === 'consentement' ? 'Cochez cette case pour envoyer votre message.' : 'Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.', faux);
     if (v('message').length < 10) return dire('Vérifiez ' + NOMS.message + '.', msg);
     if (!v('telephone') && !v('email')) return dire('Indiquez un téléphone ou un e-mail.', form.telephone);
     if (v('site')) return merci(); // robot : on fait comme si c'était envoyé, sans rien écrire

@@ -19,6 +19,9 @@
   --exemple: #6a4a00;
   --exemple-fond: #fff3cc;
   --exemple-filet: #e9cf7a;
+  --ok: #1d6b3a;
+  --ok-fond: #e7f5ec;
+  --ok-filet: #9fd3b1;
   --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light dark;
@@ -37,6 +40,9 @@
     --exemple: #f3d27a;
     --exemple-fond: #33290f;
     --exemple-filet: #5e4b1a;
+    --ok: #8fdcaa;
+    --ok-fond: #12291b;
+    --ok-filet: #2b5a3c;
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -138,7 +144,9 @@ html:not(.js) .onglets { display: none; }
 .piege { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .consentement { display: flex; gap: 12px; align-items: flex-start; font-size: .9rem; }
 .consentement input { width: 22px; height: 22px; flex: none; margin: 1px 0 0; accent-color: var(--accent); }
-#siret-erreur { margin-top: 8px; }
+/* erreur sous son champ (firebase-config.js : AOC_FB.sous) */
+.erreur-champ { margin-top: 8px; }
+#form [aria-invalid="true"], .carte-form [aria-invalid="true"] { border-color: var(--urgent); }
 .erreur { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--urgent-fond); color: var(--urgent); font-weight: 650; }
 #form .bouton-publier { width: 100%; }
 .merci { margin-top: 20px; padding: 22px; background: var(--carte); border: 1px solid var(--filet); border-radius: 16px; }
@@ -191,7 +199,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 .actions-admin { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
 .bouton-refus, .lien-bouton { font: 600 .95rem/1.2 var(--sans); color: var(--urgent); background: none; border: 1px solid currentColor; border-radius: 99px; padding: 11px 18px; cursor: pointer; }
 .bouton-sortir { display: inline-flex; align-items: center; min-height: 44px; font: 650 .95rem/1.2 var(--sans); color: var(--texte); background: none; border: 1px solid var(--doux); border-radius: 99px; padding: 0 18px; cursor: pointer; }
-.info-sortie { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--exemple-fond); border: 1px solid var(--exemple-filet); font-weight: 650; }
+.info-ok, .info-sortie { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--ok-fond); border: 1px solid var(--ok-filet); color: var(--ok); font-weight: 650; }
 .info-sortie:empty { display: none; }
 .lien-bouton { border: 0; padding: 4px; text-decoration: underline; color: var(--doux); }
 .ligne-admin { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 0; color: var(--doux); font-size: .9rem; }
@@ -274,3 +282,36 @@ button.lien-compte { border: 0; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* Confirmations vertes : ce qui est fait, et la suite */
+.merci.ok { background: var(--ok-fond); border-color: var(--ok-filet); }
+.merci.ok h2 { color: var(--ok); }
+.merci.ok h2::before { content: "✓ "; }
+
+/* Publier : 3 étapes, barre de progression */
+.progression { display: grid; gap: 8px; }
+.etape-nom { margin: 0; font-weight: 650; }
+.barre { height: 8px; border-radius: 99px; background: var(--filet); overflow: hidden; }
+.barre span { display: block; height: 100%; width: 33%; background: var(--accent); border-radius: inherit; transition: width .25s; }
+.etape { display: grid; gap: 18px; }
+.nav-etapes { display: flex; gap: 10px; }
+.nav-etapes .bouton-sortir { min-height: 46px; flex: none; }
+.hero-publier { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 18px 0 0; }
+.hero-publier span { color: rgba(243, 239, 231, .8); font-size: .9rem; }
+
+/* Mes demandes : Envoyée → En vérification → Publiée → Réponses reçues */
+.etapes { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 14px 0 0; padding: 0; counter-reset: e; }
+.etapes li { counter-increment: e; position: relative; padding-top: 30px; font-size: .78rem; line-height: 1.2; color: var(--doux); text-align: center; }
+.etapes li::before { content: counter(e); position: absolute; z-index: 1; top: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--tuile); border: 1px solid var(--filet); }
+.etapes li + li::after { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 2px; background: var(--filet); }
+.etapes .fait { color: var(--texte); }
+.etapes .fait::before { content: "✓"; background: var(--accent); border-color: var(--accent); color: var(--carte); }
+.etapes .fait::after, .etapes [aria-current]::after { background: var(--accent); }
+.etapes [aria-current] { font-weight: 700; color: var(--texte); }
+.etapes [aria-current]:not(.fait)::before { border: 2px solid var(--accent); color: var(--accent); background: var(--carte); }
+.suite { margin: 10px 0 0; font-size: .9rem; }
+.pastille-neuf { font-size: .74rem; font-weight: 700; line-height: 1; padding: 5px 8px; border-radius: 99px; background: var(--accent); color: var(--carte); }
+.etat .pastille-neuf { font-family: var(--sans); vertical-align: middle; }
+/* pastille sur « Compte » : posée sur le coin, sans élargir l'en-tête */
+.lien-compte { position: relative; }
+.pastille-compte { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 99px; background: #e8a87c; color: #13212c; font: 700 .72rem/20px var(--sans); text-align: center; }

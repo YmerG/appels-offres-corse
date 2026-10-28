@@ -81,6 +81,16 @@
         bloc.append(sup);
         it.append(bloc);
       });
+      // étape « Réponses reçues » dans Mes demandes du demandeur
+      var n = l.interets.length, faites = d.reponses || 0;
+      if (faites) it.append(el('p', 'aide-bloc', 'Déjà notées comme transmises au demandeur : ' + faites));
+      if (n !== faites) {
+        var tr = el('button', 'bouton-sortir', n > 1 ? "J'ai transmis ces " + n + ' réponses au demandeur' : "J'ai transmis cette réponse au demandeur");
+        tr.type = 'button';
+        tr.hidden = !n;
+        tr.onclick = function () { agir(f.fs.updateDoc(ref, { reponses: n })); };
+        it.append(tr);
+      }
       corps.append(it);
     }
     var actions = el('p', 'actions-admin');

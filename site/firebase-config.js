@@ -35,11 +35,57 @@ window.AOC_FB = {
           c.parentNode.classList.add('avec-sortir');
         }
         b.hidden = !u;
+        // pastille sur « Compte » : nombre de demandes qui ont changé depuis la dernière visite de Mes demandes
+        if (u) m[1].getDocs(m[1].query(m[1].collection(db, 'demandes'), m[1].where('uid', '==', u.uid))).then(function (res) {
+          var n = F.nouveautes(u.uid, res.docs).length;
+          if (!n || c.querySelector('.pastille-compte')) return;
+          var p = document.createElement('span');
+          p.className = 'pastille-compte';
+          p.textContent = n;
+          c.append(p);
+          c.setAttribute('aria-label', 'Compte : ' + n + (n > 1 ? ' nouveautés' : ' nouveauté'));
+        }).catch(function () {});
       });
       return { fs: m[1], db: db, au: m[2], auth: auth };
     });
     F._ouvert.catch(function () { F._ouvert = null; }); // réseau coupé : on pourra réessayer
     return F._ouvert;
+  },
+  // Mes demandes : état vu la dernière fois dans ce navigateur (localStorage), pour signaler ce qui a changé.
+  // Une demande jamais vue compte comme « en attente, 0 réponse » : publiée ou avec des réponses, c'est une nouveauté.
+  etat: function (d) { return d.statut + ':' + (d.reponses || 0); },
+  vus: function (uid) { try { return JSON.parse(localStorage.getItem('aoc-vu-' + uid)) || {}; } catch (e) { return {}; } },
+  nouveautes: function (uid, docs) {
+    var F = window.AOC_FB, vu = F.vus(uid);
+    return docs.filter(function (s) { return (vu[s.id] || 'en_attente:0') !== F.etat(s.data()); }).map(function (s) { return s.id; });
+  },
+  marquerVus: function (uid, docs) {
+    var vu = {};
+    docs.forEach(function (s) { vu[s.id] = window.AOC_FB.etat(s.data()); });
+    try { localStorage.setItem('aoc-vu-' + uid, JSON.stringify(vu)); } catch (e) { /* navigation privée : pas de pastille */ }
+  },
+  // message d'erreur juste sous le champ (sous son groupe pour les cases), visible au téléphone ; msg vide : efface
+  sous: function (champ, msg) {
+    var ancre = champ.closest('.choix-2, .cases, .consentement') || champ;
+    var p = ancre.nextElementSibling;
+    if (!p || !p.classList.contains('erreur-champ')) {
+      if (!msg) return;
+      p = document.createElement('p');
+      p.className = 'erreur erreur-champ';
+      p.id = 'err-' + (champ.name || champ.id);
+      p.setAttribute('role', 'alert');
+      ancre.after(p);
+    }
+    p.textContent = msg;
+    p.hidden = !msg;
+    if (!msg) return champ.removeAttribute('aria-invalid');
+    champ.setAttribute('aria-invalid', 'true');
+    champ.setAttribute('aria-describedby', p.id);
+    champ.focus();
+  },
+  effacer: function (form) {
+    form.querySelectorAll('.erreur-champ').forEach(function (p) { p.hidden = true; });
+    form.querySelectorAll('[aria-invalid]').forEach(function (c) { c.removeAttribute('aria-invalid'); });
   },
   // déconnexion depuis n'importe quelle page : retour à l'accueil, qui affiche « Déconnexion réussie. »
   deconnecter: function () {

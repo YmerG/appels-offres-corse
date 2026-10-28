@@ -27,7 +27,15 @@
 
     <div class="merci" id="garde" role="status"><p id="garde-texte">Vérification de votre compte…</p></div>
 
+    <p class="info-ok" id="brouillon" role="status" hidden>Brouillon repris là où vous l'aviez laissé. <button type="button" class="lien-bouton" id="recommencer">Recommencer à zéro</button></p>
+
     <form id="form" novalidate hidden>
+      <div class="progression">
+        <p class="etape-nom" id="etape-nom" tabindex="-1">Étape 1 sur 3 · Quoi</p>
+        <div class="barre" aria-hidden="true"><span id="barre"></span></div>
+      </div>
+
+      <section class="etape" data-nom="Quoi">
       <fieldset id="f-qui">
         <legend>Vous êtes</legend>
         <div class="choix-2">
@@ -37,7 +45,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>Les travaux</legend>
+        <legend>Quels travaux ?</legend>
         <label for="metier">Métier</label>
         <select id="metier" name="metier" required>
           <option value="">Choisir…</option>
@@ -60,7 +68,12 @@
 
         <label for="description">Description <span class="aide" id="reste-desc">20 à 1 500 caractères</span></label>
         <textarea id="description" name="description" required minlength="20" maxlength="1500" rows="6" placeholder="Surface, état actuel, ce que vous souhaitez, accès au chantier…"></textarea>
+      </fieldset>
+      </section>
 
+      <section class="etape" data-nom="Où" hidden>
+      <fieldset>
+        <legend>Où ont lieu les travaux ?</legend>
         <div class="deux-col">
           <div>
             <label for="commune">Commune</label>
@@ -74,7 +87,12 @@
             </div>
           </fieldset>
         </div>
+      </fieldset>
+      </section>
 
+      <section class="etape" data-nom="Quand" hidden>
+      <fieldset>
+        <legend>Quand ?</legend>
         <div class="deux-col">
           <div>
             <label for="budget">Budget indicatif (€) <span class="aide">facultatif</span></label>
@@ -108,13 +126,18 @@
         <span>J'accepte que mes coordonnées soient conservées par le site pour me mettre en relation avec des professionnels, au plus tard 3 mois après la date limite. Je peux demander leur suppression à tout moment (voir <a href="confidentialite.html">Confidentialité</a>).</span>
       </label>
 
+      </section>
+
       <p class="erreur" id="erreur" role="alert" hidden></p>
-      <button type="submit" class="bouton-publier" id="envoyer">Envoyer pour vérification</button>
+      <div class="nav-etapes">
+        <button type="button" class="bouton-sortir" id="precedent" hidden>Retour</button>
+        <button type="submit" class="bouton-publier" id="envoyer">Continuer</button>
+      </div>
     </form>
 
-    <div class="merci" id="merci" hidden tabindex="-1">
+    <div class="merci ok" id="merci" hidden tabindex="-1">
       <h2>Merci, votre demande est bien arrivée</h2>
-      <p>Elle sera publiée après vérification, en général sous 48&nbsp;h. Vos coordonnées restent privées.</p>
+      <p><strong>La suite :</strong> nous la vérifions, en général sous 48&nbsp;h, puis elle est publiée. Les entreprises intéressées nous répondent et nous vous transmettons leurs coordonnées. Vos coordonnées restent privées.</p>
       <p class="actions-admin"><a class="bouton-publier" href="compte.html#mes-demandes">Suivre dans Mes demandes</a>
         <a class="lien-bouton" id="retour" href="index.html">Voir les demandes</a></p>
     </div>

@@ -42,7 +42,7 @@
         <p class="erreur" id="c-erreur" role="alert" hidden></p>
         <button type="submit" class="bouton-publier">Se connecter</button>
         <p class="ligne-admin"><button type="button" class="lien-bouton" id="oubli">Mot de passe oublié ?</button></p>
-        <p class="aide-bloc" id="oubli-ok" role="status" hidden></p>
+        <p class="info-ok" id="oubli-ok" role="status" hidden></p>
       </form>
     </div>
 
@@ -79,7 +79,6 @@
         <input id="e-nom" name="e-nom" required minlength="2" maxlength="80" autocomplete="organization">
         <label for="siret">SIRET <span class="aide">14 chiffres, vérifié dans l'annuaire officiel des entreprises</span></label>
         <input id="siret" name="siret" required inputmode="numeric" maxlength="17" pattern="[0-9 ]{14,17}" autocomplete="off" placeholder="Ex. : 123 456 780 00014">
-        <p class="erreur" id="siret-erreur" role="alert" hidden></p>
         <fieldset class="dep-form" id="f-metiers">
           <legend>Vos métiers</legend>
           <div class="cases">
@@ -125,6 +124,7 @@
 
     <!-- connecté -->
     <div id="espace" hidden>
+      <p class="info-ok" id="ok" role="status" hidden></p>
       <p class="ligne-admin"><span id="qui"></span> <button type="button" class="bouton-sortir" id="deconnexion">Se déconnecter</button></p>
       <div class="bandeau-exemple a-verifier" id="a-verifier" hidden>
         <p><strong>Vérifiez votre e-mail.</strong> Nous avons envoyé un lien à <span id="mail-verif"></span>. Tant qu'il n'est pas vérifié, vous ne pouvez <span id="verif-pour"></span>.</p>
@@ -144,7 +144,7 @@
       </div>
 
       <section id="mes-demandes" hidden>
-        <h2 class="etat">Mes demandes <span class="nb" id="nb-mes"></span></h2>
+        <h2 class="etat">Mes demandes <span class="nb" id="nb-mes"></span> <span class="pastille-neuf" id="neuf-mes" hidden></span></h2>
         <div class="avis-liste" id="liste-mes"></div>
       </section>
 

@@ -2,7 +2,7 @@
 (function () {
   // après « Se déconnecter » (index.html?deconnecte) : message, puis adresse nettoyée pour qu'un rechargement ne le remontre pas
   if (/[?&]deconnecte\b/.test(location.search)) {
-    document.getElementById('deconnecte').textContent = 'Déconnexion réussie.';
+    document.getElementById('deconnecte').textContent = 'Déconnexion réussie. Pour publier ou répondre, reconnectez-vous depuis « Compte ».';
     history.replaceState(null, '', location.pathname + location.hash);
   }
   var liste = document.getElementById('avis');

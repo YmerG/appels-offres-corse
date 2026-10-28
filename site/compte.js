@@ -74,17 +74,19 @@
   $('connexion').addEventListener('submit', function (e) {
     e.preventDefault();
     dire('c-erreur', '');
-    if (!$('c-email').value.trim()) return dire('c-erreur', 'Écrivez votre e-mail.', $('c-email'));
+    AOC_FB.effacer($('connexion'));
+    if (!$('c-email').value.trim()) return AOC_FB.sous($('c-email'), 'Écrivez votre e-mail.');
     if (!$('c-mdp').value) return dire('c-erreur', 'Écrivez votre mot de passe.', $('c-mdp'));
     f.au.signInWithEmailAndPassword(f.auth, $('c-email').value.trim(), $('c-mdp').value).catch(function (err) { dire('c-erreur', messageAuth(err)); });
   });
   $('oubli').onclick = function () {
     var mail = $('c-email').value.trim();
-    if (!$('c-email').checkValidity() || !mail) return dire('c-erreur', 'Écrivez votre e-mail ci-dessus, puis cliquez de nouveau sur « Mot de passe oublié ? ».', $('c-email'));
+    AOC_FB.effacer($('connexion'));
     dire('c-erreur', '');
+    if (!$('c-email').checkValidity() || !mail) return AOC_FB.sous($('c-email'), 'Écrivez votre e-mail ici, puis cliquez de nouveau sur « Mot de passe oublié ? ».');
     // même réponse que le compte existe ou non (on ne révèle pas qui est inscrit)
     f.au.sendPasswordResetEmail(f.auth, mail).catch(function () {}).then(function () {
-      dire('oubli-ok', 'Si un compte existe pour ' + mail + ', un e-mail pour choisir un nouveau mot de passe vient de lui être envoyé.');
+      dire('oubli-ok', 'E-mail envoyé si un compte existe pour ' + mail + '. La suite : ouvrez-le, choisissez un nouveau mot de passe, puis connectez-vous ici.');
     });
   };
 
@@ -133,23 +135,23 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     dire('erreur', '');
-    dire('siret-erreur', '');
+    AOC_FB.effacer(form);
     var v = function (id) { return $(id).value.trim(); };
     var faux = Array.prototype.find.call(form.elements, function (c) { return c.name && c.willValidate && !c.checkValidity(); });
-    if (faux) return dire(faux.name === 'siret' ? 'siret-erreur' : 'erreur', 'Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.', faux);
+    if (faux) return AOC_FB.sous(faux, faux.name === 'consentement' ? 'Cochez cette case pour créer votre compte.' : 'Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.');
     var type = form.type.value;
     var champs = type === 'entreprise'
       ? { nom: v('e-nom'), siret: v('siret').replace(/\s/g, ''), metiers: coches('metiers'), zone: coches('zone') }
       : { nom: v('p-nom'), commune: v('p-commune') };
     if (type === 'entreprise') {
-      // message sous le champ SIRET : #erreur, en bas du formulaire, serait hors de l'écran du téléphone
-      if (!siretValide(champs.siret)) return dire('siret-erreur', "Ce numéro SIRET n'est pas valide : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr).", $('siret'));
-      if (!champs.metiers.length) return dire('erreur', 'Cochez au moins un métier.', form.querySelector('[name=metiers]'));
-      if (!champs.zone.length) return dire('erreur', "Cochez au moins un département d'intervention.", form.querySelector('[name=zone]'));
+      if (!siretValide(champs.siret)) return AOC_FB.sous($('siret'), "Ce numéro SIRET n'est pas valide : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr).");
+      if (!champs.metiers.length) return AOC_FB.sous(form.querySelector('[name=metiers]'), 'Cochez au moins un métier.');
+      if (!champs.zone.length) return AOC_FB.sous(form.querySelector('[name=zone]'), "Cochez au moins un département d'intervention.");
     }
     // minlength ne compte pas les espaces retirés par trim()
-    if (champs.nom.length < 2) return dire('erreur', 'Vérifiez ' + NOMS[type === 'entreprise' ? 'e-nom' : 'p-nom'] + '.', $(type === 'entreprise' ? 'e-nom' : 'p-nom'));
-    if (type !== 'entreprise' && champs.commune.length < 2) return dire('erreur', 'Vérifiez la commune.', $('p-commune'));
+    var nomId = type === 'entreprise' ? 'e-nom' : 'p-nom';
+    if (champs.nom.length < 2) return AOC_FB.sous($(nomId), 'Vérifiez ' + NOMS[nomId] + '.');
+    if (type !== 'entreprise' && champs.commune.length < 2) return AOC_FB.sous($('p-commune'), 'Vérifiez la commune.');
     var tel = v('telephone');
     var bouton = $('envoyer');
     bouton.disabled = true;
@@ -159,9 +161,9 @@
     verif.then(function (etat) {
       if (etat === 'ok') return enregistrer(champs, type, tel, fin);
       fin();
-      dire('siret-erreur', etat === 'ferme'
+      AOC_FB.sous($('siret'), etat === 'ferme'
         ? "Ce SIRET correspond à un établissement fermé. Indiquez le SIRET de votre établissement en activité."
-        : "Ce SIRET est introuvable dans l'annuaire officiel des entreprises : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr). S'il est juste, écrivez-nous à maitreagent@gmail.com.", $('siret'));
+        : "Ce SIRET est introuvable dans l'annuaire officiel des entreprises : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr). S'il est juste, écrivez-nous à maitreagent@gmail.com.");
     });
   });
 
@@ -190,19 +192,31 @@
         return lot.commit();
       });
     }
-    ecrire.then(function () { enCours = false; fin(); return afficher(moi); }, function (err) {
+    var etait = mode;
+    ecrire.then(function () { enCours = false; fin(); return afficher(moi); }).then(function () {
+      if (etait === 'modifier') return bravo('Profil enregistré. Il servira à pré-remplir vos prochains formulaires.');
+      bravo(moi.emailVerified ? 'Profil enregistré. La suite : ' + suite() + '.'
+        : 'Compte créé. La suite : cliquez sur le lien envoyé à ' + moi.email + ' pour vérifier votre e-mail.');
+    }, function (err) {
       console.warn('Compte :', err && err.code, err && err.message);
       fin();
+      var champ = etait === 'inscription' && (/email/.test(err && err.code) ? $('email') : /password/.test(err && err.code) ? $('mdp') : null);
       // compte Auth créé mais profil refusé : on reste sur le formulaire, à compléter
       if (enCours && moi) { enCours = false; mode = 'completer'; ouvrirFormulaire('completer'); }
       enCours = false;
-      dire('erreur', messageAuth(err));
+      if (champ) AOC_FB.sous(champ, messageAuth(err)); else dire('erreur', messageAuth(err));
     });
   }
 
   // --- Espace connecté
+  // confirmation verte en haut de l'espace, qui dit la suite
+  function bravo(msg) { dire('ok', msg); $('ok').scrollIntoView({ block: 'nearest' }); }
+  function suite() {
+    return profil && profil.type === 'entreprise' ? 'répondez aux demandes qui vous intéressent, ou publiez la vôtre' : 'publiez votre demande de travaux, en 3 étapes';
+  }
   function afficher(u) {
     moi = u;
+    dire('ok', '');
     return f.fs.getDoc(f.fs.doc(f.db, 'users', u.uid)).then(function (s) {
       profil = s.exists() ? s.data() : null;
       if (!profil) {
@@ -242,41 +256,70 @@
     });
   }
 
+  // Envoyée → En vérification → Publiée → Réponses reçues (reponses : nombre transmis par l'admin), et ce qu'il va se passer
+  var ETAPES = ['Envoyée', 'En vérification', 'Publiée', 'Réponses reçues'];
+  function suivi(d) {
+    var n = d.reponses || 0, close = d.delai.toMillis() < Date.now();
+    var fin = d.delai.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    var ici = d.statut !== 'validee' ? 1 : n ? 3 : 2;
+    var ol = document.createElement('ol');
+    ol.className = 'etapes';
+    ETAPES.forEach(function (nom, i) {
+      var li = document.createElement('li');
+      li.textContent = i === 3 && n ? nom + ' (' + n + ')' : nom;
+      if (i < ici || (i === ici && i > 1)) li.className = 'fait';
+      if (i === ici) li.setAttribute('aria-current', 'step');
+      ol.append(li);
+    });
+    var p = document.createElement('p');
+    p.className = 'suite';
+    p.textContent = d.statut !== 'validee' ? 'La suite : nous vérifions votre demande, en général sous 48 h, puis elle est publiée.'
+      : n ? (n > 1 ? n + ' entreprises ont répondu' : 'Une entreprise a répondu') + ' : nous vous avons transmis leurs coordonnées par e-mail ou par téléphone.'
+      : close ? 'Close depuis le ' + fin + " : elle ne reçoit plus de réponses."
+      : 'La suite : les entreprises peuvent répondre jusqu\'au ' + fin + '. Nous vous transmettons leurs coordonnées dès qu\'elles répondent.';
+    return [ol, p];
+  }
+
   function mesDemandes() {
     var liste = $('liste-mes');
     var q = f.fs.query(f.fs.collection(f.db, 'demandes'), f.fs.where('uid', '==', moi.uid));
     f.fs.getDocs(q).then(function (res) {
       liste.textContent = '';
-      var docs = res.docs.map(function (d) { return d.data(); });
-      docs.sort(function (a, b) { return (b.cree ? b.cree.toMillis() : 0) - (a.cree ? a.cree.toMillis() : 0); });
+      var ms = function (s) { return s.data().cree ? s.data().cree.toMillis() : 0; };
+      var docs = res.docs.slice().sort(function (a, b) { return ms(b) - ms(a); });
+      var neuves = AOC_FB.nouveautes(moi.uid, docs);
+      AOC_FB.marquerVus(moi.uid, docs);
       $('nb-mes').textContent = docs.length;
+      $('neuf-mes').textContent = neuves.length ? neuves.length + (neuves.length > 1 ? ' nouveautés' : ' nouveauté') : '';
+      $('neuf-mes').hidden = !neuves.length;
       if (!docs.length) {
         var p = document.createElement('p');
         p.className = 'vide';
         p.innerHTML = 'Aucune demande pour le moment. <a href="publier.html">Publier une demande</a>';
         return liste.append(p);
       }
-      docs.forEach(function (d) {
+      docs.forEach(function (s) {
+        var d = s.data();
         var a = document.createElement('article');
         a.className = 'avis avis-admin';
         var corps = document.createElement('div');
         corps.className = 'corps';
         var haut = document.createElement('p');
         haut.className = 'haut';
-        var close = d.delai.toMillis() < Date.now();
-        var st = document.createElement('span');
-        st.className = 'dep' + (d.statut === 'validee' && !close ? ' publiee' : '');
-        st.textContent = close ? 'Close' : d.statut === 'validee' ? 'Publiée' : 'En attente de vérification';
+        if (neuves.indexOf(s.id) !== -1) {
+          var nv = document.createElement('span');
+          nv.className = 'pastille-neuf';
+          nv.textContent = 'Nouveau';
+          haut.append(nv);
+        }
         var lieu = document.createElement('span');
         lieu.className = 'dep';
         lieu.textContent = d.commune + ' (' + d.departement + ')';
-        haut.append(st, lieu);
+        haut.append(lieu);
         var h = document.createElement('h3');
         h.textContent = d.titre;
-        var lim = document.createElement('p');
-        lim.className = 'limite';
-        lim.textContent = 'Réponses avant le ' + d.delai.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-        corps.append(haut, h, lim);
+        corps.append(haut, h);
+        corps.append.apply(corps, suivi(d));
         a.append(corps);
         liste.append(a);
       });
@@ -287,13 +330,13 @@
   }
 
   $('renvoyer').onclick = function () {
-    f.au.sendEmailVerification(moi).then(function () { dire('verif-info', 'Lien renvoyé à ' + moi.email + '. Pensez à regarder dans les indésirables.'); },
+    f.au.sendEmailVerification(moi).then(function () { bravo('Lien renvoyé à ' + moi.email + '. La suite : cliquez dessus (pensez à regarder dans les indésirables), puis sur « J\'ai cliqué sur le lien ».'); },
       function (e) { dire('verif-info', messageAuth(e)); });
   };
   $('deja-verifie').onclick = function () {
     moi.reload().then(function () {
       if (!moi.emailVerified) return dire('verif-info', "L'e-mail n'est pas encore vérifié : cliquez sur le lien reçu, puis réessayez.");
-      return moi.getIdToken(true).then(function () { return afficher(moi); });
+      return moi.getIdToken(true).then(function () { return afficher(moi); }).then(function () { bravo('E-mail vérifié. La suite : ' + suite() + '.'); });
     }).catch(function (e) { dire('verif-info', messageAuth(e)); });
   };
   $('deconnexion').onclick = AOC_FB.deconnecter;
