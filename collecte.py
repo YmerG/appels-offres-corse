@@ -326,11 +326,11 @@ def main():
 
     exemples = exemples_de(maintenant)
     nb = {k: sum(k in a["metiers"] for a in avis) for k in METIERS}
-    nb_tous = {k: sum(k in a["metiers"] for a in avis + exemples) for k in METIERS}  # boutons pour tous les onglets ; app.js cache ceux à 0
+    # les 12 métiers sont toujours dans la page (une demande publiée peut porter sur n'importe lequel) ; app.js cache ceux à 0
     boutons = "".join(
-        f'<button type="button" class="filtre" data-metier="{k}" aria-pressed="false" style="--c:{coul}"{"" if nb[k] else " hidden"}>'
+        f'<button type="button" class="filtre" data-metier="{k}" data-nom="{nom}" aria-pressed="false" style="--c:{coul}"{"" if nb[k] else " hidden"}>'
         f'<span class="pastille" aria-hidden="true"></span>{nom} <span class="nb">{nb[k]}</span></button>'
-        for k, (nom, coul) in METIERS.items() if nb_tous[k])
+        for k, (nom, coul) in METIERS.items())
     remplacements = {
         "<!--METIERS-->": boutons,
         "<!--AVIS-->": "\n".join(carte(a) for a in avis + exemples),

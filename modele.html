@@ -12,6 +12,7 @@
   <link rel="preload" href="polices/source-serif-4-gras.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
 </head>
 <body>
   <a class="evitement" href="#avis">Aller aux avis</a>
@@ -66,7 +67,11 @@
     </aside>
 
     <section class="liste" aria-labelledby="etat">
-      <p class="bandeau-exemple" id="bandeau" hidden><strong>Avis fictifs pour la démonstration.</strong> Aucune de ces annonces n'est réelle : elles montrent à quoi ressemblera cet onglet quand les sociétés et les particuliers pourront publier leurs demandes de travaux.</p>
+      <div class="bandeau-prive" id="bandeau" hidden>
+        <p class="bandeau-exemple"><strong>Avis fictifs pour la démonstration.</strong> Les annonces marquées « Exemple » ne sont pas réelles. Les autres sont publiées par des sociétés ou des particuliers, après vérification.</p>
+        <a class="bouton-publier" id="publier" href="publier.html">Publier une demande de travaux</a>
+        <p class="bandeau-test">Version de test : ne publiez pas de vraies coordonnées.</p>
+      </div>
       <h2 class="etat" id="etat" tabindex="-1"><!--NB--> avis en cours</h2>
       <div class="avis-liste" id="avis" tabindex="-1">
 <!--AVIS-->
@@ -83,11 +88,12 @@
       <p class="source">Données BOAMP (licence ouverte)</p>
       <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <!--MAJ-->.</p>
       <p>Seul l'avis officiel fait foi : vérifiez toujours la date limite et le dossier de consultation sur la plateforme de l'acheteur. Les petits marchés publiés seulement sur le site de l'acheteur, sans passer par le BOAMP, n'apparaissent pas ici.</p>
-      <p>Les onglets « Privé – sociétés » et « Particuliers » ne contiennent que des avis fictifs, marqués « Exemple », pour la démonstration.</p>
-      <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun compte, aucun cookie, aucune donnée personnelle. Prototype, étape&nbsp;1.</p>
+      <p>Dans les onglets « Privé – sociétés » et « Particuliers », les avis marqués « Exemple » sont fictifs. Les demandes publiées par les visiteurs y apparaissent après vérification, sans leurs coordonnées.</p>
+      <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun cookie. <a href="confidentialite.html">Confidentialité et données personnelles</a>. Prototype, version de test.</p>
     </div>
   </footer>
 
   <script src="app.js"></script>
+  <script src="demandes.js"></script>
 </body>
 </html>

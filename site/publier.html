@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Publier une demande de travaux · Appels d'offres Corse</title>
+  <meta name="description" content="Publiez gratuitement votre demande de travaux en Corse (société ou particulier) : elle est vérifiée avant publication, vos coordonnées ne sont jamais affichées.">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#13212c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2313212c'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23e8a87c' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html#onglet=particulier"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><span class="proto">Test</span></p>
+      <h1>Publier une demande de travaux</h1>
+      <p class="chapo">Gratuit. Votre demande est vérifiée avant d'être publiée. Vos coordonnées ne sont jamais affichées sur le site.</p>
+    </div>
+  </header>
+
+  <main class="cadre page-form">
+    <p class="bandeau-test bandeau-test-fort">Version de test : ne publiez pas de vraies coordonnées.</p>
+
+    <form id="form" novalidate>
+      <fieldset>
+        <legend>Vous êtes</legend>
+        <div class="choix-2">
+          <label><input type="radio" name="type" value="particulier" checked> Particulier</label>
+          <label><input type="radio" name="type" value="prive"> Société</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Les travaux</legend>
+        <label for="metier">Métier</label>
+        <select id="metier" name="metier" required>
+          <option value="">Choisir…</option>
+          <option value="gros-oeuvre">Gros œuvre, bâtiment</option>
+          <option value="second-oeuvre">Second œuvre, finitions</option>
+          <option value="electricite">Électricité, éclairage</option>
+          <option value="plomberie-cvc">Plomberie, chauffage, clim</option>
+          <option value="voirie-vrd">Voirie, réseaux (VRD)</option>
+          <option value="espaces-verts">Espaces verts</option>
+          <option value="nettoyage">Nettoyage, déchets</option>
+          <option value="informatique">Informatique, télécoms</option>
+          <option value="etudes">Études, maîtrise d'œuvre</option>
+          <option value="restauration">Restauration, alimentation</option>
+          <option value="services">Services</option>
+          <option value="fournitures">Fournitures, équipements</option>
+        </select>
+
+        <label for="titre">Titre de la demande</label>
+        <input id="titre" name="titre" required minlength="5" maxlength="120" placeholder="Ex. : rénovation d'une salle de bains" autocomplete="off">
+
+        <label for="description">Description <span class="aide" id="reste-desc">20 à 1 500 caractères</span></label>
+        <textarea id="description" name="description" required minlength="20" maxlength="1500" rows="6" placeholder="Surface, état actuel, ce que vous souhaitez, accès au chantier…"></textarea>
+
+        <div class="deux-col">
+          <div>
+            <label for="commune">Commune</label>
+            <input id="commune" name="commune" required minlength="2" maxlength="60" placeholder="Ex. : Corte" autocomplete="address-level2">
+          </div>
+          <fieldset class="dep-form">
+            <legend>Département</legend>
+            <div class="choix-2">
+              <label><input type="radio" name="departement" value="2A" required> 2A</label>
+              <label><input type="radio" name="departement" value="2B"> 2B</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="deux-col">
+          <div>
+            <label for="budget">Budget indicatif (€) <span class="aide">facultatif</span></label>
+            <input id="budget" name="budget" type="number" inputmode="numeric" min="0" max="10000000" step="1" placeholder="Ex. : 8000">
+          </div>
+          <div>
+            <label for="delai">Réponses souhaitées avant le</label>
+            <input id="delai" name="delai" type="date" required>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Vos coordonnées <span class="aide">jamais publiées</span></legend>
+        <p class="aide-bloc">Seul l'administrateur du site les voit, pour vous mettre en relation avec des professionnels. Un téléphone ou un e-mail suffit.</p>
+        <label for="nom">Nom ou société</label>
+        <input id="nom" name="nom" required minlength="2" maxlength="80" autocomplete="name">
+        <label for="telephone">Téléphone</label>
+        <input id="telephone" name="telephone" type="tel" maxlength="20" pattern="[+0-9 .\(\)\-]{6,20}" autocomplete="tel" inputmode="tel">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" maxlength="120" pattern="[^@ ]+@[^@ ]+[.][^@ ]+" autocomplete="email">
+        <!-- champ piège anti-robots : invisible pour les personnes, rempli par les robots -->
+        <div class="piege" aria-hidden="true">
+          <label for="site">Site web</label>
+          <input id="site" name="site" tabindex="-1" autocomplete="off">
+        </div>
+      </fieldset>
+
+      <label class="consentement">
+        <input type="checkbox" id="consentement" name="consentement" required>
+        <span>J'accepte que mes coordonnées soient conservées par le site pour me mettre en relation avec des professionnels, au plus tard 3 mois après la date limite. Je peux demander leur suppression à tout moment (voir <a href="confidentialite.html">Confidentialité</a>).</span>
+      </label>
+
+      <p class="erreur" id="erreur" role="alert" hidden></p>
+      <button type="submit" class="bouton-publier" id="envoyer">Envoyer pour vérification</button>
+    </form>
+
+    <div class="merci" id="merci" hidden tabindex="-1">
+      <h2>Merci, votre demande est bien arrivée</h2>
+      <p>Elle sera publiée après vérification, en général sous 48&nbsp;h. Vos coordonnées restent privées.</p>
+      <a class="bouton-publier" id="retour" href="index.html">Voir les demandes</a>
+    </div>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p><a href="index.html">Appels d'offres Corse</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a></p>
+      <p>Prototype, version de test. Aucun cookie.</p>
+    </div>
+  </footer>
+
+  <script src="publier.js"></script>
+</body>
+</html>

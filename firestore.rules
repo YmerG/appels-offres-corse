@@ -1,0 +1,84 @@
+rules_version = '2';
+// Demandes de travaux publiées par les visiteurs (onglets Privé – sociétés et Particuliers).
+// demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans.
+// demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
+// demandes/{id}/interets/{iid} : messages d'artisans « Je suis intéressé », lisibles par l'administrateur seulement.
+// config/admins : { uids: [...] }, créé à la main dans la console Firebase (aucune écriture possible depuis le site).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/config/admins)
+        && request.auth.uid in get(/databases/$(database)/documents/config/admins).data.uids;
+    }
+
+    function texte(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    function demandeValide(d) {
+      return d.keys().hasOnly(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree'])
+        && d.keys().hasAll(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'delai', 'statut', 'cree'])
+        && d.type in ['prive', 'particulier']
+        && d.metier in ['gros-oeuvre', 'second-oeuvre', 'electricite', 'plomberie-cvc', 'voirie-vrd', 'espaces-verts',
+                        'nettoyage', 'informatique', 'etudes', 'restauration', 'services', 'fournitures']
+        && texte(d.titre, 5, 120)
+        && texte(d.description, 20, 1500)
+        && texte(d.commune, 2, 60)
+        && d.departement in ['2A', '2B']
+        && (!('budget' in d) || (d.budget is int && d.budget >= 0 && d.budget <= 10000000))
+        && d.delai is timestamp && d.delai > request.time && d.delai < request.time + duration.value(120, 'd')
+        && d.statut == 'en_attente'
+        && d.cree == request.time;
+    }
+
+    // nom + téléphone et/ou e-mail + consentement, communs au demandeur et à l'artisan intéressé
+    function coordonneesValides(c) {
+      return texte(c.nom, 2, 80)
+        && ('telephone' in c || 'email' in c)
+        && (!('telephone' in c) || (c.telephone is string && c.telephone.matches('[+0-9 .()-]{6,20}')))
+        && (!('email' in c) || (texte(c.email, 6, 120) && c.email.matches('[^@ ]+@[^@ ]+[.][^@ ]+')))
+        && c.consentement == true
+        && c.cree == request.time;
+    }
+
+    function contactValide(c) {
+      return c.keys().hasOnly(['nom', 'telephone', 'email', 'consentement', 'cree']) && coordonneesValides(c);
+    }
+
+    function interetValide(i) {
+      return i.keys().hasOnly(['nom', 'telephone', 'email', 'message', 'consentement', 'cree'])
+        && coordonneesValides(i)
+        && texte(i.message, 10, 1000);
+    }
+
+    match /demandes/{id} {
+      allow get, list: if resource.data.statut == 'validee' || estAdmin();
+      // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), toujours « en attente »
+      allow create: if demandeValide(request.resource.data)
+        && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
+      allow update: if estAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut'])
+        && request.resource.data.statut in ['en_attente', 'validee'];
+      allow delete: if estAdmin();
+
+      match /prive/{doc} {
+        allow get, list, delete: if estAdmin();
+        allow create: if doc == 'contact'
+          && contactValide(request.resource.data)
+          && !exists(/databases/$(database)/documents/demandes/$(id))
+          && getAfter(/databases/$(database)/documents/demandes/$(id)).data.statut == 'en_attente';
+      }
+
+      // « Je suis intéressé » : message d'un artisan, lisible par l'admin seulement, qui le transmet au demandeur.
+      // Seulement sur une demande validée et pas encore close.
+      match /interets/{iid} {
+        allow get, list, delete: if estAdmin();
+        allow create: if interetValide(request.resource.data)
+          && get(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee'
+          && get(/databases/$(database)/documents/demandes/$(id)).data.delai > request.time;
+      }
+    }
+  }
+}

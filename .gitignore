@@ -1,3 +1,4 @@
 captures/
 __pycache__/
 outils/__pycache__/
+.claude/

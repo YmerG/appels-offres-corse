@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modération des demandes · Appels d'offres Corse</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#13212c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2313212c'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23e8a87c' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><span class="proto">Admin</span></p>
+      <h1>Modération des demandes</h1>
+    </div>
+  </header>
+
+  <main class="cadre page-form">
+    <p class="bandeau-test">Version de test.</p>
+
+    <form id="connexion" class="carte-form" hidden>
+      <h2>Connexion</h2>
+      <label for="ad-email">E-mail</label>
+      <input id="ad-email" type="email" required autocomplete="username">
+      <label for="ad-mdp">Mot de passe</label>
+      <input id="ad-mdp" type="password" required autocomplete="current-password">
+      <p class="erreur" id="ad-erreur" role="alert" hidden></p>
+      <button type="submit" class="bouton-publier">Se connecter</button>
+    </form>
+
+    <div id="espace" hidden>
+      <p class="ligne-admin"><span id="qui"></span> <button type="button" class="lien-bouton" id="deconnexion">Se déconnecter</button></p>
+      <p class="erreur" id="erreur" role="alert" hidden></p>
+      <p class="aide-bloc">Une demande est « échue » 3 mois après sa date limite : la page Confidentialité promet de la supprimer.</p>
+      <button type="button" class="bouton-refus" id="purger" hidden></button>
+      <h2 class="etat">En attente <span class="nb" id="nb-attente"></span></h2>
+      <div class="avis-liste" id="attente"></div>
+      <h2 class="etat">Publiées <span class="nb" id="nb-publiees"></span></h2>
+      <div class="avis-liste" id="publiees"></div>
+    </div>
+    <p id="chargement">Chargement…</p>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

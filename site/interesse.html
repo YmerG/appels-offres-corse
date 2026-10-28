@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Je suis intéressé · Appels d'offres Corse</title>
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#13212c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2313212c'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23e8a87c' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html#onglet=particulier"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><span class="proto">Test</span></p>
+      <h1>Répondre à une demande</h1>
+      <p class="chapo">Votre message est transmis au demandeur par l'administrateur du site. Il n'est jamais affiché sur le site.</p>
+    </div>
+  </header>
+
+  <main class="cadre page-form">
+    <p class="bandeau-test bandeau-test-fort">Version de test : ne publiez pas de vraies coordonnées.</p>
+
+    <div class="merci" id="demande"><h2 id="demande-titre" hidden></h2><p id="demande-texte">Chargement de la demande…</p></div>
+
+    <form id="form" novalidate hidden>
+      <fieldset>
+        <legend>Votre message</legend>
+        <label for="message">Message au demandeur <span class="aide" id="reste-msg">10 à 1 000 caractères</span></label>
+        <textarea id="message" name="message" required minlength="10" maxlength="1000" rows="6" placeholder="Vos disponibilités, votre expérience sur ce type de travaux, la suite que vous proposez (visite, devis)…"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Vos coordonnées <span class="aide">jamais publiées</span></legend>
+        <p class="aide-bloc">Seul l'administrateur les voit, pour les transmettre au demandeur. Un téléphone ou un e-mail suffit.</p>
+        <label for="nom">Nom ou société</label>
+        <input id="nom" name="nom" required minlength="2" maxlength="80" autocomplete="organization">
+        <label for="telephone">Téléphone</label>
+        <input id="telephone" name="telephone" type="tel" maxlength="20" pattern="[+0-9 .\(\)\-]{6,20}" autocomplete="tel" inputmode="tel">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" maxlength="120" pattern="[^@ ]+@[^@ ]+[.][^@ ]+" autocomplete="email">
+        <!-- champ piège anti-robots : invisible pour les personnes, rempli par les robots -->
+        <div class="piege" aria-hidden="true">
+          <label for="site">Site web</label>
+          <input id="site" name="site" tabindex="-1" autocomplete="off">
+        </div>
+      </fieldset>
+
+      <label class="consentement">
+        <input type="checkbox" id="consentement" name="consentement" required>
+        <span>J'accepte que mon message et mes coordonnées soient conservés par le site et transmis au demandeur, au plus tard 3 mois après la date limite de la demande. Je peux demander leur suppression à tout moment (voir <a href="confidentialite.html">Confidentialité</a>).</span>
+      </label>
+
+      <p class="erreur" id="erreur" role="alert" hidden></p>
+      <button type="submit" class="bouton-publier" id="envoyer">Envoyer mon message</button>
+    </form>
+
+    <div class="merci" id="merci" hidden tabindex="-1">
+      <h2>Merci, votre message est bien arrivé</h2>
+      <p>L'administrateur le transmet au demandeur, qui vous recontactera s'il le souhaite. Vos coordonnées ne sont pas publiées.</p>
+      <a class="bouton-publier retour-liste" href="index.html#onglet=particulier">Voir les demandes</a>
+    </div>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p><a href="index.html">Appels d'offres Corse</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a></p>
+      <p>Prototype, version de test. Aucun cookie.</p>
+    </div>
+  </footer>
+
+  <script src="interesse.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@
   var etat = document.getElementById('etat');
   var vide = document.getElementById('vide');
   var bandeau = document.getElementById('bandeau');
+  var publier = document.getElementById('publier');
   var filtres = Array.prototype.slice.call(document.querySelectorAll('.filtre'));
   var CLES = ['onglet', 'metier', 'dep'];
   var DEFAUT = { onglet: 'public', metier: '', dep: '' };
@@ -20,9 +21,9 @@
   function cle(b) { return CLES.filter(function (k) { return k in b.dataset; })[0]; }
 
   // La page peut dater de quelques heures : on retire les avis dont la date limite est passée
-  var cartes = Array.prototype.slice.call(liste.querySelectorAll('.avis')).filter(function (c) {
+  function preparer(c) {
     var limite = new Date(c.dataset.limite);
-    if (limite < maintenant) { c.remove(); return false; }
+    if (!(limite >= maintenant)) { c.remove(); return false; }
     var j = Math.round((new Date(limite.getFullYear(), limite.getMonth(), limite.getDate()) - aujourdhui) / JOUR);
     c.querySelector('.reste').textContent = j === 0 ? "Auj." : j === 1 ? 'Demain' : 'J-' + j;
     if (j <= 7) { c.classList.add('urgent'); c.querySelector('.badge').hidden = false; }
@@ -31,13 +32,17 @@
     c._ancre = c.querySelector('.autres') || c.querySelector('.dep');
     c._texte = normal(c.querySelector('.corps').textContent);
     return true;
-  });
+  }
+  var cartes = Array.prototype.slice.call(liste.querySelectorAll('.avis')).filter(preparer);
   function de(source) { return cartes.filter(function (c) { return c.dataset.source === source; }); }
   // l'en-tête ne compte que les marchés publics réels
   var publics = de('public');
   document.getElementById('nb-total').textContent = publics.length;
   document.getElementById('nb-semaine').textContent = publics.filter(function (c) { return c.classList.contains('urgent'); }).length;
-  filtres.forEach(function (b) { if (b.dataset.onglet) b.querySelector('.nb').textContent = de(b.dataset.onglet).length; });
+  function compterOnglets() {
+    filtres.forEach(function (b) { if (b.dataset.onglet) b.querySelector('.nb').textContent = de(b.dataset.onglet).length; });
+  }
+  compterOnglets();
 
   // compteurs des métiers pour l'onglet affiché ; un métier absent de l'onglet est caché (sauf s'il est choisi)
   function compter() {
@@ -55,6 +60,7 @@
     var n = 0;
     compter();
     bandeau.hidden = choix.onglet === 'public';
+    publier.href = 'publier.html?type=' + choix.onglet;
     cartes.forEach(function (c) {
       var ok = c.dataset.source === choix.onglet &&
         (!choix.metier || c._metiers.indexOf(choix.metier) !== -1) &&
@@ -69,7 +75,9 @@
       if (ordre.length > 2) c._ancre.title = ordre.slice(2).map(function (t) { return t.textContent; }).join(', ');
     });
     var filtre = mots.length || choix.metier || choix.dep;
-    etat.textContent = n + ' avis ' + (filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours' : "d'exemple");
+    var ex = cartes.filter(function (c) { return !c.hidden && c.querySelector('.exemple'); }).length;
+    etat.textContent = n + ' avis ' + (filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours'
+      : ex === n ? "d'exemple" : 'en cours' + (ex ? ', dont ' + ex + " d'exemple" : ''));
     vide.hidden = n > 0;
     // l'adresse garde le choix : un artisan peut l'enregistrer (#onglet=prive&metier=electricite&dep=2B)
     var h = CLES.filter(function (k) { return choix[k] !== DEFAUT[k]; }).map(function (k) { return k + '=' + choix[k]; }).join('&');
@@ -118,4 +126,12 @@
   }
   window.addEventListener('hashchange', depuisAdresse);
   depuisAdresse();
+
+  // Demandes publiées par les visiteurs (demandes.js, après la lecture sur Firestore) : ajoutées puis triées et filtrées comme les autres
+  window.ajouterAvis = function (nouvelles) {
+    nouvelles.forEach(function (c) { if (preparer(c)) cartes.push(c); });
+    compterOnglets();
+    trier();
+    appliquer();
+  };
 })();

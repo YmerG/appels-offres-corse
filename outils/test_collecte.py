@@ -87,4 +87,12 @@ for a in ex:
     html = carte(a)
     assert ">Exemple</span>" in html and "href=" not in html and f'data-source="{a["source"]}"' in html and " hidden>" in html
 assert datetime.fromisoformat(ex[0]["date_limite"]).hour == 12
-print("OK : lecture des avis et exemples")
+
+# les 12 métiers sont les mêmes dans le formulaire, les règles Firestore et la page admin
+racine = Path(__file__).resolve().parent.parent
+assert re.findall(r'<option value="([\w-]+)"', (racine / "site" / "publier.html").read_text(encoding="utf-8")) == list(METIERS)
+regles = (racine / "firestore.rules").read_text(encoding="utf-8")
+assert re.findall(r"'([\w-]+)'", regles[regles.index("d.metier in"):regles.index("texte(d.titre")]) == list(METIERS)
+admin = (racine / "site" / "admin.js").read_text(encoding="utf-8")
+assert re.findall(r"'?([\w-]+)'?: ['\"]", admin[admin.index("METIERS = {"):admin.index("};")]) == list(METIERS)
+print("OK : lecture des avis, exemples et métiers")
