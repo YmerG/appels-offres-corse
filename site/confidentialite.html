@@ -24,7 +24,7 @@
     <h2>En bref</h2>
     <ul>
       <li>Consulter les avis ne demande <strong>aucun compte</strong> et ne dépose <strong>aucun cookie</strong>.</li>
-      <li>Publier une demande demande un <strong>compte Particulier</strong>, et y répondre un <strong>compte Entreprise de travaux</strong>, avec un e-mail vérifié. Votre profil n'est <strong>jamais public</strong>.</li>
+      <li>Publier une demande demande un <strong>compte</strong> (Particulier, ou Entreprise de travaux pour une demande de société), et y répondre un <strong>compte Entreprise de travaux</strong>, avec un e-mail vérifié. Votre profil n'est <strong>jamais public</strong>.</li>
       <li>Si vous publiez une demande de travaux, ou si vous répondez à une demande en tant que professionnel, vos <strong>coordonnées ne sont jamais affichées</strong> sur le site. Seul l'administrateur les voit.</li>
       <li>Vous pouvez <strong>supprimer votre compte</strong> vous-même à tout moment (page Compte), et demander la suppression de vos autres données.</li>
     </ul>
@@ -36,7 +36,8 @@
     <p>Quand vous créez un compte, nous enregistrons :</p>
     <ul>
       <li><strong>votre e-mail et votre mot de passe</strong>, gérés par Firebase Authentication (le mot de passe est chiffré : personne, pas même l'administrateur, ne peut le lire). L'e-mail sert à vous connecter, à vérifier votre adresse et à réinitialiser votre mot de passe ;</li>
-      <li><strong>votre profil</strong> : particulier, nom et commune ; entreprise de travaux, raison sociale, numéro SIRET, métiers et départements d'intervention ; dans les deux cas, un téléphone si vous le donnez, et la date de création. Il sert à pré-remplir vos formulaires et à réserver la publication aux particuliers et les réponses aux entreprises. Seuls vous et l'administrateur pouvez le lire ;</li>
+      <li><strong>votre profil</strong> : particulier, nom et commune ; entreprise de travaux, raison sociale, numéro SIRET, métiers et départements d'intervention ; dans les deux cas, un téléphone si vous le donnez, et la date de création. Il sert à pré-remplir vos formulaires et à réserver les réponses aux entreprises. Seuls vous et l'administrateur pouvez le lire ;</li>
+      <li>pour une entreprise, le <strong>numéro SIRET est vérifié</strong> à l'inscription auprès de l'annuaire officiel des entreprises de l'État (<a href="https://annuaire-entreprises.data.gouv.fr" rel="noopener">annuaire-entreprises.data.gouv.fr</a>, API publique et gratuite) : seul le numéro SIRET lui est envoyé, depuis votre navigateur, pour savoir si l'établissement existe et est en activité. Rien d'autre n'est transmis et rien n'est enregistré en plus ;</li>
       <li>le <strong>lien entre votre compte et vos demandes ou réponses</strong> : un identifiant technique du compte (une suite de lettres et de chiffres, sans nom ni coordonnée). Il sert à retrouver vos demandes dans « Mes demandes ». <strong>Il reste visible sur une demande publiée</strong> : il ne donne aucun accès à votre compte ni à vos coordonnées, mais il permet de voir que deux demandes viennent du même compte ;</li>
       <li>le <strong>type de votre compte</strong> (particulier ou entreprise), avec ce même identifiant, pour qu'il ne puisse pas être changé. Il ne contient ni nom ni coordonnée et il est conservé même après la suppression du compte.</li>
     </ul>

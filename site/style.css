@@ -151,14 +151,15 @@ html:not(.js) .onglets { display: none; }
 .contact-prive p { margin: 0 0 4px; }
 .contact-prive .titre-outil { margin: 0 0 4px; }
 /* Compte */
-.lien-compte { margin-left: auto; flex: none; font: 650 .85rem/1 var(--sans); color: #f3efe7; text-decoration: none; padding: 7px 12px; border-radius: 99px; background: rgba(243, 239, 231, .14); }
+/* 44 px : taille minimale d'une cible tactile */
+.lien-compte { margin-left: auto; flex: none; display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; font: 650 .85rem/1 var(--sans); color: #f3efe7; text-decoration: none; padding: 0 14px; border-radius: 99px; background: rgba(243, 239, 231, .14); }
 .lien-compte:hover { background: rgba(243, 239, 231, .24); }
 .proto + .lien-compte { margin-left: 0; }
 /* téléphone, accueil : « Prototype » + « Compte » ne tiennent pas sur la ligne ; la mention reste dans le pied de page */
 @media (max-width: 479px) { .entete:not(.entete-court) .proto { display: none; } .entete:not(.entete-court) .proto + .lien-compte { margin-left: auto; } }
 /* en-tête court : badge masqué sous 420 px (le bandeau « Version de test » reste) ; 320 px : on resserre */
 @media (max-width: 419px) { .proto { display: none; } .proto + .lien-compte { margin-left: auto; } }
-@media (max-width: 359px) { .marque { font-size: .95rem; } .marque, .retour { gap: 6px; } .lien-compte { padding: 7px 10px; } }
+@media (max-width: 359px) { .marque { font-size: .95rem; } .marque, .retour { gap: 6px; } .lien-compte { padding: 0 10px; } }
 .bascule { margin: 20px 0 14px; }
 .bascule .filtre { flex: 1; justify-content: center; }
 #form .cases { display: grid; gap: 8px; margin-top: 6px; }

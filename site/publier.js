@@ -1,4 +1,5 @@
-// Formulaire « Publier une demande » : réservé aux comptes Particulier à l'e-mail vérifié (les règles Firestore l'imposent aussi).
+// Formulaire « Publier une demande » : réservé aux comptes à l'e-mail vérifié (les règles Firestore l'imposent aussi) ;
+// un compte Entreprise publie seulement dans « Privé – sociétés ».
 // Contrôle, puis écriture groupée sur Firestore (demande « en attente » liée au compte + coordonnées privées).
 (function () {
   var m; // { f, user, profil } (firebase-config.js)
@@ -44,20 +45,24 @@
     window.scrollTo(0, 0);
   }
 
-  // compte : pas connecté (ou sans profil) → page Compte ; mauvais type ou e-mail pas vérifié → explication ; sinon formulaire pré-rempli
+  // compte : pas connecté (ou sans profil) → page Compte ; e-mail pas vérifié → explication ; sinon formulaire pré-rempli
   function garde(html) { document.getElementById('garde-texte').innerHTML = html; }
   AOC_FB.moi().then(function (r) {
     m = r;
     // garde ?type=prive pour le retour (encodé : il passe aussi dans le lien ci-dessous)
     var compte = 'compte.html?retour=' + encodeURIComponent('publier.html' + location.search);
     if (!m.user || !m.profil) return location.replace(compte);
-    if (m.profil.type !== 'particulier') return garde('Publier une demande est réservé aux comptes <strong>Particulier</strong>. Votre compte est un compte Entreprise : vous pouvez répondre aux demandes. <a href="index.html#onglet=particulier">Voir les demandes</a>');
     if (!m.user.emailVerified) return garde("Vérifiez d'abord votre e-mail : cliquez sur le lien reçu à l'inscription. <a href=\"" + compte + "\">Renvoyer le lien</a>");
     form.nom.value = m.profil.nom;
     form.commune.value = m.profil.commune || '';
     form.telephone.value = m.profil.telephone || '';
     form.email.value = m.user.email;
     if (!type) form.type.value = 'particulier';
+    if (m.profil.type === 'entreprise') {
+      form.type.value = 'prive';
+      document.getElementById('f-qui').hidden = true;
+      if (m.profil.zone.length === 1) form.departement.value = m.profil.zone[0];
+    }
     majRetour();
     document.getElementById('garde').hidden = true;
     form.hidden = false;

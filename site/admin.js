@@ -19,6 +19,15 @@
   function montrer(id) { ['connexion', 'espace', 'chargement'].forEach(function (x) { $(x).hidden = x !== id; }); }
   function erreur(id, msg) { $(id).textContent = msg; $(id).hidden = !msg; }
 
+  // fiche officielle de l'établissement, pour vérifier un SIRET à la main (l'inscription l'a vérifié, sauf si l'annuaire ne répondait pas)
+  function lienSiret(siret) {
+    var a = el('a', '', 'SIRET ' + siret);
+    a.href = 'https://annuaire-entreprises.data.gouv.fr/etablissement/' + siret;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    return a;
+  }
+
   function lien(co, c) {
     if (c.telephone) { var t = el('a', '', c.telephone); t.href = 'tel:' + c.telephone.replace(/[^+0-9]/g, ''); co.append(t, ' '); }
     if (c.email) { var m = el('a', '', c.email); m.href = 'mailto:' + c.email; co.append(m); }
@@ -29,13 +38,14 @@
     return [f.fs.doc(f.db, l.ref.path, 'prive', 'contact')].concat(l.interets.map(function (i) { return i.ref; }), [l.ref]);
   }
 
-  function carte(l) {
+  function carte(l, auteur) {
     var ref = l.ref, d = l.d, c = l.c;
     var a = el('article', 'avis avis-admin');
     var corps = el('div', 'corps');
     var haut = el('p', 'haut');
     haut.append(el('span', 'metier', METIERS[d.metier] || d.metier), el('span', 'dep', d.departement),
-      el('span', 'dep', d.type === 'particulier' ? 'Particulier' : 'Société'));
+      el('span', 'dep', d.type === 'particulier' ? 'Particulier' : 'Société'),
+      el('span', 'dep', !auteur ? 'Compte supprimé' : auteur.type === 'entreprise' ? 'Compte Entreprise' : 'Compte Particulier'));
     if (echue(d)) haut.append(el('span', 'dep echue', 'Échue : à supprimer'));
     corps.append(haut, el('h3', '', d.titre), el('p', 'description description-entiere', d.description));
     var dl = el('dl', 'infos');
@@ -49,6 +59,11 @@
     var co = el('div', 'contact-prive');
     co.append(el('p', 'titre-outil', 'Coordonnées (privées)'), el('p', '', c ? c.nom : '(introuvables)'));
     if (c) lien(co, c);
+    if (auteur && auteur.type === 'entreprise') {
+      var societe = el('p', '', 'Compte : ' + auteur.nom + ' · ');
+      societe.append(lienSiret(auteur.siret));
+      co.append(societe);
+    }
     corps.append(co);
     if (d.statut === 'validee') {
       var it = el('div', 'interets');
@@ -110,30 +125,34 @@
     p.then(charger, function (e) { erreur('erreur', 'Action refusée : ' + (e && e.code || e)); });
   }
 
-  // comptes (users/{uid}) : lecture seule, les plus récents d'abord
+  // comptes (users/{uid}) : lecture seule, les plus récents d'abord ; renvoie { uid: profil } pour les auteurs des demandes
   function comptes() {
     return f.fs.getDocs(f.fs.collection(f.db, 'users')).then(function (res) {
       var ul = $('comptes');
       ul.textContent = '';
+      var auteurs = {};
+      res.docs.forEach(function (s) { auteurs[s.id] = s.data(); });
       var docs = res.docs.map(function (s) { return s.data(); });
       docs.sort(function (x, y) { return (y.cree ? y.cree.toMillis() : 0) - (x.cree ? x.cree.toMillis() : 0); });
       $('nb-comptes').textContent = docs.length;
       docs.forEach(function (p) {
         var ent = p.type === 'entreprise';
         var li = el('li');
-        li.append(el('span', 'dep', ent ? 'Entreprise' : 'Particulier'), ' ', el('strong', '', p.nom),
-          el('span', 'aide', ent ? 'SIRET ' + p.siret + ' · ' + p.metiers.map(function (m) { return METIERS[m] || m; }).join(', ') + ' · ' + p.zone.join(', ')
-            : p.commune),
+        var details = el('span', 'aide', ent ? ' · ' + p.metiers.map(function (m) { return METIERS[m] || m; }).join(', ') + ' · ' + p.zone.join(', ') : p.commune);
+        if (ent) details.prepend(lienSiret(p.siret));
+        li.append(el('span', 'dep', ent ? 'Entreprise' : 'Particulier'), ' ', el('strong', '', p.nom), details,
           el('span', 'aide', 'créé le ' + date(p.cree)));
         ul.append(li);
       });
       if (!docs.length) ul.append(el('li', 'vide', 'Aucun compte pour le moment.'));
-    }, function (e) { erreur('erreur', 'Comptes illisibles : ' + (e && e.code || e)); });
+      return auteurs;
+    }, function (e) { erreur('erreur', 'Comptes illisibles : ' + (e && e.code || e)); return {}; });
   }
 
   function charger() {
     erreur('erreur', '');
-    return f.fs.getDocs(f.fs.collection(f.db, 'demandes')).then(function (res) {
+    var auteurs = {};
+    return comptes().then(function (a) { auteurs = a; return f.fs.getDocs(f.fs.collection(f.db, 'demandes')); }).then(function (res) {
       return Promise.all(res.docs.map(function (d) {
         return Promise.all([f.fs.getDoc(f.fs.doc(f.db, d.ref.path, 'prive', 'contact')), f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'interets'))])
           .then(function (r) { return { ref: d.ref, d: d.data(), c: r[0].exists() ? r[0].data() : null, interets: r[1].docs }; });
@@ -151,13 +170,12 @@
       $('purger').hidden = !echues.length;
       $('purger').textContent = 'Supprimer les demandes échues (' + echues.length + ')';
       lignes.forEach(function (l) {
-        $(l.d.statut === 'validee' ? 'publiees' : 'attente').append(carte(l));
+        $(l.d.statut === 'validee' ? 'publiees' : 'attente').append(carte(l, auteurs[l.d.uid]));
       });
       $('nb-attente').textContent = $('attente').children.length;
       $('nb-publiees').textContent = $('publiees').children.length;
       if (!$('attente').children.length) $('attente').append(el('p', 'vide', 'Aucune demande en attente.'));
       montrer('espace');
-      return comptes();
     }, function (e) {
       montrer('espace');
       erreur('erreur', e && e.code === 'permission-denied' ? "Ce compte n'est pas administrateur." : 'Lecture impossible : ' + (e && e.message));

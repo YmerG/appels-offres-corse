@@ -160,7 +160,8 @@ def main():
     assert maj(f"users/{ent_uid}", ent_jeton, {"siret": "123"}) == 403, "SIRET faux à la modification"
     assert maj(f"users/{ent_uid}", ent_jeton, {"zone": ["2A", "2B"]}) == 200
 
-    # publication : seulement par un compte Particulier vérifié, demande + coordonnées ensemble, toujours en attente
+    # publication : par un compte Particulier vérifié, ou Entreprise vérifié (onglet Privé – sociétés seulement),
+    # demande + coordonnées ensemble, toujours en attente
     DEMANDE["uid"] = part_uid
 
     def publier(i, demande=None, contact=None, avec_contact=True, jeton=part_jeton):
@@ -171,11 +172,13 @@ def main():
 
     assert publier("ok1") == 200
     assert publier("ok2", {"type": "prive", "metier": "electricite"}, {"email": "a@b.fr"}) == 200
+    assert publier("e1", {"type": "prive", "uid": ent_uid}, jeton=ent_jeton) == 200, "société (compte Entreprise)"
     refus_compte = {
         "sans connexion": dict(jeton=None),
         "compte sans profil": dict(jeton=intrus_jeton, demande={"uid": intrus_uid}),
         "e-mail pas vérifié": dict(jeton=part_nv_jeton, demande={"uid": part_nv_uid}),
-        "compte entreprise": dict(jeton=ent_jeton, demande={"uid": ent_uid}),
+        "compte entreprise, onglet Particuliers": dict(jeton=ent_jeton, demande={"uid": ent_uid}),
+        "compte entreprise pas vérifié": dict(jeton=ent_nv_jeton, demande={"uid": ent_nv_uid, "type": "prive"}),
         "uid d'un autre": dict(demande={"uid": ent_uid}),
     }
     refus = {
@@ -218,6 +221,8 @@ def main():
     code, res = appel(FS + ":runQuery", requete("uid", part_uid), part_jeton)
     assert code == 200 and ids(res) == ["ok1", "ok2", "x1"], "Mes demandes"
     assert appel(FS + ":runQuery", requete("uid", part_uid), ent_jeton)[0] == 403, "demandes d'un autre compte"
+    code, res = appel(FS + ":runQuery", requete("uid", ent_uid), ent_jeton)
+    assert code == 200 and ids(res) == ["e1"], "Mes demandes (entreprise)"
     assert appel(FS + ":runQuery", requete("uid", part_uid))[0] == 403
     assert appel(FS + ":runQuery", requete("statut", "validee"))[0] == 200
     assert appel(FS + ":runQuery", {"structuredQuery": {"from": [{"collectionId": "demandes"}]}})[0] == 403, "liste sans filtre"
@@ -288,6 +293,8 @@ def main():
     assert code == 200 and len(res["documents"]) == 2
     assert appel(FS + "/demandes/ok1/interets/i2", jeton=admin_jeton, methode="DELETE")[0] == 200
     appel(FS + "/demandes/vieille", jeton="owner", methode="DELETE")
+    assert maj("demandes/e1", admin_jeton, {"statut": "validee"}) == 200
+    assert interet("r", INTERET, "e1") == 403, "sa propre demande"
 
     # suppression du compte : son profil seulement
     assert appel(FS + f"/users/{part_nv_uid}", jeton=intrus_jeton, methode="DELETE")[0] == 403
@@ -301,14 +308,14 @@ def main():
     assert commit([ecriture(f"users/{part_nv_uid}", PROFIL_P)], part_nv_jeton) == 200, "recréé avec le même type"
     print(f"OK : règles Firestore (profils : {len(refus_profil) + 9} refus de création, lecture et modification ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
-          f"intérêts : {len(refus_interet) + 5} refus, aucune lecture publique)")
+          f"intérêts : {len(refus_interet) + 6} refus, aucune lecture publique)")
 
-    if "--demo" in sys.argv:  # ok1 validée avec 1 artisan intéressé, x1 en attente, toutes deux du compte particulier
+    if "--demo" in sys.argv:  # ok1 validée avec 1 artisan intéressé, x1 en attente (compte particulier) ; e1 validée (compte entreprise)
         print(f"Démo prête : admin {ADMIN[0]} / {ADMIN[1]} ; particulier {PART[0]} / {PART[1]} ; entreprise {ENT[0]} / {ENT[1]}"
               " (e-mails vérifiés)")
     else:
         appel(FS + "/demandes/ok1/interets/i1", jeton="owner", methode="DELETE")
-        for i in ("ok1", "x1"):
+        for i in ("ok1", "x1", "e1"):
             appel(FS + f"/demandes/{i}/prive/contact", jeton="owner", methode="DELETE")
             appel(FS + f"/demandes/{i}", jeton="owner", methode="DELETE")
         for uid in (part_uid, ent_uid, part_nv_uid, ent_nv_uid):

@@ -13,7 +13,7 @@
   if (retour) {
     $('raison').textContent = retour.indexOf('interesse') === 0
       ? 'Pour répondre à une demande, connectez-vous avec un compte Entreprise de travaux, ou créez-en un.'
-      : 'Pour publier une demande de travaux, connectez-vous avec un compte Particulier, ou créez-en un.';
+      : 'Pour publier une demande de travaux, connectez-vous ou créez un compte (Particulier, ou Entreprise de travaux pour une demande de société).';
     $('raison').hidden = false;
     if (retour.indexOf('interesse') === 0) form.type.value = 'entreprise';
   }
@@ -26,6 +26,25 @@
     return luhn % 10 === 0 || (s.slice(0, 9) === '356000000' && chiffres % 5 === 0);
   }
   window.siretValide = siretValide; // pour les tests
+
+  // SIRET connu de l'annuaire officiel (API gratuite, sans clé) : 'ok', 'inconnu' ou 'ferme'.
+  // L'API ne répond pas (6 s, quota, panne) : 'ok', pour ne pas bloquer l'inscription ; l'admin vérifie depuis admin.html.
+  // shortcut: contrôle fait dans le navigateur seulement (les règles Firestore ne peuvent pas appeler l'API) ; Cloud Function si de faux SIRET passent.
+  function siretExiste(s) {
+    var stop = new AbortController();
+    setTimeout(function () { stop.abort(); }, 6000);
+    return fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + s + '&per_page=5', { signal: stop.signal })
+      .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
+      .then(function (j) {
+        var trouve = null;
+        j.results.forEach(function (e) {
+          (e.matching_etablissements || []).concat(e.siege || []).forEach(function (x) { if (x.siret === s) trouve = x; });
+        });
+        return !trouve ? 'inconnu' : trouve.etat_administratif === 'F' ? 'ferme' : 'ok';
+      })
+      .catch(function (e) { console.warn('Annuaire des entreprises injoignable :', e); return 'ok'; });
+  }
+  window.siretExiste = siretExiste; // pour les tests
 
   function montrer(id) { ['chargement', 'hors-ligne', 'espace', 'supprime'].forEach(function (x) { $(x).hidden = x !== id; }); form.hidden = true; }
   function dire(id, msg, champ) { $(id).textContent = msg; $(id).hidden = !msg; if (champ) champ.focus(); }
@@ -132,8 +151,19 @@
     var tel = v('telephone');
     var bouton = $('envoyer');
     bouton.disabled = true;
-
     var fin = function () { bouton.disabled = false; };
+
+    var verif = type === 'entreprise' && !(mode === 'modifier' && champs.siret === profil.siret) ? siretExiste(champs.siret) : Promise.resolve('ok');
+    verif.then(function (etat) {
+      if (etat === 'ok') return enregistrer(champs, type, tel, fin);
+      fin();
+      dire('erreur', etat === 'ferme'
+        ? "Ce SIRET correspond à un établissement fermé. Indiquez le SIRET de votre établissement en activité."
+        : "Ce SIRET est introuvable dans l'annuaire officiel des entreprises : vérifiez les 14 chiffres (sur un Kbis ou sur annuaire-entreprises.data.gouv.fr). S'il est juste, écrivez-nous à maitreagent@gmail.com.", $('siret'));
+    });
+  });
+
+  function enregistrer(champs, type, tel, fin) {
     var ecrire;
     if (mode === 'modifier') {
       champs.telephone = tel || f.fs.deleteField();
@@ -145,7 +175,7 @@
       var creer = Promise.resolve(moi);
       if (mode === 'inscription') {
         enCours = true;
-        creer = f.au.createUserWithEmailAndPassword(f.auth, v('email'), $('mdp').value).then(function (r) {
+        creer = f.au.createUserWithEmailAndPassword(f.auth, $('email').value.trim(), $('mdp').value).then(function (r) {
           return f.au.sendEmailVerification(r.user).catch(function () {}).then(function () { return r.user; });
         });
       }
@@ -166,7 +196,7 @@
       enCours = false;
       dire('erreur', messageAuth(err));
     });
-  });
+  }
 
   // --- Espace connecté
   function afficher(u) {
@@ -184,16 +214,18 @@
         });
       }
       var ent = profil.type === 'entreprise';
-      if (retour && u.emailVerified && (ent === (retour.indexOf('interesse') === 0))) return location.replace(retour);
+      // publier : tous les comptes (entreprise : onglet Privé – sociétés) ; répondre : comptes Entreprise
+      var bonType = retour.indexOf('interesse') !== 0 || ent;
+      if (retour && u.emailVerified && bonType) return location.replace(retour);
       montrer('espace');
       $('raison').hidden = !retour;
-      if (retour) $('raison').textContent = (ent === (retour.indexOf('interesse') === 0))
+      if (retour) $('raison').textContent = bonType
         ? 'Vérifiez votre e-mail, puis vous serez renvoyé vers le formulaire.'
-        : (ent ? 'Publier une demande est réservé aux comptes Particulier.' : 'Répondre à une demande est réservé aux comptes Entreprise de travaux.');
+        : 'Répondre à une demande est réservé aux comptes Entreprise de travaux.';
       $('qui').textContent = 'Connecté : ' + u.email;
       $('a-verifier').hidden = u.emailVerified;
       $('mail-verif').textContent = u.email;
-      $('verif-pour').textContent = ent ? 'pas encore répondre aux demandes' : 'pas encore publier de demande';
+      $('verif-pour').textContent = ent ? 'pas encore répondre aux demandes ni en publier' : 'pas encore publier de demande';
       $('r-nom').textContent = profil.nom;
       $('r-details').textContent = ent
         ? 'Entreprise de travaux · SIRET ' + profil.siret.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/, '$1 $2 $3 $4') + ' · '
@@ -202,9 +234,9 @@
       if (profil.telephone) $('r-details').textContent += ' · ' + profil.telephone;
       $('r-action').textContent = ent ? 'Voir les demandes' : 'Publier une demande de travaux';
       $('r-action').href = ent ? 'index.html#onglet=particulier' : 'publier.html';
-      $('mes-demandes').hidden = ent;
-      if (!ent) mesDemandes();
-      if (location.hash === '#mes-demandes' && !ent) $('mes-demandes').scrollIntoView();
+      $('mes-demandes').hidden = false;
+      mesDemandes();
+      if (location.hash === '#mes-demandes') $('mes-demandes').scrollIntoView();
     });
   }
 

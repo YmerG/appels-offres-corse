@@ -1,5 +1,6 @@
 rules_version = '2';
-// Demandes de travaux publiées par des comptes Particulier vérifiés (onglets Privé – sociétés et Particuliers).
+// Demandes de travaux publiées par des comptes Particulier vérifiés (onglets Privé – sociétés et Particuliers)
+// ou Entreprise vérifiés (onglet Privé – sociétés seulement).
 // demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans (uid = compte auteur).
 // Son auteur la voit aussi en attente (« Mes demandes »).
 // demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
@@ -92,7 +93,8 @@ service cloud.firestore {
       allow get, list: if resource.data.statut == 'validee' || estAdmin()
         || (request.auth != null && resource.data.uid == request.auth.uid);
       // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), toujours « en attente »
-      allow create: if compteVerifie('particulier') && demandeValide(request.resource.data)
+      allow create: if (compteVerifie('particulier') || (compteVerifie('entreprise') && request.resource.data.type == 'prive'))
+        && demandeValide(request.resource.data)
         && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
       allow update: if estAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut'])
@@ -108,12 +110,13 @@ service cloud.firestore {
       }
 
       // « Je suis intéressé » : message d'un artisan, lisible par l'admin seulement, qui le transmet au demandeur.
-      // Seulement sur une demande validée et pas encore close.
+      // Seulement sur une demande validée, pas encore close, et pas sur sa propre demande.
       match /interets/{iid} {
         allow get, list, delete: if estAdmin();
         allow create: if compteVerifie('entreprise') && interetValide(request.resource.data)
           && get(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee'
-          && get(/databases/$(database)/documents/demandes/$(id)).data.delai > request.time;
+          && get(/databases/$(database)/documents/demandes/$(id)).data.delai > request.time
+          && get(/databases/$(database)/documents/demandes/$(id)).data.uid != request.auth.uid;
       }
     }
 

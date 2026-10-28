@@ -50,6 +50,7 @@
       lien.textContent = 'Mon compte';
       return texte.append(document.createElement('br'), 'Répondre est réservé aux comptes Entreprise de travaux. ', lien);
     }
+    if (d.uid === m.user.uid) return texte.append(document.createElement('br'), "C'est votre propre demande : vous ne pouvez pas y répondre.");
     if (!m.user.emailVerified) {
       lien.textContent = 'Renvoyer le lien';
       return texte.append(document.createElement('br'), "Vérifiez d'abord votre e-mail : cliquez sur le lien reçu à l'inscription. ", lien);
