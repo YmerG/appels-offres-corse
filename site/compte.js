@@ -420,24 +420,24 @@
     }, function () { dire('fiche-erreur', "La fiche n'a pas été retirée. Réessayez dans un instant."); });
   };
 
-  // Envoyée → En vérification → Publiée → Réponses reçues (reponses : nombre transmis par l'admin), et ce qu'il va se passer
-  var ETAPES = ['Envoyée', 'En vérification', 'Publiée', 'Réponses reçues'];
+  // Envoyée → Publiée (dès l'envoi, sauf si l'admin l'a retirée) → Réponses reçues (reponses : nombre transmis par l'admin), et ce qu'il va se passer
+  var ETAPES = ['Envoyée', 'Publiée', 'Réponses reçues'];
   function suivi(d) {
     var n = d.reponses || 0, close = d.delai.toMillis() < Date.now();
     var fin = d.delai.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    var ici = d.statut !== 'validee' ? 1 : n ? 3 : 2;
+    var ici = d.statut !== 'validee' ? 0 : n ? 2 : 1;
     var ol = document.createElement('ol');
     ol.className = 'etapes';
     ETAPES.forEach(function (nom, i) {
       var li = document.createElement('li');
-      li.textContent = i === 3 && n ? nom + ' (' + n + ')' : nom;
-      if (i < ici || (i === ici && i > 1)) li.className = 'fait';
+      li.textContent = i === 2 && n ? nom + ' (' + n + ')' : nom;
+      if (i <= ici) li.className = 'fait';
       if (i === ici) li.setAttribute('aria-current', 'step');
       ol.append(li);
     });
     var p = document.createElement('p');
     p.className = 'suite';
-    p.textContent = d.statut !== 'validee' ? 'La suite : nous vérifions votre demande, en général sous 48 h, puis elle est publiée.'
+    p.textContent = d.statut !== 'validee' ? 'Votre demande a été retirée du site : elle n\'est plus visible. Nous vous écrivons si quelque chose doit être corrigé.'
       : d.pourvue ? "Vous avez indiqué que votre demande est pourvue : elle n'est plus affichée et ne reçoit plus de réponses."
       : n ? (n > 1 ? n + ' entreprises ont répondu : nous vous avons transmis leurs' : 'Une entreprise a répondu : nous vous avons transmis ses') + ' coordonnées par e-mail ou par téléphone.'
       : close ? 'Close depuis le ' + fin + " : elle ne reçoit plus de réponses."

@@ -1,8 +1,8 @@
 rules_version = '2';
 // Demandes de travaux publiées par des comptes Particulier vérifiés (onglets Privé – sociétés et Particuliers)
 // ou Entreprise vérifiés (onglet Privé – sociétés seulement).
-// demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans (uid = compte auteur).
-// Son auteur la voit aussi en attente (« Mes demandes »).
+// demandes/{id} : la demande, publiée dès sa création (statut « validee », lisible par tous) ; jamais de coordonnées dedans
+// (uid = compte auteur). L'admin peut la retirer (« en_attente » : seuls lui et l'auteur la voient encore, « Mes demandes »).
 // demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
 // demandes/{id}/photos/{1,2,3} : photos de la demande (JPEG en octets), lisibles comme la demande.
 // demandes/{id}/interets/{uid} : messages « Je suis intéressé » des comptes Entreprise vérifiés (un par entreprise, 5 au plus),
@@ -77,7 +77,7 @@ service cloud.firestore {
         && d.departement in ['2A', '2B']
         && (!('budget' in d) || (d.budget is int && d.budget >= 0 && d.budget <= 10000000))
         && d.delai is timestamp && d.delai > request.time && d.delai < request.time + duration.value(120, 'd')
-        && d.statut == 'en_attente'
+        && d.statut == 'validee' // publiée tout de suite ; contrôle après coup (outils/moderer.py, toutes les heures)
         && d.cree == request.time;
     }
 
@@ -127,11 +127,11 @@ service cloud.firestore {
     match /demandes/{id} {
       allow get, list: if resource.data.statut == 'validee' || estAdmin()
         || (request.auth != null && resource.data.uid == request.auth.uid);
-      // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), toujours « en attente »
+      // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), publiée tout de suite
       allow create: if (compteVerifie('particulier') || (compteVerifie('entreprise') && request.resource.data.type == 'prive'))
         && demandeValide(request.resource.data)
         && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
-      // admin : statut, reponses (nombre de réponses transmises au demandeur, étape « Réponses reçues » de Mes demandes),
+      // admin : statut (retirer « en_attente » ou republier « validee »), reponses (nombre de réponses transmises au demandeur, étape « Réponses reçues » de Mes demandes),
       // nbInterets (recalculé quand il supprime un message)
       allow update: if (estAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'reponses', 'nbInterets'])
@@ -156,7 +156,7 @@ service cloud.firestore {
         allow create: if doc == 'contact'
           && contactValide(request.resource.data)
           && !exists(/databases/$(database)/documents/demandes/$(id))
-          && getAfter(/databases/$(database)/documents/demandes/$(id)).data.statut == 'en_attente';
+          && getAfter(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee';
       }
 
       // Photos (1 à 3) : JPEG de 300 Ko au plus réduits dans le navigateur, en octets (pas de Cloud Storage, payant).

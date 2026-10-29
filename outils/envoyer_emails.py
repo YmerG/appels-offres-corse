@@ -73,7 +73,7 @@ def message(cle, d, abonne, nom, site):
         suite = (f"Les entreprises peuvent y répondre jusqu'au {fin}. Nous vous transmettons leurs coordonnées dès qu'elles répondent."
                  if d["delai"] > datetime.now(timezone.utc)
                  else f"Sa date limite, le {fin}, est passée : elle ne reçoit plus de réponses.")  # validée trop tard
-        lignes = [f"Bonjour {nom},", f"Votre demande {cite}, à {lieu}, a été vérifiée et publiée.", suite,
+        lignes = [f"Bonjour {nom},", f"Votre demande {cite}, à {lieu}, est publiée.", suite,
                   ("Suivre ma demande", f"{site}compte.html#mes-demandes")]
         pourquoi = "Vous recevez cet e-mail parce que vous avez publié cette demande sur Appels d'offres Corse."
     elif cle.startswith("reponses:"):

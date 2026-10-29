@@ -453,8 +453,8 @@ html:not(.js) .vue { display: none; }
 .hero-publier { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 22px 0 0; }
 .hero-publier span { color: var(--doux); font-size: .9rem; }
 
-/* Mes demandes : Envoyée → En vérification → Publiée → Réponses reçues */
-.etapes { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 16px 0 0; padding: 0; counter-reset: e; }
+/* Mes demandes : Envoyée → Publiée → Réponses reçues */
+.etapes { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 16px 0 0; padding: 0; counter-reset: e; }
 .etapes li { counter-increment: e; position: relative; padding-top: 32px; font-size: .78rem; line-height: 1.25; color: var(--doux); text-align: center; }
 .etapes li::before { content: counter(e); position: absolute; z-index: 1; top: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .75rem; background: var(--tuile); border: 1px solid var(--filet); }
 .etapes li + li::after { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 1px; background: var(--filet); }
@@ -510,7 +510,7 @@ html:not(.js) .vue { display: none; }
 .vignette img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
 .vignette[aria-pressed="true"] { grid-column: 1 / -1; order: -1; cursor: zoom-out; }
 .vignette[aria-pressed="true"] img { aspect-ratio: auto; max-height: 70vh; object-fit: contain; }
-.galerie-admin .vignette img { object-fit: contain; } /* l'admin voit la photo entière avant de la publier */
+.galerie-admin .vignette img { object-fit: contain; } /* l'admin voit la photo entière */
 .voir-photos { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linejoin='round'%3E%3Cpath d='M3.5 8h3.5l1.7-2.5h6.6L17 8h3.5v11h-17z'/%3E%3Ccircle cx='12' cy='13.3' r='3.4'/%3E%3C/svg%3E"); }
 /* décennale : expirée (admin) ; avertissement dans le compte de l'entreprise */
 .dec-expiree { color: var(--urgent); font-weight: 700; }

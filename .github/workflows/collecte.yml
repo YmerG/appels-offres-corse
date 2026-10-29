@@ -1,4 +1,5 @@
-# Deux fois par jour : lecture de l'API du BOAMP, puis (quand Rémy l'aura autorisé) publication du dossier site/.
+# Deux fois par jour : lecture de l'API du BOAMP, puis publication du dossier site/.
+# (Le contrôle des demandes de travaux tourne sur le Mac de Rémy, pas ici : outils/moderer.py.)
 name: Collecte des appels d'offres
 on:
   schedule:

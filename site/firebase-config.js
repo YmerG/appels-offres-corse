@@ -52,12 +52,12 @@ window.AOC_FB = {
     return F._ouvert;
   },
   // Mes demandes : état vu la dernière fois dans ce navigateur (localStorage), pour signaler ce qui a changé.
-  // Une demande jamais vue compte comme « en attente, 0 réponse » : publiée ou avec des réponses, c'est une nouveauté.
+  // Une demande jamais vue compte comme « publiée, 0 réponse » (publiée dès sa création) : seules les réponses ou un retrait sont une nouveauté.
   etat: function (d) { return d.statut + ':' + (d.reponses || 0); },
   vus: function (uid) { try { return JSON.parse(localStorage.getItem('aoc-vu-' + uid)) || {}; } catch (e) { return {}; } },
   nouveautes: function (uid, docs) {
     var F = window.AOC_FB, vu = F.vus(uid);
-    return docs.filter(function (s) { return (vu[s.id] || 'en_attente:0') !== F.etat(s.data()); }).map(function (s) { return s.id; });
+    return docs.filter(function (s) { return (vu[s.id] || 'validee:0') !== F.etat(s.data()); }).map(function (s) { return s.id; });
   },
   marquerVus: function (uid, docs) {
     var vu = {};

@@ -90,7 +90,7 @@ def ids(res):
 dans = lambda jours: datetime.now(timezone.utc) + timedelta(days=jours)
 DEMANDE = {"type": "particulier", "metier": "plomberie-cvc", "titre": "Rénovation salle de bains",
            "description": "Douche à l'italienne, 6 m², carrelage à refaire.", "commune": "Corte", "departement": "2B",
-           "budget": 12000, "delai": dans(14), "statut": "en_attente", "cree": True}
+           "budget": 12000, "delai": dans(14), "statut": "validee", "cree": True}
 CONTACT = {"nom": "Test Démo", "telephone": "06 00 00 00 00", "consentement": True, "cree": True}
 INTERET = {"nom": "Plomberie Test", "email": "artisan@test.fr", "message": "Disponible en novembre, devis gratuit sur place.",
            "consentement": True, "cree": True}
@@ -195,7 +195,7 @@ def main():
     assert profil(intrus_uid, {**PROFIL_E, "decennale": {**DEC, "fin": "demain"}}, intrus_jeton) == 403, "décennale fausse (création)"
 
     # publication : par un compte Particulier vérifié, ou Entreprise vérifié (onglet Privé – sociétés seulement),
-    # demande + coordonnées ensemble, toujours en attente
+    # demande + coordonnées ensemble, publiée tout de suite
     DEMANDE["uid"] = part_uid
 
     def publier(i, demande=None, contact=None, avec_contact=True, jeton=part_jeton):
@@ -217,7 +217,7 @@ def main():
     }
     refus = {
         "sans coordonnées": dict(avec_contact=False),
-        "déjà validée": dict(demande={"statut": "validee"}),
+        "créée en attente": dict(demande={"statut": "en_attente"}),
         "métier inconnu": dict(demande={"metier": "astrologie"}),
         "champ en trop": dict(demande={"nom": "Jean"}),
         "description trop longue": dict(demande={"description": "x" * 1501}),
@@ -248,10 +248,12 @@ def main():
     assert commit([ecriture("demandes/ok1/prive/contact", CONTACT, nouveau=False)], part_jeton) == 403
     assert commit([ecriture("demandes/ok1", DEMANDE, nouveau=False)], part_jeton) == 403
 
-    # lecture : rien en public tant que ce n'est pas validé, jamais les coordonnées ; l'auteur voit ses demandes en attente
-    assert appel(FS + "/demandes/ok1")[0] == 403
-    assert appel(FS + "/demandes/ok1", jeton=ent_jeton)[0] == 403
-    assert appel(FS + "/demandes/ok1", jeton=part_jeton)[0] == 200
+    # lecture : publique dès la création, jamais les coordonnées ; retirée par l'admin (« en_attente ») : seuls lui et l'auteur la voient
+    assert appel(FS + "/demandes/ok1")[0] == 200, "publique dès la création"
+    assert maj("demandes/x1", admin_jeton, {"statut": "en_attente"}) == 200, "retirée par l'admin"
+    assert appel(FS + "/demandes/x1")[0] == 403
+    assert appel(FS + "/demandes/x1", jeton=ent_jeton)[0] == 403
+    assert appel(FS + "/demandes/x1", jeton=part_jeton)[0] == 200
     code, res = appel(FS + ":runQuery", requete("uid", part_uid), part_jeton)
     assert code == 200 and ids(res) == ["ok1", "ok2", "x1"], "Mes demandes"
     assert appel(FS + ":runQuery", requete("uid", part_uid), ent_jeton)[0] == 403, "demandes d'un autre compte"
@@ -263,9 +265,10 @@ def main():
     for jeton in (intrus_jeton, part_jeton):
         assert appel(FS + "/demandes/ok1/prive/contact", jeton=jeton)[0] == 403
 
-    # un compte connecté qui n'est pas admin ne valide rien, même l'auteur
+    # un compte connecté qui n'est pas admin ne republie ni ne retire rien, même l'auteur
     for jeton in (intrus_jeton, part_jeton, None):
-        assert maj("demandes/ok1", jeton, {"statut": "validee"}) == 403
+        assert maj("demandes/x1", jeton, {"statut": "validee"}) == 403
+        assert maj("demandes/ok1", jeton, {"statut": "en_attente"}) == 403
 
     # l'admin lit les coordonnées, valide (statut seulement), supprime
     assert appel(FS + "/demandes/ok1/prive/contact", jeton=admin_jeton)[0] == 200
@@ -286,7 +289,7 @@ def main():
     assert code == 200 and "nom" not in doc["fields"] and "telephone" not in doc["fields"]
     assert appel(FS + "/demandes/ok1/prive/contact")[0] == 403
     code, res = appel(FS + ":runQuery", requete("statut", "validee"))
-    assert code == 200 and ids(res) == ["ok1"]
+    assert code == 200 and ids(res) == ["e1", "ok1", "ok2"], "liste publique (sans x1, retirée)"
     assert appel(FS + "/demandes/ok1", jeton=part_jeton, methode="DELETE")[0] == 403
     assert appel(FS + "/demandes/ok2/prive/contact", jeton=admin_jeton, methode="DELETE")[0] == 200
     assert appel(FS + "/demandes/ok2", jeton=admin_jeton, methode="DELETE")[0] == 200
@@ -514,13 +517,15 @@ def main():
     assert avec_photos("ph2", 1, [("1", JPEG)], en_trop={"legende": "x"}) == 403, "champ en trop (photo)"
     assert avec_photos("ph2", 1, [("1", JPEG)], jeton=ent_jeton) == 403, "demande d'un autre compte"
     assert commit([ecriture("demandes/ok1/photos/1", {"data": JPEG, "cree": True})], part_jeton) == 403, "photo ajoutée après coup"
-    assert appel(FS + "/demandes/ph1/photos/1")[0] == 403, "photo publique avant validation"
+    assert appel(FS + "/demandes/ph1/photos/1")[0] == 200, "photos publiques dès la création"
+    assert maj("demandes/ph1", admin_jeton, {"statut": "en_attente"}) == 200
+    assert appel(FS + "/demandes/ph1/photos/1")[0] == 403, "photo d'une demande retirée"
     assert appel(FS + "/demandes/ph1/photos", jeton=ent_jeton)[0] == 403
     assert appel(FS + "/demandes/ph1/photos/1", jeton=part_jeton)[0] == 200, "l'auteur voit ses photos"
     assert appel(FS + "/demandes/ph1/photos", jeton=admin_jeton)[0] == 200
     assert maj("demandes/ph1", admin_jeton, {"statut": "validee"}) == 200
     code, res = appel(FS + "/demandes/ph1/photos")
-    assert code == 200 and len(res["documents"]) == 2, "photos publiques après validation"
+    assert code == 200 and len(res["documents"]) == 2, "photos publiques après republication"
     for jeton in (None, part_jeton, ent_jeton):
         assert appel(FS + "/demandes/ph1/photos/1", jeton=jeton, methode="DELETE")[0] == 403
     assert appel(FS + "/demandes/ph1/photos/2", jeton=admin_jeton, methode="DELETE")[0] == 200
@@ -533,13 +538,13 @@ def main():
           f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus ; "
           f"partenaires : {len(refus_partenaire) + 17} refus, lus par l'admin seulement ; "
           f"fiches : {len(refus_fiche) + 20} refus, publiques après validation seulement, jamais listées ; "
-          f"photos : {len(refus_photos) + 6} refus, publiques après validation seulement)")
+          f"photos : {len(refus_photos) + 7} refus, cachées quand la demande est retirée)")
 
     for _, u in autres[:4]:
         appel(FS + f"/demandes/cap/interets/{u}", jeton="owner", methode="DELETE")
     appel(FS + f"/demandes/cap/interets/{ent_uid}", jeton="owner", methode="DELETE")
     appel(FS + "/demandes/cap", jeton="owner", methode="DELETE")
-    if "--demo" in sys.argv:  # ok1 validée avec 1 artisan intéressé, x1 en attente (compte particulier) ; e1 validée (compte entreprise)
+    if "--demo" in sys.argv:  # ok1 publiée avec 1 artisan intéressé, x1 retirée (compte particulier) ; e1 validée (compte entreprise)
         print(f"Démo prête : admin {ADMIN[0]} / {ADMIN[1]} ; particulier {PART[0]} / {PART[1]} ; entreprise {ENT[0]} / {ENT[1]}"
               " (e-mails vérifiés) ; entreprise2 à entreprise6@test.local, même mot de passe")
     else:

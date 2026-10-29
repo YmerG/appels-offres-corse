@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Contrôle des demandes publiées d'Appels d'offres Corse, toutes les heures (outils/moderer.py, lecture seule).
+     Installer : cp outils/fr.aocorse.moderation.plist ~/Library/LaunchAgents/ && launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/fr.aocorse.moderation.plist
+     Arrêter :   launchctl bootout gui/$(id -u)/fr.aocorse.moderation && rm ~/Library/LaunchAgents/fr.aocorse.moderation.plist
+     Journal :   ~/Library/Logs/aocorse-moderation.log -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>fr.aocorse.moderation</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/python3</string>
+    <string>/Users/remy/SitesWeb/AppelsOffresCorse/outils/moderer.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/remy/SitesWeb/AppelsOffresCorse</string>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/remy/Library/Logs/aocorse-moderation.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/remy/Library/Logs/aocorse-moderation.log</string>
+</dict>
+</plist>

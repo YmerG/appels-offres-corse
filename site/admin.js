@@ -44,6 +44,7 @@
   function carte(l, auteur) {
     var ref = l.ref, d = l.d, c = l.c;
     var a = el('article', 'avis avis-admin');
+    a.id = 'd-' + ref.id; // admin.html#d-<id> : lien envoyé par outils/moderer.py
     var corps = el('div', 'corps');
     var haut = el('p', 'haut');
     haut.append(el('span', 'metier autres', METIERS[d.metier] || d.metier), el('span', 'dep', d.departement),
@@ -132,13 +133,14 @@
       corps.append(it);
     }
     var actions = el('p', 'actions-admin');
-    if (d.statut === 'en_attente') {
-      var ok = el('button', 'bouton-publier', 'Valider');
-      ok.type = 'button';
-      ok.onclick = function () { agir(f.fs.updateDoc(ref, { statut: 'validee' })); };
-      actions.append(ok);
-    }
-    var non = el('button', 'bouton-refus', d.statut === 'en_attente' ? 'Refuser et supprimer' : 'Retirer et supprimer');
+    // Retirer : cachée du site (« en_attente »), gardée dans « Retirées, pas visibles » ; Republier : de nouveau en ligne
+    var publiee = d.statut === 'validee';
+    var bascule = el('button', publiee ? 'bouton-sortir' : 'bouton-publier', publiee ? 'Retirer' : 'Republier');
+    bascule.type = 'button';
+    bascule.dataset.bascule = '';
+    bascule.onclick = function () { agir(f.fs.updateDoc(ref, { statut: publiee ? 'en_attente' : 'validee' })); };
+    actions.append(bascule);
+    var non = el('button', 'bouton-refus', 'Supprimer');
     non.type = 'button';
     non.onclick = function () {
       if (!confirm('Supprimer définitivement cette demande, ses coordonnées et les messages des artisans ?')) return;
@@ -314,8 +316,11 @@
       });
       $('nb-attente').textContent = $('attente').children.length;
       $('nb-publiees').textContent = $('publiees').children.length;
-      if (!$('attente').children.length) $('attente').append(el('p', 'vide', 'Aucune demande en attente.'));
+      if (!$('attente').children.length) $('attente').append(el('p', 'vide', 'Aucune demande retirée.'));
       montrer('espace');
+      var vise = location.hash && document.getElementById(location.hash.slice(1));
+      // lien du message de modération : la demande à l'écran, focus sur « Retirer »
+      if (vise) { vise.scrollIntoView(); vise.querySelector('[data-bascule]').focus({ preventScroll: true }); }
     }, function (e) {
       montrer('espace');
       erreur('erreur', e && e.code === 'permission-denied' ? "Ce compte n'est pas administrateur." : 'Lecture impossible : ' + (e && e.message));

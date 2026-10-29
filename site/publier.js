@@ -1,6 +1,6 @@
 // Formulaire « Publier une demande » en 3 étapes (Quoi, Où, Quand), brouillon gardé dans ce navigateur.
 // Réservé aux comptes à l'e-mail vérifié (les règles Firestore l'imposent aussi) ; un compte Entreprise publie seulement dans « Privé – sociétés ».
-// Contrôle, puis écriture groupée sur Firestore (demande « en attente » liée au compte + coordonnées privées).
+// Contrôle, puis écriture groupée sur Firestore (demande publiée tout de suite, liée au compte, + coordonnées privées).
 (function () {
   var m; // { f, user, profil } (firebase-config.js)
   var form = document.getElementById('form');
@@ -27,7 +27,7 @@
     document.getElementById('reste-desc').textContent = n < 20 ? 'encore ' + (20 - n) + ' caractères au moins' : n + ' / 1 500';
   });
 
-  function libelle() { envoyer.textContent = etape < etapes.length - 1 ? 'Continuer' : 'Envoyer pour vérification'; }
+  function libelle() { envoyer.textContent = etape < etapes.length - 1 ? 'Continuer' : 'Publier ma demande'; }
   function dire(msg, champ) {
     if (champ) AOC_FB.sous(champ, msg);
     else { erreur.textContent = msg; erreur.hidden = false; }
@@ -224,7 +224,7 @@
         type: form.type.value, metier: v('metier'), titre: v('titre'), description: v('description'),
         commune: v('commune'), departement: form.departement.value,
         delai: fs.Timestamp.fromDate(new Date(v('delai') + 'T18:00:00')),
-        statut: 'en_attente', cree: fs.serverTimestamp(), uid: m.user.uid
+        statut: 'validee', cree: fs.serverTimestamp(), uid: m.user.uid
       };
       if (v('budget')) demande.budget = form.budget.valueAsNumber; // « 1e3 » = 1000 ; entier garanti par step="1"
       if (photos.length) demande.photos = photos.length;
