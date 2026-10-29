@@ -11,7 +11,8 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
 - Pour chaque avis : l'objet, l'acheteur, le lieu d'exécution, le **montant estimé s'il est connu** (HT), le type de procédure, la date et l'heure limites, un compte à rebours (« Demain », « J-5 ») et le badge **« Bientôt clos »** à 7 jours ou moins. Toute la carte mène à l'**avis officiel sur boamp.fr**.
 - Un avis rectifié remplace l'avis d'origine (pastille « Rectifié »). Les avis clos depuis la dernière collecte disparaissent tout seuls à l'ouverture.
 - Le choix reste dans l'adresse : `index.html#metier=electricite&dep=2B` affiche directement l'électricité en Haute-Corse. Un artisan peut l'enregistrer dans ses favoris.
-- Téléphone d'abord, mode sombre automatique, police Source Serif 4 hébergée sur le site (gratuite, licence OFL), aucune autre dépendance.
+- Téléphone d'abord, mode sombre automatique, aucune autre dépendance.
+- Style « luxe épuré » (refonte v11) : ivoire, encre profonde #0e1c28, or patiné (#7d5f24 pour le texte, #d6b46e sur fond sombre) ; titres en Playfair Display hébergée sur le site (gratuite, licence OFL), texte en police du système ; animations douces (cartes qui apparaissent, chiffres qui montent, pastilles qui réagissent), coupées si le téléphone demande « réduire les animations ». Captures : `outils/captures_refonte.js` (Playwright, sans serveur).
 - Mention « Données BOAMP (licence ouverte) » dans le pied de page, avec le rappel que seul l'avis officiel fait foi.
 - **Aucune donnée personnelle** : les avis contiennent des noms, téléphones et courriels de correspondants, qui ne sont jamais repris.
 

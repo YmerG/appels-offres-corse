@@ -44,6 +44,16 @@
   var publics = de('public');
   document.getElementById('nb-total').textContent = publics.length;
   document.getElementById('nb-semaine').textContent = publics.filter(function (c) { return c.classList.contains('urgent'); }).length;
+  // chiffres de l'en-tête : ils montent jusqu'à leur valeur en 0,9 s (pas si « réduire les animations » est demandé)
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.chiffres strong').forEach(function (el) {
+    var n = +el.textContent, debut = performance.now();
+    if (!(n > 0)) return;
+    (function pas(t) {
+      var p = Math.min(1, (t - debut) / 900);
+      el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(pas);
+    })(debut);
+  });
   function compterOnglets() {
     filtres.forEach(function (b) { if (b.dataset.onglet) b.querySelector('.nb').textContent = de(b.dataset.onglet).length; });
   }

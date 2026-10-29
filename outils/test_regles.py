@@ -323,7 +323,7 @@ def main():
     assert appel(FS + f"/types/{part_nv_uid}", jeton=part_nv_jeton, methode="DELETE")[0] == 403, "type supprimé"
     assert appel(FS + f"/types/{part_nv_uid}", jeton=intrus_jeton)[0] == 403
     assert commit([ecriture(f"users/{part_nv_uid}", PROFIL_P)], part_nv_jeton) == 200, "recréé avec le même type"
-    print(f"OK : règles Firestore (profils : {len(refus_profil) + 9} refus de création, lecture et modification ; "
+    print(f"OK : règles Firestore (profils : {len(refus_profil) + 16} refus de création, lecture et modification ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
           f"intérêts : {len(refus_interet) + 6} refus, aucune lecture publique)")
 
