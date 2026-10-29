@@ -7,11 +7,11 @@
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
   }
-  function euros(x) { return x.toLocaleString('fr-FR').replace(/\s/g, ' ') + ' €'; }
+  function euros(x) { return x.toLocaleString('fr-FR').replace(/\s/g, '\u202f') + '\u00a0€'; } // insécables : l'unité ne passe jamais seule à la ligne
 
   function carte(d, id) {
     var b = document.querySelector('.metiers .filtre[data-metier="' + CSS.escape(d.metier) + '"]');
-    var coul = b ? b.style.getPropertyValue('--c') : '#2c5d8f';
+    var coul = b ? b.style.getPropertyValue('--c') : '#0040dd';
     var limite = d.delai.toDate();
     var a = document.createElement('article');
     a.className = 'avis demande';
@@ -24,7 +24,7 @@
     a.dataset.montant = d.budget || 0;
     a.style.setProperty('--c', coul);
     var infos = '<div class="garde"><dt>Lieu</dt><dd>' + esc(d.commune) + '</dd></div>'; // garde : gardé en vue compacte
-    if (d.budget) infos += '<div class="garde"><dt>Budget indicatif</dt><dd>' + euros(d.budget) + (d.type === 'particulier' ? ' TTC' : ' HT') + '</dd></div>';
+    if (d.budget) infos += '<div class="garde"><dt>Budget indicatif</dt><dd>' + euros(d.budget) + (d.type === 'particulier' ? '\u00a0TTC' : '\u00a0HT') + '</dd></div>';
     var h = limite.getHours();
     a.innerHTML =
       '<div class="echeance" aria-hidden="true"><span class="jour">' + limite.getDate() + '</span>' +

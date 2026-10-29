@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from collecte import (METIERS, analyser, avis_de, carte, date_limite, dossier, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
+from collecte import (METIERS, analyser, insecable, avis_de, carte, date_limite, dossier, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
                       metiers_de, nom_lieu, propre, carte_resultat, resultat, resultats_de, taille)
 
 # métiers par préfixe CPV, le plus long l'emporte
@@ -61,7 +61,9 @@ assert 'data-id="26-1"' in html_dce and 'href="https://a.fr/?a=1&amp;b=2"' in ht
 
 assert lieu_texte("Lieu(x) d'exécution : voir lot") is None and lieu_texte("FRM01") is None
 assert propre("MISE EN \x9cUVRE DES TRAVAUX") == "Mise en œuvre des travaux"
-assert euros(1_500_000) == "1,5 M€" and euros(2_000_000) == "2 M€" and euros(32000) == "32 000 €"
+assert euros(1_500_000) == "1,5\u00a0M€" and euros(2_000_000) == "2\u00a0M€" and euros(32000) == "32\u202f000\u00a0€"
+# rapport 39 : ni l'unité ni « (MAPA) » ne passent seules à la ligne
+assert insecable("Marchés <90 k€ (MAPA)") == "Marchés <90\u00a0k€\u00a0(MAPA)" and insecable("Marchés européens") == "Marchés européens"
 
 # l'heure écrite dans l'avis est l'heure de Paris, quel que soit le fuseau annoncé (comme boamp.fr : 26-99420, 26-93441, 26-92291)
 def limite(brut):
@@ -160,7 +162,7 @@ sans = json.dumps(avis_res({"efac:LotResult": lot("selec-w", "2")}))
 s1, s2 = {**brut[0], "donnees": sans}, {**double, "donnees": sans}
 assert len(resultats_de([s1, s2])) == 2 and len(resultats_de([s1, {**s2, "dateparution": "2026-10-16"}])) == 1
 html_res = carte_resultat(res[0])
-assert euros(1500) + " HT" in html_res and "1 à 3 par lot" in html_res and "Travaux de voirie" in html_res and "ven. 16 oct. 2026" in html_res
+assert euros(1500) + "\u00a0HT" in html_res and "1 à 3 par lot" in html_res and "Travaux de voirie" in html_res and "ven. 16 oct. 2026" in html_res
 assert "voir l'avis officiel" in carte_resultat({**res[0], "montant": None, "offres": []})
 # repères : montant attribué et offres médianes du marché ; le maximum d'un accord-cadre n'est pas repris
 assert 'data-montant="1500" data-offres="3"' in html_res

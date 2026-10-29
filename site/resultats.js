@@ -10,7 +10,7 @@
   });
   var reperes = document.getElementById('reperes');
   function euros(x) {
-    return x >= 1e6 ? (Math.round(x / 1e5) / 10).toLocaleString('fr-FR') + ' M€' : Math.round(x).toLocaleString('fr-FR') + ' €';
+    return x >= 1e6 ? (Math.round(x / 1e5) / 10).toLocaleString('fr-FR') + '\u00a0M€' : Math.round(x).toLocaleString('fr-FR') + '\u00a0€';
   }
   function rang(v, q) { return v[Math.round((v.length - 1) * q)]; }
   function mediane(v) { var n = v.length; return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2; }

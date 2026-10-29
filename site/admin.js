@@ -46,7 +46,7 @@
     var a = el('article', 'avis avis-admin');
     var corps = el('div', 'corps');
     var haut = el('p', 'haut');
-    haut.append(el('span', 'metier', METIERS[d.metier] || d.metier), el('span', 'dep', d.departement),
+    haut.append(el('span', 'metier autres', METIERS[d.metier] || d.metier), el('span', 'dep', d.departement),
       el('span', 'dep', d.type === 'particulier' ? 'Particulier' : 'Société'),
       el('span', 'dep', !auteur ? 'Compte supprimé' : auteur.type === 'entreprise' ? 'Compte Entreprise' : 'Compte Particulier'));
     if (echue(d)) haut.append(el('span', 'dep echue', 'Échue : à supprimer'));

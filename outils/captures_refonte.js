@@ -2,7 +2,7 @@
 // Firebase remplacé par un faux (compte Entreprise connecté, sans demande). Pour l'outil browser_run_code_unsafe de Playwright MCP.
 // Préfixe des fichiers : window.__prefixe dans la page n'existe pas ici ; on le lit dans PREFIXE ci-dessous (à changer à chaque étape).
 async (page) => {
-  const PREFIXE = 'refonte-3';
+  const PREFIXE = 'macos-2';
   const racine = '/Users/remy/SitesWeb/AppelsOffresCorse/site';
   const dest = '/Users/remy/SitesWeb/AppelsOffresCorse/captures/';
   const ctx = page.context();

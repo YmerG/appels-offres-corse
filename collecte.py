@@ -34,18 +34,18 @@ MOIS = "janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.".split
 
 # Métiers : nom affiché et couleur (assez foncée pour du texte sur fond clair)
 METIERS = {
-    "gros-oeuvre": ("Gros œuvre, bâtiment", "#8a4b2a"),
-    "second-oeuvre": ("Second œuvre, finitions", "#946000"),
-    "electricite": ("Électricité, éclairage", "#7a6400"),
-    "plomberie-cvc": ("Plomberie, chauffage, clim", "#0b6e8a"),
-    "voirie-vrd": ("Voirie, réseaux (VRD)", "#4a5560"),
-    "espaces-verts": ("Espaces verts", "#2f7d32"),
-    "nettoyage": ("Nettoyage, déchets", "#127a6a"),
-    "informatique": ("Informatique, télécoms", "#4b4fc4"),
-    "etudes": ("Études, maîtrise d'œuvre", "#7b3fa0"),
-    "restauration": ("Restauration, alimentation", "#b03a2e"),
-    "services": ("Services", "#2c5d8f"),
-    "fournitures": ("Fournitures, équipements", "#6b5b3e"),
+    "gros-oeuvre": ("Gros œuvre, bâtiment", "#c93400"),
+    "second-oeuvre": ("Second œuvre, finitions", "#7f6545"),
+    "electricite": ("Électricité, éclairage", "#b25000"),
+    "plomberie-cvc": ("Plomberie, chauffage, clim", "#0071a4"),
+    "voirie-vrd": ("Voirie, réseaux (VRD)", "#6c6c70"),
+    "espaces-verts": ("Espaces verts", "#248a3d"),
+    "nettoyage": ("Nettoyage, déchets", "#0c817b"),
+    "informatique": ("Informatique, télécoms", "#3634a3"),
+    "etudes": ("Études, maîtrise d'œuvre", "#8944ab"),
+    "restauration": ("Restauration, alimentation", "#d30f45"),
+    "services": ("Services", "#0040dd"),
+    "fournitures": ("Fournitures, équipements", "#008299"),
 }
 # shortcut: regroupement par préfixes CPV, quelques avis mal rangés (ex. observations en mer -> espaces verts) ; affiner avec les retours des artisans
 # Début du code CPV -> métier ; le préfixe le plus long l'emporte. Au-delà : 45 = gros œuvre, < 45 = fournitures, >= 50 = services.
@@ -404,9 +404,15 @@ def exemples_de(maintenant, chemin=SORTIE / "exemples.json"):
 
 
 def euros(x):
+    # espaces insécables (fine pour les milliers) : « 120 000 € HT » ne se coupe jamais en fin de ligne (rapport 39)
     if x >= 1e6:
-        return f"{x / 1e6:.1f}".replace(".", ",").replace(",0", "") + " M€"
-    return f"{round(x):,}".replace(",", " ") + " €"
+        return f"{x / 1e6:.1f}".replace(".", ",").replace(",0", "") + " M€"
+    return f"{round(x):,}".replace(",", " ") + "\u00a0€"
+
+
+def insecable(texte):
+    """« Marchés <90 k€ (MAPA) » : ni « 90 » / « k€ », ni « k€ » / « (MAPA) » sur deux lignes."""
+    return re.sub(r"(?<=\d) (?=k€)|(?<=k€) (?=\()", "\u00a0", texte)
 
 
 def date_fr(iso, heure=True):
@@ -439,7 +445,7 @@ def carte_resultat(a):
     d = datetime.fromisoformat(a["publie"])
     infos = [("Lieu", e(a["lieu"]))]
     if a["montant"]:
-        infos.append(("Montant max." if a["montant_type"] == "max" else "Montant attribué", euros(a["montant"]) + " HT"))
+        infos.append(("Montant max." if a["montant_type"] == "max" else "Montant attribué", euros(a["montant"]) + " HT"))
     if a["offres"]:
         o = sorted(a["offres"])
         infos.append(("Offres reçues", str(o[0]) if len(o) == 1 else f"{o[0]} par lot" if o[0] == o[-1] else f"{o[0]} à {o[-1]} par lot"))
@@ -469,10 +475,10 @@ def carte(a):
     infos = [("Lieu", e(a["lieu"]))]
     if a["montant"]:
         genre = {"max": "Montant max.", "budget": "Budget indicatif"}.get(a["montant_type"], "Montant estimé")
-        infos.append((genre, euros(a["montant"]) + " " + a.get("taxe", "HT")))
+        infos.append((genre, euros(a["montant"]) + " " + a.get("taxe", "HT")))
     if a.get("duree"):
         infos.append(("Durée", e(a["duree"])))
-    infos.append(("Procédure" if a["lien"] else "Demande", e(a["procedure"])))
+    infos.append(("Procédure" if a["lien"] else "Demande", insecable(e(a["procedure"]))))
     # vue compacte (style.css) : seuls le lieu et le montant restent, ou la procédure s'il n'y a pas de montant
     garde = (0, 1 if a["montant"] else len(infos) - 1)
     dl = "".join(f'<div{GARDE if i in garde else ""}><dt>{k}</dt><dd>{v}</dd></div>' for i, (k, v) in enumerate(infos))
