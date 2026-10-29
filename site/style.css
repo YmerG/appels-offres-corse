@@ -118,13 +118,17 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
 @media (min-width: 900px) { .action.plus-filtres { display: none; } } /* .action (plus bas) remettrait inline-flex */
 /* Sous 360 px, « Trier par » prend sa ligne (sinon « Date lim… » coupé) */
 @media (max-width: 359px) { .ligne-outils { grid-template-columns: 1fr; gap: 0; } }
-.segments { display: flex; gap: 2px; background: var(--piste); border-radius: 10px; padding: 2px; }
+.segments { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; background: var(--piste); border-radius: 10px; padding: 2px; }
 .segments .filtre { border: 0; border-radius: 8px; padding: 9px 13px; background: none; }
 .segments .filtre[aria-pressed="true"], .onglets .filtre[aria-pressed="true"], .bascule .filtre[aria-pressed="true"] { background: var(--carte); color: var(--texte); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .06), 0 1px 3px rgba(0, 0, 0, .14); }
 .segments .filtre[aria-pressed="true"] .nb, .onglets .filtre[aria-pressed="true"] .nb { color: var(--doux); }
 /* le fond blanc seul ne se distingue pas assez de la piste (1,25:1) : second repère par la graisse et la couleur du texte */
 .segments .filtre:not([aria-pressed="true"]), .onglets .filtre:not([aria-pressed="true"]), .bascule .filtre:not([aria-pressed="true"]) { color: var(--doux); font-weight: 400; }
 .segments .filtre[aria-pressed="true"], .onglets .filtre[aria-pressed="true"], .bascule .filtre[aria-pressed="true"] { font-weight: 600; }
+/* largeur du gras réservée par une 2e rangée invisible (data-texte = libellé) : les libellés ne bougent pas quand on change de segment */
+.filtre[data-texte] { display: inline-grid; justify-items: start; row-gap: 0; }
+.filtre[data-texte] .nb { grid-area: 1 / 2; font-weight: 500; }
+.filtre[data-texte]::after { content: attr(data-texte); content: attr(data-texte) / ""; grid-area: 2 / 1; height: 0; overflow: hidden; visibility: hidden; font-weight: 600; }
 
 /* Onglets Public / Privé / Particuliers (rien à choisir sans JS : seuls les avis publics sont visibles) */
 html:not(.js) .onglets { display: none; }
@@ -224,12 +228,13 @@ button.lien-compte { border: 0; cursor: pointer; }
 .avec-sortir { justify-content: flex-end; }
 .avec-sortir .retour { margin-right: auto; }
 .sortir { background: none; box-shadow: inset 0 0 0 1px var(--filet); }
+@media (max-width: 599px) { .sortir { display: none; } } /* téléphone : « Se déconnecter » est en bas de la page Compte, l'en-tête garde une seule rangée */
 .proto + .lien-compte { margin-left: 0; }
 /* téléphone, accueil : « Prototype » + « Compte » ne tiennent pas sur la ligne ; la mention reste dans le pied de page */
 @media (max-width: 479px) { .entete:not(.entete-court) .proto { display: none; } .entete:not(.entete-court) .proto + .lien-compte { margin-left: auto; } }
 /* en-tête court : badge masqué sous 420 px (le bandeau « Version de test » reste) ; 320 px : on resserre */
 @media (max-width: 419px) { .proto { display: none; } .proto + .lien-compte { margin-left: auto; } }
-@media (max-width: 359px) { .marque { font-size: .95rem; } .marque, .retour { gap: 6px; } .lien-compte { padding: 0 10px; } .lien-compte::before { display: none; } }
+@media (max-width: 359px) { .marque { font-size: .95rem; } .marque, .retour { gap: 6px; } .lien-compte { padding: 0 10px; } .lien-compte:not(.sortir)::before { display: none; } }
 .bascule { margin: 22px 0 14px; gap: 2px; padding: 2px; background: var(--piste); border-radius: 10px; }
 .bascule .filtre { flex: 1; justify-content: center; border: 0; border-radius: 8px; background: none; }
 #form .cases { display: grid; gap: 8px; margin-top: 6px; }
@@ -249,7 +254,8 @@ button.lien-compte { border: 0; cursor: pointer; }
 #alertes { margin-top: 26px; padding: 20px; background: var(--carte); border: 1px solid var(--filet); border-radius: 12px; box-shadow: var(--ombre); }
 #alertes .etat { margin: 0 0 14px; }
 #alertes .aide-bloc { margin-top: 10px; padding-left: 34px; }
-.supprimer-compte { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--filet); }
+.sortie-compte { margin: 32px 0 0; }
+.supprimer-compte { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--filet); }
 .supprimer-compte summary { cursor: pointer; color: var(--urgent); font-weight: 600; padding: 10px 0; } /* 44 px de haut */
 .comptes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .comptes li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 12px 14px; background: var(--carte); border: 1px solid var(--filet); border-radius: 10px; overflow-wrap: anywhere; }

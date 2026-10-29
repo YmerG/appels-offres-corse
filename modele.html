@@ -33,9 +33,9 @@
   </header>
 
   <nav class="cadre onglets" role="group" aria-label="Type d'avis">
-    <button type="button" class="filtre" data-onglet="public" aria-pressed="true">Public <span class="nb"><!--NB--></span></button>
-    <button type="button" class="filtre" data-onglet="prive" aria-pressed="false">Privé – sociétés <span class="nb"></span></button>
-    <button type="button" class="filtre" data-onglet="particulier" aria-pressed="false">Particuliers <span class="nb"></span></button>
+    <button type="button" class="filtre" data-onglet="public" aria-pressed="true" data-texte="Public">Public <span class="nb"><!--NB--></span></button>
+    <button type="button" class="filtre" data-onglet="prive" aria-pressed="false" data-texte="Privé – sociétés">Privé – sociétés <span class="nb"></span></button>
+    <button type="button" class="filtre" data-onglet="particulier" aria-pressed="false" data-texte="Particuliers">Particuliers <span class="nb"></span></button>
   </nav>
   <div class="cadre"><p class="info-sortie" id="deconnecte" role="status"></p></div>
 
@@ -55,9 +55,9 @@
         <div>
           <p class="titre-outil" id="t-dep">Département</p>
           <div class="segments" role="group" aria-labelledby="t-dep">
-            <button type="button" class="filtre" data-dep="" aria-pressed="true">Tous</button>
-            <button type="button" class="filtre" data-dep="2A" aria-pressed="false" title="Corse-du-Sud">2A</button>
-            <button type="button" class="filtre" data-dep="2B" aria-pressed="false" title="Haute-Corse">2B</button>
+            <button type="button" class="filtre" data-dep="" aria-pressed="true" data-texte="Tous">Tous</button>
+            <button type="button" class="filtre" data-dep="2A" aria-pressed="false" title="Corse-du-Sud" data-texte="2A">2A</button>
+            <button type="button" class="filtre" data-dep="2B" aria-pressed="false" title="Haute-Corse" data-texte="2B">2B</button>
           </div>
         </div>
         <button type="button" class="action plus-filtres" id="plus-filtres" aria-expanded="true" aria-controls="bloc-taille bloc-tri" hidden>Taille et tri</button>

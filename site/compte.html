@@ -145,7 +145,7 @@
     <!-- connecté -->
     <div id="espace" hidden>
       <p class="info-ok" id="ok" role="status" hidden></p>
-      <p class="ligne-admin"><span id="qui"></span> <button type="button" class="bouton-sortir" id="deconnexion">Se déconnecter</button></p>
+      <p class="ligne-admin"><span id="qui"></span></p>
       <div class="bandeau-exemple a-verifier" id="a-verifier" hidden>
         <p><strong>Vérifiez votre e-mail.</strong> Nous avons envoyé un lien à <span id="mail-verif"></span>. Tant qu'il n'est pas vérifié, vous ne pouvez <span id="verif-pour"></span>.</p>
         <p class="actions-admin">
@@ -196,6 +196,9 @@
         <h2 class="etat">Mes demandes <span class="nb" id="nb-mes"></span> <span class="pastille-neuf" id="neuf-mes" hidden></span></h2>
         <div class="avis-liste" id="liste-mes"></div>
       </section>
+
+      <!-- en bas de page : sur téléphone, l'en-tête n'a pas « Se déconnecter » -->
+      <p class="sortie-compte"><button type="button" class="bouton-sortir" id="deconnexion">Se déconnecter</button></p>
 
       <details class="supprimer-compte">
         <summary>Supprimer mon compte</summary>
