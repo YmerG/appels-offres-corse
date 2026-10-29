@@ -459,3 +459,19 @@ html:not(.js) .vue { display: none; }
 }
 /* chiffres alignés dans les titres Playfair (« v11 », « Lot 1 ») ; en fin de fichier : le raccourci font des règles plus haut remet la valeur à zéro */
 .marque, .entete h1, .page-texte h2, #form legend, .merci h2, .carte-form h2, .etat, .avis h3, .pied .source { font-variant-numeric: lining-nums; }
+/* Photos d'une demande : vignettes du formulaire Publier, galerie des cartes et de l'admin */
+#form input[type=file] { padding: 10px; font-size: .9rem; cursor: pointer; }
+#form input[type=file]::file-selector-button { min-height: 40px; margin-right: 12px; padding: 0 16px; font: 600 .88rem/1 var(--sans); color: var(--texte); background: var(--carte); border: 1px solid var(--filet); border-radius: 99px; cursor: pointer; }
+#form input[type=file]:disabled { opacity: .55; cursor: not-allowed; }
+.vignettes { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 0; padding: 0; }
+.vignettes:empty { display: none; }
+.vignettes li { position: relative; }
+.vignettes img { display: block; width: 88px; height: 88px; object-fit: cover; border-radius: 12px; box-shadow: 0 0 0 1px var(--filet); }
+.vignettes button { position: absolute; top: -14px; right: -14px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--carte); background: var(--texte); color: var(--carte); font: 600 1.05rem/1 var(--sans); cursor: pointer; }
+.galerie { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; animation: apparait .35s var(--doux-mvt); }
+.vignette { padding: 0; border: 0; background: var(--tuile); border-radius: 12px; overflow: hidden; cursor: zoom-in; }
+.vignette img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.vignette[aria-pressed="true"] { grid-column: 1 / -1; order: -1; cursor: zoom-out; }
+.vignette[aria-pressed="true"] img { aspect-ratio: auto; max-height: 70vh; object-fit: contain; }
+.galerie-admin .vignette img { object-fit: contain; } /* l'admin voit la photo entière avant de la publier */
+.voir-photos { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linejoin='round'%3E%3Cpath d='M3.5 8h3.5l1.7-2.5h6.6L17 8h3.5v11h-17z'/%3E%3Ccircle cx='12' cy='13.3' r='3.4'/%3E%3C/svg%3E"); }

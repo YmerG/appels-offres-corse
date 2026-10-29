@@ -33,9 +33,10 @@
     if (c.email) { var m = el('a', '', c.email); m.href = 'mailto:' + c.email; co.append(m); }
   }
 
-  // tout ce qui part avec une demande : coordonnées, messages d'artisans, puis la demande
+  // tout ce qui part avec une demande : coordonnées, photos, messages d'artisans, puis la demande
   function aSupprimer(l) {
-    return [f.fs.doc(f.db, l.ref.path, 'prive', 'contact')].concat(l.interets.map(function (i) { return i.ref; }), [l.ref]);
+    return [f.fs.doc(f.db, l.ref.path, 'prive', 'contact')].concat(l.photos.map(function (p) { return p.ref; }),
+      l.interets.map(function (i) { return i.ref; }), [l.ref]);
   }
 
   function carte(l, auteur) {
@@ -50,6 +51,23 @@
     if (d.pourvue) haut.append(el('span', 'dep', 'Pourvue (par le demandeur)'));
     if ((d.nbInterets || 0) >= 5) haut.append(el('span', 'dep', 'Complète : 5 entreprises'));
     corps.append(haut, el('h3', '', d.titre), el('p', 'description description-entiere', d.description));
+    // photos : publiques une fois la demande validée, à regarder avant (visages, plaques, adresses)
+    if (l.photos.length) {
+      var galerie = el('div', 'galerie galerie-admin');
+      l.photos.forEach(function (p, i) {
+        var v = el('button', 'vignette');
+        v.type = 'button';
+        v.setAttribute('aria-pressed', 'false');
+        v.setAttribute('aria-label', 'Agrandir la photo ' + (i + 1));
+        var img = el('img');
+        img.src = 'data:image/jpeg;base64,' + p.data().data.toBase64();
+        img.alt = 'Photo ' + (i + 1);
+        v.append(img);
+        v.onclick = function () { v.setAttribute('aria-pressed', String(v.getAttribute('aria-pressed') !== 'true')); };
+        galerie.append(v);
+      });
+      corps.append(galerie);
+    }
     var dl = el('dl', 'infos');
     [['Lieu', d.commune], ['Budget', d.budget ? d.budget.toLocaleString('fr-FR') + ' €' : '–'],
       ['Réponses avant le', date(d.delai)], ['Reçue le', date(d.cree)]].forEach(function (kv) {
@@ -175,8 +193,9 @@
     var auteurs = {};
     return comptes().then(function (a) { auteurs = a; return f.fs.getDocs(f.fs.collection(f.db, 'demandes')); }).then(function (res) {
       return Promise.all(res.docs.map(function (d) {
-        return Promise.all([f.fs.getDoc(f.fs.doc(f.db, d.ref.path, 'prive', 'contact')), f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'interets'))])
-          .then(function (r) { return { ref: d.ref, d: d.data(), c: r[0].exists() ? r[0].data() : null, interets: r[1].docs }; });
+        return Promise.all([f.fs.getDoc(f.fs.doc(f.db, d.ref.path, 'prive', 'contact')), f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'interets')),
+          d.data().photos ? f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'photos')) : { docs: [] }])
+          .then(function (r) { return { ref: d.ref, d: d.data(), c: r[0].exists() ? r[0].data() : null, interets: r[1].docs, photos: r[2].docs }; });
       }));
     }).then(function (lignes) {
       var ms = function (l) { return l.d.cree ? l.d.cree.toMillis() : 0; };

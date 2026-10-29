@@ -4,6 +4,7 @@ rules_version = '2';
 // demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans (uid = compte auteur).
 // Son auteur la voit aussi en attente (« Mes demandes »).
 // demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
+// demandes/{id}/photos/{1,2,3} : photos de la demande (JPEG en octets), lisibles comme la demande.
 // demandes/{id}/interets/{uid} : messages « Je suis intéressé » des comptes Entreprise vérifiés (un par entreprise, 5 au plus),
 // lisibles par l'administrateur seulement (l'entreprise peut seulement voir que le sien existe).
 // users/{uid} : profil du compte (particulier ou entreprise de travaux), lisible par son titulaire et l'admin seulement.
@@ -55,7 +56,8 @@ service cloud.firestore {
     }
 
     function demandeValide(d) {
-      return d.keys().hasOnly(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree', 'uid'])
+      return d.keys().hasOnly(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree', 'uid', 'photos'])
+        && (!('photos' in d) || (d.photos is int && d.photos >= 1 && d.photos <= 3)) // nombre de photos (demandes/{id}/photos/1 à 3)
         && d.keys().hasAll(['type', 'metier', 'titre', 'description', 'commune', 'departement', 'delai', 'statut', 'cree', 'uid'])
         && d.uid == request.auth.uid
         && d.type in ['prive', 'particulier']
@@ -134,6 +136,21 @@ service cloud.firestore {
           && contactValide(request.resource.data)
           && !exists(/databases/$(database)/documents/demandes/$(id))
           && getAfter(/databases/$(database)/documents/demandes/$(id)).data.statut == 'en_attente';
+      }
+
+      // Photos (1 à 3) : JPEG de 300 Ko au plus réduits dans le navigateur, en octets (pas de Cloud Storage, payant).
+      // Écrites seulement avec la demande, dans la même écriture, par son auteur ; lisibles comme la demande ; supprimées par l'admin.
+      match /photos/{pid} {
+        allow get, list: if get(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee' || estAdmin()
+          || (request.auth != null && get(/databases/$(database)/documents/demandes/$(id)).data.uid == request.auth.uid);
+        allow create: if pid in ['1', '2', '3']
+          && !exists(/databases/$(database)/documents/demandes/$(id))
+          && getAfter(/databases/$(database)/documents/demandes/$(id)).data.uid == request.auth.uid
+          && int(pid) <= getAfter(/databases/$(database)/documents/demandes/$(id)).data.get('photos', 0)
+          && request.resource.data.keys().hasOnly(['data', 'cree'])
+          && request.resource.data.data is bytes && request.resource.data.data.size() <= 300000
+          && request.resource.data.cree == request.time;
+        allow delete: if estAdmin();
       }
 
       // « Je suis intéressé » : message d'un artisan, lisible par l'admin seulement, qui le transmet au demandeur.

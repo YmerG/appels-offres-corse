@@ -24,6 +24,10 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
   - dans « Mes demandes », le demandeur peut cliquer **« Ma demande est pourvue »** (et la rouvrir) ;
   - une demande pourvue ou complète disparaît de la liste, ne reçoit plus de réponses et ne déclenche plus d'alertes ; l'admin la voit marquée « Pourvue » ou « Complète » ;
   - les règles Firestore l'imposent (compteur `nbInterets` augmenté dans la même écriture que le message) ; l'admin recalcule le compteur quand il supprime un message.
+- **Photos dans la demande (v12, lot 4)** :
+  - jusqu'à 3 photos dans « Publier », réduites dans le navigateur en JPEG de 300 Ko au plus (ce qui retire la position GPS) ; vignettes avec bouton « × » pour en retirer une ;
+  - stockées en octets dans Firestore (`demandes/{id}/photos/1 à 3`), pas dans Cloud Storage (payant) ; écrites seulement en même temps que la demande, par son auteur ;
+  - visibles par l'admin avant validation, puis par tous via le bouton « Photos (n) » de la carte (chargées seulement au clic) ; supprimées avec la demande.
 - **Interface (v12, lot 2)** :
   - bouton **« Vue compacte »** à côté du nombre d'avis : seulement l'essentiel de chaque carte (sur téléphone, environ 250 px au lieu de 540, boutons réduits à leur icône) ; le choix est gardé dans le navigateur ;
   - page **`comment-ca-marche.html`** (lien sous les chiffres de l'en-tête et dans le pied de page) : parcours entreprise et particulier en 3 étapes, « Combien ça coûte ? » (gratuit pendant la version de test, **à décider par Rémy pour la suite**), ce qui est vérifié et ce qu'il faut vérifier soi-même (décennale, devis écrit), questions fréquentes.

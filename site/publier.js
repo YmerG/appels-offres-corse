@@ -77,6 +77,61 @@
     location.reload();
   };
 
+  // --- Photos (3 au plus) : réduites ici en JPEG de 300 Ko au plus ; le nouveau fichier ne garde rien de l'appareil (position GPS…)
+  var photos = []; // Blob JPEG
+  var enCours = 0; // photos choisies dont la réduction n'est pas finie
+  var champPhotos = document.getElementById('photos');
+  var vignettes = document.getElementById('vignettes');
+  function reduire(fichier) {
+    return createImageBitmap(fichier).then(function (img) {
+      function essai(cote, qualite) {
+        var k = Math.min(1, cote / Math.max(img.width, img.height));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.width * k);
+        c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', qualite); }).then(function (b) {
+          return b && b.size <= 300000 ? b : cote > 600 ? essai(cote * 0.75, 0.68) : null;
+        });
+      }
+      return essai(1280, 0.75);
+    });
+  }
+  function afficherPhotos() {
+    vignettes.textContent = '';
+    photos.forEach(function (b, i) {
+      var li = document.createElement('li');
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(b);
+      img.alt = 'Photo ' + (i + 1);
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.textContent = '×';
+      x.setAttribute('aria-label', 'Retirer la photo ' + (i + 1));
+      x.onclick = function () { photos.splice(i, 1); afficherPhotos(); champPhotos.focus(); };
+      li.append(img, x);
+      vignettes.append(li);
+    });
+    champPhotos.disabled = photos.length >= 3;
+  }
+  champPhotos.addEventListener('change', function () {
+    var choisis = Array.prototype.slice.call(champPhotos.files);
+    var gardes = choisis.slice(0, Math.max(0, 3 - photos.length - enCours));
+    enCours += gardes.length;
+    champPhotos.value = '';
+    AOC_FB.effacer(form);
+    Promise.all(gardes.map(function (fi) { return reduire(fi).catch(function () { return null; }); })).then(function (bs) {
+      enCours -= gardes.length;
+      var ratees = bs.filter(function (b) { return !b; }).length;
+      photos = photos.concat(bs.filter(Boolean));
+      afficherPhotos();
+      var msg = [];
+      if (choisis.length > gardes.length) msg.push('3 photos au plus.');
+      if (ratees) msg.push((ratees > 1 ? ratees + " photos n'ont pas pu être lues" : "Une photo n'a pas pu être lue") + ' : essayez une photo JPEG ou PNG.');
+      if (msg.length) AOC_FB.sous(champPhotos, msg.join(' '));
+    });
+  });
+
   var NOMS = { metier: 'le métier', titre: 'le titre (5 caractères au moins)', description: 'la description (20 caractères au moins)',
     commune: 'la commune', departement: 'le département', budget: 'le budget (un nombre entier)', delai: 'la date (entre demain et dans 90 jours)',
     nom: 'votre nom', telephone: 'le téléphone', email: "l'e-mail", consentement: "l'accord sur vos coordonnées" };
@@ -100,6 +155,7 @@
     if (faux) return [faux.type === 'radio' ? form.querySelector('[name=' + faux.name + ']') : faux, MSG[faux.name] || 'Vérifiez ' + (NOMS[faux.name] || 'ce champ') + '.'];
     if (n === 0 && v('titre').length < 5) return [form.titre, 'Vérifiez ' + NOMS.titre + '.'];
     if (n === 0 && v('description').length < 20) return [desc, 'Vérifiez ' + NOMS.description + '.'];
+    if (n === 0 && enCours) return [champPhotos, 'Photos en cours de préparation : patientez une seconde.'];
     if (n === 1 && v('commune').length < 2) return [form.commune, 'Vérifiez ' + NOMS.commune + '.'];
     if (n === 2 && !v('telephone') && !v('email')) return [form.telephone, 'Indiquez un téléphone ou un e-mail.'];
   }
@@ -171,13 +227,20 @@
         statut: 'en_attente', cree: fs.serverTimestamp(), uid: m.user.uid
       };
       if (v('budget')) demande.budget = form.budget.valueAsNumber; // « 1e3 » = 1000 ; entier garanti par step="1"
+      if (photos.length) demande.photos = photos.length;
       var contact = { nom: v('nom'), consentement: true, cree: fs.serverTimestamp() };
       if (v('telephone')) contact.telephone = v('telephone');
       if (v('email')) contact.email = v('email');
-      var lot = fs.writeBatch(f.db);
-      lot.set(ref, demande);
-      lot.set(fs.doc(f.db, 'demandes', ref.id, 'prive', 'contact'), contact);
-      return lot.commit();
+      return Promise.all(photos.map(function (b) { return b.arrayBuffer(); })).then(function (octets) {
+        var lot = fs.writeBatch(f.db);
+        lot.set(ref, demande);
+        lot.set(fs.doc(f.db, 'demandes', ref.id, 'prive', 'contact'), contact);
+        // photos/1, 2, 3 : dans la même écriture que la demande (les règles refusent d'en ajouter après)
+        octets.forEach(function (o, i) {
+          lot.set(fs.doc(f.db, 'demandes', ref.id, 'photos', String(i + 1)), { data: fs.Bytes.fromUint8Array(new Uint8Array(o)), cree: fs.serverTimestamp() });
+        });
+        return lot.commit();
+      });
     }).then(merci, function (err) {
       console.warn('Envoi refusé :', err && err.message);
       // refus des règles Firestore (champ que le navigateur a laissé passer) : ne pas parler de connexion

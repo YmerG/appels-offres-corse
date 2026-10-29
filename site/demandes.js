@@ -40,8 +40,46 @@
       '<p class="places">' + (d.nbInterets ? d.nbInterets + ' entreprise' + (d.nbInterets > 1 ? 's' : '') + ' sur 5 ' +
         (d.nbInterets > 1 ? 'ont' : 'a') + ' déjà répondu' : 'Aucune réponse pour le moment : 5 entreprises au plus') + '</p>' +
       '<p class="interesse"><a class="bouton-publier" href="interesse.html?d=' + encodeURIComponent(id) +
-      '" aria-label="Je suis intéressé : ' + esc(d.titre) + '">Je suis intéressé</a></p></div>';
+      '" aria-label="Je suis intéressé : ' + esc(d.titre) + '">Je suis intéressé</a></p>' +
+      // Suivre et Agenda viennent se mettre devant (app.js)
+      (d.photos ? '<p class="actions"><button type="button" class="action voir-photos" aria-expanded="false" aria-label="Voir les photos : ' +
+        esc(d.titre) + '">Photos (' + (d.photos | 0) + ')</button></p>' : '') + '</div>';
+    if (d.photos) a.querySelector('.voir-photos').onclick = function () { voirPhotos(this, a, id); };
     return a;
+  }
+
+  // photos (demandes/{id}/photos) chargées seulement à la demande ; un clic sur une vignette l'agrandit
+  function voirPhotos(b, a, id) {
+    var galerie = a.querySelector('.galerie');
+    if (galerie) {
+      galerie.hidden = !galerie.hidden;
+      return b.setAttribute('aria-expanded', String(!galerie.hidden));
+    }
+    if (b.getAttribute('aria-busy')) return;
+    b.setAttribute('aria-busy', 'true'); // pas disabled : le focus resterait perdu
+    f.fs.getDocs(f.fs.collection(f.db, 'demandes', id, 'photos')).then(function (res) {
+      galerie = document.createElement('div');
+      galerie.className = 'galerie';
+      res.docs.forEach(function (s, i) {
+        var v = document.createElement('button');
+        v.type = 'button';
+        v.className = 'vignette';
+        v.setAttribute('aria-pressed', 'false');
+        v.setAttribute('aria-label', 'Agrandir la photo ' + (i + 1));
+        var img = document.createElement('img');
+        img.src = 'data:image/jpeg;base64,' + s.data().data.toBase64();
+        img.alt = 'Photo ' + (i + 1) + ' de la demande';
+        v.append(img);
+        v.onclick = function () { v.setAttribute('aria-pressed', String(v.getAttribute('aria-pressed') !== 'true')); };
+        galerie.append(v);
+      });
+      b.parentNode.after(galerie); // après le bouton : Tab y mène directement
+      b.textContent = res.docs.length ? 'Photos (' + res.docs.length + ')' : 'Aucune photo';
+      b.setAttribute('aria-expanded', 'true');
+    }, function (e) {
+      console.warn('Photos indisponibles :', e && e.code);
+      b.textContent = 'Photos indisponibles';
+    }).then(function () { b.removeAttribute('aria-busy'); });
   }
 
   // Sur ses propres demandes, l'auteur voit « Votre demande » au lieu de « Je suis intéressé ».

@@ -2,6 +2,7 @@
 Usage : npx -y firebase-tools@latest emulators:exec --project demo-appels-offres-corse --only firestore,auth "python3 outils/test_regles.py"
 Avec --demo : laisse en plus des comptes et 2 demandes, pour essayer les pages (identifiants affichés à la fin).
 """
+import base64
 import json
 import sys
 import urllib.error
@@ -29,6 +30,8 @@ def appel(url, corps=None, jeton=None, methode=None):
 
 
 def valeur(v):
+    if isinstance(v, bytes):
+        return {"bytesValue": base64.b64encode(v).decode()}
     if isinstance(v, bool):
         return {"booleanValue": v}
     if isinstance(v, int):
@@ -375,9 +378,46 @@ def main():
     assert appel(FS + f"/types/{part_nv_uid}", jeton=part_nv_jeton, methode="DELETE")[0] == 403, "type supprimé"
     assert appel(FS + f"/types/{part_nv_uid}", jeton=intrus_jeton)[0] == 403
     assert commit([ecriture(f"users/{part_nv_uid}", PROFIL_P)], part_nv_jeton) == 200, "recréé avec le même type"
+    # photos : avec la demande seulement, 1 à 3 annoncées, en octets, 300 Ko au plus ; lisibles comme la demande ; supprimées par l'admin
+    JPEG = b"\xff\xd8\xff" + b"0" * 1000
+
+    def avec_photos(i, n, photos, jeton=part_jeton, en_trop=None):
+        w = [ecriture(f"demandes/{i}", {**DEMANDE, **({"photos": n} if n is not None else {})}), ecriture(f"demandes/{i}/prive/contact", CONTACT)]
+        w += [ecriture(f"demandes/{i}/photos/{p}", {"data": d, "cree": True, **(en_trop or {})}) for p, d in photos]
+        return commit(w, jeton)
+
+    assert avec_photos("ph1", 2, [("1", JPEG), ("2", JPEG)]) == 200
+    refus_photos = {
+        "plus de photos qu'annoncé": (1, [("1", JPEG), ("2", JPEG)]),
+        "sans le nombre": (None, [("1", JPEG)]),
+        "4 photos": (4, [(str(k), JPEG) for k in range(1, 5)]),
+        "nombre en texte": ("2", [("1", JPEG), ("2", JPEG)]),
+        "identifiant inconnu": (1, [("x", JPEG)]),
+        "photo trop lourde": (1, [("1", b"0" * 300001)]),
+        "photo en texte": (1, [("1", "data:image/jpeg;base64,AAAA")]),
+    }
+    for nom, (n, ph) in refus_photos.items():
+        assert avec_photos("ph2", n, ph) == 403, nom
+    assert avec_photos("ph2", 1, [("1", JPEG)], en_trop={"legende": "x"}) == 403, "champ en trop (photo)"
+    assert avec_photos("ph2", 1, [("1", JPEG)], jeton=ent_jeton) == 403, "demande d'un autre compte"
+    assert commit([ecriture("demandes/ok1/photos/1", {"data": JPEG, "cree": True})], part_jeton) == 403, "photo ajoutée après coup"
+    assert appel(FS + "/demandes/ph1/photos/1")[0] == 403, "photo publique avant validation"
+    assert appel(FS + "/demandes/ph1/photos", jeton=ent_jeton)[0] == 403
+    assert appel(FS + "/demandes/ph1/photos/1", jeton=part_jeton)[0] == 200, "l'auteur voit ses photos"
+    assert appel(FS + "/demandes/ph1/photos", jeton=admin_jeton)[0] == 200
+    assert maj("demandes/ph1", admin_jeton, {"statut": "validee"}) == 200
+    code, res = appel(FS + "/demandes/ph1/photos")
+    assert code == 200 and len(res["documents"]) == 2, "photos publiques après validation"
+    for jeton in (None, part_jeton, ent_jeton):
+        assert appel(FS + "/demandes/ph1/photos/1", jeton=jeton, methode="DELETE")[0] == 403
+    assert appel(FS + "/demandes/ph1/photos/2", jeton=admin_jeton, methode="DELETE")[0] == 200
+    for chemin in ("ph1/photos/1", "ph1/prive/contact", "ph1"):
+        appel(FS + f"/demandes/{chemin}", jeton="owner", methode="DELETE")
+
     print(f"OK : règles Firestore (profils : {len(refus_profil) + 16} refus de création, lecture et modification ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
-          f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus)")
+          f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus ; "
+          f"photos : {len(refus_photos) + 6} refus, publiques après validation seulement)")
 
     for _, u in autres[:4]:
         appel(FS + f"/demandes/cap/interets/{u}", jeton="owner", methode="DELETE")
