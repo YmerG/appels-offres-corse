@@ -35,10 +35,38 @@
     if (c.email) { var m = el('a', '', c.email); m.href = 'mailto:' + c.email; co.append(m); }
   }
 
-  // tout ce qui part avec une demande : coordonnées, photos, messages d'artisans, puis la demande
+  // tout ce qui part avec une demande : coordonnées, photos, messages d'artisans, discussions et leurs messages, puis la demande
   function aSupprimer(l) {
+    var disc = [];
+    l.discussions.forEach(function (x) { disc = disc.concat(x.msgs.map(function (m) { return m.ref; }), [x.s.ref]); });
     return [f.fs.doc(f.db, l.ref.path, 'prive', 'contact')].concat(l.photos.map(function (p) { return p.ref; }),
-      l.interets.map(function (i) { return i.ref; }), [l.ref]);
+      l.interets.map(function (i) { return i.ref; }), disc, [l.ref]);
+  }
+
+  // discussions de la demande (lot 18.6), lisibles par l'admin pour la modération : supprimer un message, fermer la discussion
+  function blocDiscussions(l) {
+    var box = el('div', 'interets');
+    box.append(el('p', 'titre-outil', 'Discussions privées (' + l.discussions.length + ') : à lire seulement pour la modération'));
+    l.discussions.forEach(function (x) {
+      var d = x.s.data(), bloc = el('div', 'contact-prive');
+      bloc.append(el('p', 'qui-interet', d.nomEntreprise + ' ↔ demandeur · ' + (d.ouverte ? 'ouverte' : 'fermée') + ' · dernier message le ' + date(d.maj)));
+      x.msgs.forEach(function (m) {
+        var msg = m.data(), p = el('p', 'description description-entiere', (msg.auteur === d.particulier ? 'Demandeur' : d.nomEntreprise) + ' · ' + date(msg.cree) + ' : ' + msg.texte);
+        var sup = el('button', 'lien-bouton', 'Supprimer ce message');
+        sup.type = 'button';
+        sup.onclick = function () { if (confirm('Supprimer définitivement ce message ?')) agir(f.fs.deleteDoc(m.ref)); };
+        p.append(' ', sup);
+        bloc.append(p);
+      });
+      if (d.ouverte) {
+        var fermer = el('button', 'bouton-sortir', 'Fermer la discussion');
+        fermer.type = 'button';
+        fermer.onclick = function () { if (confirm('Fermer cette discussion ? Plus personne ne pourra y écrire.')) agir(f.fs.updateDoc(x.s.ref, { ouverte: false })); };
+        bloc.append(fermer);
+      }
+      box.append(bloc);
+    });
+    return box;
   }
 
   function carte(l, auteur) {
@@ -132,6 +160,7 @@
       }
       corps.append(it);
     }
+    if (l.discussions.length) corps.append(blocDiscussions(l));
     var actions = el('p', 'actions-admin');
     // Retirer : cachée du site (« en_attente »), gardée dans « Retirées, pas visibles » ; Republier : de nouveau en ligne
     var publiee = d.statut === 'validee';
@@ -170,6 +199,14 @@
     echues.forEach(function (refs) { refs.forEach(function (r) { lot.delete(r); }); });
     agir(lot.commit());
   });
+
+  function discussionsDe(id) {
+    return f.fs.getDocs(f.fs.query(f.fs.collection(f.db, 'discussions'), f.fs.where('demande', '==', id))).then(function (res) {
+      return Promise.all(res.docs.map(function (s) {
+        return f.fs.getDocs(f.fs.query(f.fs.collection(s.ref, 'messages'), f.fs.orderBy('cree'))).then(function (m) { return { s: s, msgs: m.docs }; });
+      }));
+    }, function (e) { console.warn('Discussions illisibles :', e && e.code); return []; }); // règles pas encore publiées
+  }
 
   function agir(p) {
     p.then(charger, function (e) { erreur('erreur', 'Action refusée : ' + (e && e.code || e)); });
@@ -294,8 +331,8 @@
     }).then(function (res) {
       return Promise.all(res.docs.map(function (d) {
         return Promise.all([f.fs.getDoc(f.fs.doc(f.db, d.ref.path, 'prive', 'contact')), f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'interets')),
-          d.data().photos ? f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'photos')) : { docs: [] }])
-          .then(function (r) { return { ref: d.ref, d: d.data(), c: r[0].exists() ? r[0].data() : null, interets: r[1].docs, photos: r[2].docs }; });
+          d.data().photos ? f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'photos')) : { docs: [] }, discussionsDe(d.id)])
+          .then(function (r) { return { ref: d.ref, d: d.data(), c: r[0].exists() ? r[0].data() : null, interets: r[1].docs, photos: r[2].docs, discussions: r[3] }; });
       }));
     }).then(function (lignes) {
       var ms = function (l) { return l.d.cree ? l.d.cree.toMillis() : 0; };
@@ -321,6 +358,7 @@
       var vise = location.hash && document.getElementById(location.hash.slice(1));
       // lien du message de modération : la demande à l'écran, focus sur « Retirer »
       if (vise) { vise.scrollIntoView(); vise.querySelector('[data-bascule]').focus({ preventScroll: true }); }
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search); // une seule fois, pas après chaque action
     }, function (e) {
       montrer('espace');
       erreur('erreur', e && e.code === 'permission-denied' ? "Ce compte n'est pas administrateur." : 'Lecture impossible : ' + (e && e.message));

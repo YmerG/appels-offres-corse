@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Discussion · Appels d'offres Corse</title>
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icones/favicon-16.png">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="compte.html#discussions"><picture><source srcset="icones/logo-sombre.png" media="(prefers-color-scheme: dark)"><img class="logo" src="icones/logo-clair.png" alt="AO Corse, appels d'offres en Corse" width="122" height="32"></picture></a><span class="proto">Test</span><a class="lien-compte" href="compte.html#discussions">Compte</a></p>
+      <h1 id="titre">Discussion</h1>
+      <p class="chapo" id="avec">Chargement…</p>
+    </div>
+  </header>
+
+  <main class="cadre page-form">
+    <p class="bandeau-test bandeau-test-fort">Version de test : n'échangez pas de vraies coordonnées.</p>
+    <p class="aide-bloc">Discussion privée : seuls vous, votre interlocuteur et l'administrateur du site (pour la modération) peuvent la lire.</p>
+    <p class="erreur" id="etat" role="alert" hidden></p>
+
+    <ol class="fil" id="fil" aria-label="Messages" aria-live="polite"></ol>
+
+    <form id="f-msg" class="carte-form" novalidate hidden>
+      <label for="texte">Votre message <span class="aide" id="reste">1 000 caractères au plus</span></label>
+      <textarea id="texte" name="texte" required maxlength="1000" rows="3"></textarea>
+      <p class="erreur" id="erreur" role="alert" hidden></p>
+      <button type="submit" class="bouton-publier" id="envoyer">Envoyer</button>
+    </form>
+    <p class="merci" id="fermee" hidden>Cette discussion est fermée : plus aucun message ne peut être envoyé.</p>
+    <div id="notifs"></div>
+    <p class="ligne-admin"><button type="button" class="lien-bouton" id="fermer" hidden>Fermer cette discussion</button></p>
+    <p class="ligne-admin"><a href="compte.html#discussions">Toutes mes discussions</a></p>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p><a href="index.html">Appels d'offres Corse</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a></p>
+      <p>Prototype, version de test. Aucun cookie.</p>
+    </div>
+  </footer>
+
+  <script src="discussion.js"></script>
+</body>
+</html>

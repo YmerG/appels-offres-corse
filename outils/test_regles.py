@@ -47,12 +47,22 @@ def valeur(v):
 
 def ecriture(chemin, champs, nouveau=True):
     """Création avec « cree » = heure du serveur (comme serverTimestamp() côté site)."""
+    heure = [k for k in ("cree", "maj") if champs.get(k) is True]  # True : heure du serveur
     w = {"update": {"name": f"projects/{PROJET}/databases/(default)/documents/{chemin}",
-                    "fields": {k: valeur(v) for k, v in champs.items() if k != "cree"}}}
-    if "cree" in champs:
-        w["updateTransforms"] = [{"fieldPath": "cree", "setToServerValue": "REQUEST_TIME"}]
+                    "fields": {k: valeur(v) for k, v in champs.items() if k not in heure}}}
+    if heure:
+        w["updateTransforms"] = [{"fieldPath": k, "setToServerValue": "REQUEST_TIME"} for k in heure]
     if nouveau:
         w["currentDocument"] = {"exists": False}
+    return w
+
+
+def modif(chemin, champs, heure=()):
+    """Écriture partielle pour un lot (updateMask), avec des champs à l'heure du serveur (comme serverTimestamp())."""
+    w = {"update": {"name": f"projects/{PROJET}/databases/(default)/documents/{chemin}", "fields": {k: valeur(v) for k, v in champs.items()}},
+         "updateMask": {"fieldPaths": list(champs)}, "currentDocument": {"exists": True}}
+    if heure:
+        w["updateTransforms"] = [{"fieldPath": k, "setToServerValue": "REQUEST_TIME"} for k in heure]
     return w
 
 
@@ -78,8 +88,8 @@ def compte(email, mdp, verifie=False):
     return r["idToken"], r["localId"]
 
 
-def requete(champ, val):
-    return {"structuredQuery": {"from": [{"collectionId": "demandes"}],
+def requete(champ, val, collection="demandes"):
+    return {"structuredQuery": {"from": [{"collectionId": collection}],
                                 "where": {"fieldFilter": {"field": {"fieldPath": champ}, "op": "EQUAL", "value": valeur(val)}}}}
 
 
@@ -376,6 +386,97 @@ def main():
     assert maj("demandes/e1", admin_jeton, {"statut": "validee"}) == 200
     assert interet({**INTERET}, "e1") == 403, "sa propre demande"
 
+    # discussions (lot 18.6) : ouvertes par l'entreprise avec son « Je suis intéressé » (premier message = le sien),
+    # lues par les 2 participants et l'admin seulement ; messages seulement tant qu'elle est ouverte ; fermée par le demandeur
+    assert publier("t1") == 200
+    (ent4_jeton, ent4_uid) = autres[2]
+    DISC = f"t1_{ent3_uid}"
+
+    def ouvrir(jeton=ent3_jeton, uid=ent3_uid, disc=None, msg=None, avec_interet=True, avec_msg=True, did=None):
+        did = did or f"t1_{uid}"
+        w = [ecriture(f"demandes/t1/interets/{uid}", {**INTERET, "uid": uid}), plus("t1")] if avec_interet else []
+        w.append(ecriture(f"discussions/{did}", {"demande": "t1", "particulier": part_uid, "entreprise": uid, "titre": DEMANDE["titre"],
+                                                 "nomEntreprise": PROFIL_E["nom"], "ouverte": True, "cree": True, "maj": True,
+                                                 "dernier": uid, "dernierMsg": "m1", **(disc or {})}))
+        if avec_msg:
+            w.append(ecriture(f"discussions/{did}/messages/m1", {"auteur": uid, "texte": INTERET["message"], "cree": True, **(msg or {})}))
+        return commit(w, jeton)
+
+    refus_ouverture = {
+        "sans « Je suis intéressé »": dict(avec_interet=False),
+        "sans premier message": dict(avec_msg=False),
+        "demandeur d'un autre": dict(disc={"particulier": ent_uid}),
+        "titre changé": dict(disc={"titre": "Autre titre"}),
+        "nom d'entreprise inventé": dict(disc={"nomEntreprise": "Société inventée"}),
+        "fermée dès l'ouverture": dict(disc={"ouverte": False}),
+        "champ en trop": dict(disc={"telephone": "06 00 00 00 00"}),
+        "identifiant d'une autre entreprise": dict(did=f"t1_{ent_uid}"),
+        "premier message d'un autre": dict(msg={"auteur": part_uid}),
+    }
+    for nom, k in refus_ouverture.items():
+        assert ouvrir(ent4_jeton, ent4_uid, **k) == 403, f"discussion : {nom}"
+    assert ouvrir() == 200
+    # lecture : les 2 participants et l'admin
+    for jeton in (part_jeton, ent3_jeton, admin_jeton):
+        assert appel(FS + f"/discussions/{DISC}", jeton=jeton)[0] == 200
+        assert appel(FS + f"/discussions/{DISC}/messages", jeton=jeton)[0] == 200
+    for jeton in (None, intrus_jeton, ent_jeton, ent4_jeton):
+        assert appel(FS + f"/discussions/{DISC}", jeton=jeton)[0] == 403, "discussion lue par un autre"
+        assert appel(FS + f"/discussions/{DISC}/messages", jeton=jeton)[0] == 403, "messages lus par un autre"
+    code, res = appel(FS + ":runQuery", requete("particulier", part_uid, "discussions"), part_jeton)
+    assert code == 200 and ids(res) == [DISC], "Mes discussions (demandeur)"
+    code, res = appel(FS + ":runQuery", requete("entreprise", ent3_uid, "discussions"), ent3_jeton)
+    assert code == 200 and ids(res) == [DISC], "Mes discussions (entreprise)"
+    assert appel(FS + ":runQuery", requete("particulier", part_uid, "discussions"), ent_jeton)[0] == 403
+    assert appel(FS + ":runQuery", {"structuredQuery": {"from": [{"collectionId": "discussions"}]}}, part_jeton)[0] == 403
+
+    def ecrire(mid, jeton, uid, texte="Bonjour, vous pouvez passer mardi ?", auteur=None, avec_maj=True, dernier=None):
+        w = [ecriture(f"discussions/{DISC}/messages/{mid}", {"auteur": auteur or uid, "texte": texte, "cree": True})]
+        if avec_maj:
+            w.append(modif(f"discussions/{DISC}", {"dernier": dernier or uid, "dernierMsg": mid}, ["maj"]))
+        return commit(w, jeton)
+
+    assert ecrire("m2", part_jeton, part_uid) == 200
+    assert ecrire("m3", ent3_jeton, ent3_uid) == 200
+    refus_message = {
+        "autre entreprise": dict(jeton=ent_jeton, uid=ent_uid),
+        "sans connexion": dict(jeton=None, uid=part_uid),
+        "auteur d'un autre": dict(jeton=part_jeton, uid=part_uid, auteur=ent3_uid),
+        "vide": dict(jeton=part_jeton, uid=part_uid, texte=""),
+        "trop long": dict(jeton=part_jeton, uid=part_uid, texte="m" * 1001),
+        "sans mettre la discussion à jour": dict(jeton=part_jeton, uid=part_uid, avec_maj=False),
+        "dernier = l'autre": dict(jeton=part_jeton, uid=part_uid, dernier=ent3_uid),
+    }
+    for nom, k in refus_message.items():
+        assert ecrire("m9", **k) == 403, f"message : {nom}"
+    assert ecrire("m2", part_jeton, part_uid) == 403, "message réécrit"
+    assert commit([modif(f"discussions/{DISC}", {"dernier": part_uid, "dernierMsg": "m8"}, ["maj"])], part_jeton) == 403, "mise à jour sans message"
+    # lu : chacun le sien, à l'heure du serveur
+    assert commit([modif(f"discussions/{DISC}", {}, ["luP"])], part_jeton) == 200
+    assert commit([modif(f"discussions/{DISC}", {}, ["luE"])], ent3_jeton) == 200
+    assert commit([modif(f"discussions/{DISC}", {}, ["luE"])], part_jeton) == 403, "lu de l'autre"
+    assert commit([modif(f"discussions/{DISC}", {"luP": dans(1)})], part_jeton) == 403, "lu à une date choisie"
+    # fermeture : par le demandeur (ou l'admin), définitive ; plus aucun message
+    assert commit([modif(f"discussions/{DISC}", {"ouverte": False})], ent3_jeton) == 403, "fermée par l'entreprise"
+    assert commit([modif(f"discussions/{DISC}", {"ouverte": False})], part_jeton) == 200
+    assert ecrire("m4", ent3_jeton, ent3_uid) == 403, "message après fermeture (entreprise)"
+    assert ecrire("m4", part_jeton, part_uid) == 403, "message après fermeture (demandeur)"
+    assert commit([modif(f"discussions/{DISC}", {"ouverte": True})], part_jeton) == 403, "rouverte"
+    assert appel(FS + f"/discussions/{DISC}", jeton=ent3_jeton)[0] == 200, "toujours lisible, fermée"
+    # suppression : l'admin seulement
+    for jeton in (part_jeton, ent3_jeton):
+        assert appel(FS + f"/discussions/{DISC}/messages/m3", jeton=jeton, methode="DELETE")[0] == 403
+    assert appel(FS + f"/discussions/{DISC}/messages/m3", jeton=admin_jeton, methode="DELETE")[0] == 200
+
+    # jetons de notification : chacun les siens, 5 au plus, jamais lus par un autre
+    assert commit([ecriture(f"jetons/{part_uid}", {"liste": ["jeton-a"], "maj": True}, nouveau=False)], part_jeton) == 200
+    assert commit([ecriture(f"jetons/{part_uid}", {"liste": ["jeton-x"], "maj": True}, nouveau=False)], intrus_jeton) == 403, "jetons d'un autre"
+    assert commit([ecriture(f"jetons/{part_uid}", {"liste": [str(i) for i in range(6)], "maj": True}, nouveau=False)], part_jeton) == 403, "6 jetons"
+    assert commit([ecriture(f"jetons/{part_uid}", {"liste": ["jeton-a"], "maj": True, "uid": part_uid}, nouveau=False)], part_jeton) == 403, "champ en trop (jetons)"
+    assert appel(FS + f"/jetons/{part_uid}", jeton=part_jeton)[0] == 200
+    for jeton in (None, intrus_jeton, ent3_jeton, admin_jeton):
+        assert appel(FS + f"/jetons/{part_uid}", jeton=jeton)[0] == 403, "jetons lus par un autre"
+
     # « Je cherche un partenaire » sur un avis BOAMP : identifiant <avis>_<uid>, entreprise vérifiée, lu par l'admin seulement
     AVIS = "26-93354"
     PARTENAIRE = {**INTERET, "avis": AVIS, "objet": "Construction d'un chalet thermal - Lot 5", "limite": dans(20)}
@@ -538,7 +639,8 @@ def main():
           f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus ; "
           f"partenaires : {len(refus_partenaire) + 17} refus, lus par l'admin seulement ; "
           f"fiches : {len(refus_fiche) + 20} refus, publiques après validation seulement, jamais listées ; "
-          f"photos : {len(refus_photos) + 7} refus, cachées quand la demande est retirée)")
+          f"photos : {len(refus_photos) + 7} refus, cachées quand la demande est retirée ; "
+          f"discussions : {len(refus_ouverture) + len(refus_message) + 21} refus, lues par les 2 participants et l'admin ; jetons : 7 refus)")
 
     for _, u in autres[:4]:
         appel(FS + f"/demandes/cap/interets/{u}", jeton="owner", methode="DELETE")
@@ -550,7 +652,10 @@ def main():
     else:
         appel(FS + f"/demandes/ok1/interets/{ent_uid}", jeton="owner", methode="DELETE")
         appel(FS + f"/partenaires/{AVIS}_{ent_uid}", jeton="owner", methode="DELETE")
-        for i in ("ok1", "x1", "e1"):
+        for chemin in (f"discussions/{DISC}/messages/m1", f"discussions/{DISC}/messages/m2", f"discussions/{DISC}",
+                       f"demandes/t1/interets/{ent3_uid}", f"jetons/{part_uid}"):
+            appel(FS + f"/{chemin}", jeton="owner", methode="DELETE")
+        for i in ("ok1", "x1", "e1", "t1"):
             appel(FS + f"/demandes/{i}/prive/contact", jeton="owner", methode="DELETE")
             appel(FS + f"/demandes/{i}", jeton="owner", methode="DELETE")
         for uid in [part_uid, ent_uid, part_nv_uid, ent_nv_uid] + [u for _, u in autres]:

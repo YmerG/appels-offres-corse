@@ -9,7 +9,7 @@
 
   // retour après connexion vers la page qui l'a demandée (seulement nos trois formulaires)
   var retour = new URLSearchParams(location.search).get('retour') || '';
-  if (!/^(publier|interesse|partenaire)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$/.test(retour)) retour = '';
+  if (!/^(publier|interesse|partenaire)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$|^discussion\.html\?id=[A-Za-z0-9_-]{1,200}$/.test(retour)) retour = '';
   var pourEntreprise = /^(interesse|partenaire)/.test(retour);
   if (retour) {
     $('raison').textContent = pourEntreprise
@@ -335,8 +335,10 @@
       $('r-action').textContent = ent ? 'Mes appels d’offres' : 'Publier une demande de travaux';
       $('r-action').href = ent ? 'index.html#mes=1' : 'publier.html';
       $('r-demandes').hidden = !ent;
-      $('mes-demandes').hidden = false;
+      $('mes-demandes').hidden = $('discussions').hidden = false;
       mesDemandes();
+      mesDiscussions(ent);
+      AOC_FB.boutonNotifs($('notifs'));
       $('alertes').hidden = $('fiche').hidden = !ent;
       if (ent) maFiche();
       if (ent) {
@@ -351,7 +353,7 @@
           ecrireAlertes(false);
         }
       }
-      if (location.hash === '#mes-demandes' || (ent && location.hash === '#alertes')) $(location.hash.slice(1)).scrollIntoView();
+      if (location.hash === '#mes-demandes' || location.hash === '#discussions' || (ent && location.hash === '#alertes')) $(location.hash.slice(1)).scrollIntoView();
     });
   }
 
@@ -517,6 +519,66 @@
     }, function (e) {
       console.warn('Mes demandes :', e && e.message);
       liste.textContent = 'Vos demandes ne peuvent pas être chargées. Réessayez plus tard.';
+    });
+  }
+
+  // discussions (lot 18.6) : comme demandeur avec les entreprises qui ont répondu, ou comme entreprise ; les plus récentes d'abord
+  function mesDiscussions(ent) {
+    var liste = $('liste-disc');
+    return AOC_FB.discussions(f, moi.uid).then(function (docs) {
+      liste.textContent = '';
+      var ms = function (s) { return s.data().maj ? s.data().maj.toMillis() : 0; };
+      docs.sort(function (a, b) { return ms(b) - ms(a); });
+      var neuves = docs.filter(function (s) { return AOC_FB.nonLue(s.data(), moi.uid); }).length;
+      AOC_FB.badge(neuves);
+      $('nb-disc').textContent = docs.length;
+      $('neuf-disc').textContent = neuves ? neuves + (neuves > 1 ? ' non lues' : ' non lue') : '';
+      $('neuf-disc').hidden = !neuves;
+      if (!docs.length) {
+        var vide = document.createElement('p');
+        vide.className = 'vide';
+        vide.textContent = ent ? 'Aucune discussion pour le moment. Elle s’ouvre quand vous répondez à une demande (« Je suis intéressé »).'
+          : 'Aucune discussion pour le moment. Elle s’ouvre quand une entreprise répond à une de vos demandes.';
+        return liste.append(vide);
+      }
+      docs.forEach(function (s) {
+        var d = s.data(), a = document.createElement('article'), corps = document.createElement('div'), haut = document.createElement('p');
+        a.className = 'avis avis-admin';
+        corps.className = 'corps';
+        haut.className = 'haut';
+        if (AOC_FB.nonLue(d, moi.uid)) {
+          var nv = document.createElement('span');
+          nv.className = 'pastille-neuf';
+          nv.textContent = 'Nouveau message';
+          haut.append(nv);
+        }
+        var qui = document.createElement('span');
+        qui.className = 'dep';
+        qui.textContent = moi.uid === d.particulier ? d.nomEntreprise : 'Demandeur';
+        haut.append(qui);
+        if (!d.ouverte) {
+          var fermee = document.createElement('span');
+          fermee.className = 'dep';
+          fermee.textContent = 'Fermée';
+          haut.append(fermee);
+        }
+        var h = document.createElement('h3'), lien = document.createElement('a');
+        lien.href = 'discussion.html?id=' + encodeURIComponent(s.id);
+        lien.textContent = d.titre;
+        h.append(lien);
+        var p = document.createElement('p');
+        p.className = 'suite';
+        p.textContent = 'Dernier message le ' + (d.maj ? d.maj.toDate().toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '–')
+          + (d.dernier === moi.uid ? ' (par vous)' : '');
+        var ouvrir = document.createElement('a');
+        ouvrir.className = 'bouton-sortir';
+        ouvrir.href = lien.href;
+        ouvrir.textContent = d.ouverte ? 'Lire et répondre' : 'Relire';
+        ouvrir.setAttribute('aria-label', ouvrir.textContent + ' : ' + d.titre);
+        corps.append(haut, h, p, ouvrir);
+        a.append(corps);
+        liste.append(a);
+      });
     });
   }
 

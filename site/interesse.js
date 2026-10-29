@@ -1,5 +1,6 @@
 // « Je suis intéressé » : un compte Entreprise à l'e-mail vérifié répond à une demande validée (les règles Firestore l'imposent aussi).
-// Son message va dans demandes/{id}/interets, lisible par l'admin seulement.
+// Son message va dans demandes/{id}/interets, lisible par l'admin seulement (avec ses coordonnées), et ouvre une discussion
+// privée avec le demandeur (discussions/{id}_{uid}, lot 18.6) dont il est le premier message.
 (function () {
   var form = document.getElementById('form');
   var erreur = document.getElementById('erreur');
@@ -7,7 +8,7 @@
   var msg = document.getElementById('message');
   var texte = document.getElementById('demande-texte');
   var id = new URLSearchParams(location.search).get('d') || '';
-  var f, m;
+  var f, m, dem;
 
   msg.addEventListener('input', function () {
     var n = msg.value.trim().length;
@@ -32,7 +33,7 @@
     return f.fs.getDoc(f.fs.doc(f.db, 'demandes', id));
   }).then(function (s) {
     if (!s.exists()) throw { code: 'not-found' };
-    var d = s.data();
+    var d = dem = s.data();
     var onglet = 'index.html#onglet=' + (d.type === 'prive' ? 'prive' : 'particulier');
     document.querySelectorAll('.retour, .retour-liste').forEach(function (a) { a.href = onglet; });
     var limite = d.delai.toDate();
@@ -59,7 +60,12 @@
     }
     // une seule réponse par entreprise : son message porte l'identifiant de son compte
     return f.fs.getDoc(f.fs.doc(f.db, 'demandes', id, 'interets', m.user.uid)).then(function (deja) {
-      if (deja.exists()) return texte.append(document.createElement('br'), 'Vous avez déjà répondu à cette demande : nous transmettons votre message au demandeur.');
+      if (deja.exists()) {
+        var disc = document.createElement('a');
+        disc.href = 'discussion.html?id=' + encodeURIComponent(id + '_' + m.user.uid);
+        disc.textContent = 'Ouvrir la discussion';
+        return texte.append(document.createElement('br'), 'Vous avez déjà répondu à cette demande. ', disc);
+      }
       if (d.pourvue) return texte.append(document.createElement('br'), 'Le demandeur a trouvé son entreprise : cette demande ne reçoit plus de réponses.');
       if (nb >= 5) return texte.append(document.createElement('br'), 'Cette demande a déjà reçu 5 réponses, le maximum : elle ne reçoit plus de réponses.');
       form.nom.value = m.profil.nom;
@@ -115,6 +121,12 @@
     var lot = f.fs.writeBatch(f.db);
     lot.set(f.fs.doc(f.db, 'demandes', id, 'interets', m.user.uid), interet);
     lot.update(f.fs.doc(f.db, 'demandes', id), { nbInterets: f.fs.increment(1) });
+    // la discussion avec le demandeur, son message en premier (sans les coordonnées, qui restent à l'admin)
+    var did = id + '_' + m.user.uid, premier = f.fs.doc(f.fs.collection(f.db, 'discussions', did, 'messages'));
+    lot.set(f.fs.doc(f.db, 'discussions', did), { demande: id, particulier: dem.uid, entreprise: m.user.uid, titre: dem.titre,
+      nomEntreprise: m.profil.nom, ouverte: true, cree: f.fs.serverTimestamp(), maj: f.fs.serverTimestamp(), dernier: m.user.uid, dernierMsg: premier.id });
+    lot.set(premier, { auteur: m.user.uid, texte: v('message'), cree: f.fs.serverTimestamp() });
+    document.getElementById('vers-discussion').href = 'discussion.html?id=' + encodeURIComponent(did);
     lot.commit().then(merci, function (err) {
       console.warn('Envoi refusé :', err && err.message);
       dire(err && err.code === 'permission-denied'

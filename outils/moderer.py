@@ -8,6 +8,8 @@ il n'écrit rien dans Firestore et ne lit jamais les coordonnées privées (dema
 Si une demande pose problème, il prévient le Master une seule fois :
   python3 /Users/remy/ClaudeChat/tools/report.py "Modération AOC" "Demande à vérifier : <titre> — <raison> — <lien admin>"
 (numéros, adresses et liens masqués dans le titre). Demandes déjà vues : .moderation-vues.json (local, pas publié).
+Discussions privées (lot 18.6) : leurs nouveaux messages sont lus avec le compte admin (mot de passe dans le trousseau
+du Mac, voir TROUSSEAU plus bas) et signalés de la même façon (« Message à vérifier : … »). Sans ce mot de passe : sautées.
 Essai sur les vraies données, sans rien noter ni envoyer : --essai.
 Contrôle automatique, sans réseau : python3 outils/test_moderer.py
 """
@@ -46,10 +48,11 @@ COMMUNES.update({cle_commune(n): dep for n, dep in (
 
 # Tout ce qui permettrait de joindre le demandeur sans passer par le site (ses coordonnées restent privées).
 TELEPHONE = re.compile(r"(?:\+33\s*(?:\(0\))?\s*|\b0)[1-9](?:[\s.\-/,]*\d\d){4}\b|\+\d(?:[\s.\-/,]?\d){7,}")
+# fournisseur seul (« pas de compte Gmail ») : rien ; suivi de « : », « . », « point », « com », « fr » : une adresse
 EMAIL = re.compile(r"\S+\s*(?:@|\(at\)|\[at\]|\s(?:at|arobase)\s)\s*\S+"
-                   r"|(?<![a-z])(?:g\W?mail|hotmail|outlook|yahoo|wanadoo|laposte|icloud|protonmail)(?![a-z])"
+                   r"|(?<![a-z])(?:g\W?mail|hotmail|outlook|yahoo|wanadoo|laposte|icloud|protonmail)\s*(?::|\.|point\b|com\b|fr\b)"
                    r"|\bpoint\W+(?:com|fr|net|org)\b", re.I)
-LIEN = re.compile(r"https?://|\bwww\s*\.|\b[\w-]+\.(?:com|fr|net|org|eu|io|corsica|info|biz|me|ly|gl|be|ch)\b"
+LIEN = re.compile(r"https?://|\bwww\b|\b[\w-]+\.(?:com|fr|net|org|eu|io|corsica|info|biz|me|ly|gl|be|ch)\b"
                   r"|\b[\w-]+\s*\.\s*(?:com|fr|net|org|corsica)\b", re.I)
 # Numéro en toutes lettres : « zéro six douze trente-quatre… »
 NOMBRES = ("zero|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|vingts"
@@ -57,7 +60,7 @@ NOMBRES = ("zero|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze
 EN_LETTRES = re.compile(rf"\bz[eé]ro(?:[\s,.-]+(?:{NOMBRES})\b){{4,}}", re.I)
 # Listes en minuscules sans accents (comparées à normal(texte)), pluriel compris, même collées à des chiffres.
 RESEAUX = ["facebook", "fb", "instagram", "insta", "whatsapp", "whats app", "snapchat", "snap", "tiktok", "telegram",
-           "messenger", "linkedin", "twitter", "leboncoin", "wa me"]
+           "messenger", "linkedin", "twitter", "leboncoin", "wa me", "viber", "wechat", "skype", "discord"]
 # pas « con » (« avec » en corse et en italien), ni voleur, escroc, arnaqueur (souvent la raison des travaux)
 INSULTES = ["conne", "connard", "connasse", "salope", "pute", "putain", "merde", "merdique", "encule", "enculer",
             "batard", "fdp", "ntm", "nique", "niquer", "abruti", "debile", "cretin", "pd", "tapette", "bouffon",
@@ -95,30 +98,16 @@ def verifier(d):
     if not 30 <= len(desc) <= 1500:
         r.append("description trop courte ou trop longue")
     commune = d.get("commune") or ""
-    texte = titre + "\n" + desc + "\n" + commune  # la commune est affichée sur la carte publique : contrôlée aussi
-    n = " " + normal(texte).replace("’", "'").replace("'", " ") + " "
-    for motif, raison in ((TELEPHONE, "numéro de téléphone"), (EMAIL, "adresse e-mail"), (LIEN, "lien vers un site")):
-        if motif.search(texte):
-            r.append(raison)
-    if EN_LETTRES.search(n) and "numéro de téléphone" not in r:
-        r.append("numéro de téléphone")
-    if RE_RESEAUX.search(n):
-        r.append("réseau social ou messagerie")
-    if RE_INSULTES.search(n):
-        r.append("mot grossier")
-    if RE_PUB.search(n):
-        r.append("publicité ou spam")
-    if re.search(r"([^\W\d_])\1{3,}|[!?]{4,}", texte) or re.search(r"\b(\w+)(?:\W+\1\b){3,}", n):
-        r.append("répétitions")
+    r += contenu(titre + "\n" + desc + "\n" + commune)  # la commune est affichée sur la carte publique : contrôlée aussi
     for t in (titre, desc):
-        lettres = [c for c in t if c.isalpha()]
-        if len(lettres) >= 12 and sum(c.isupper() for c in lettres) > 0.6 * len(lettres):
+        if criarde(t):
             r.append("trop de majuscules")
             break
     if desc and absurde(titre + " " + desc):
         r.append("texte incompréhensible")
-    dep = COMMUNES.get(cle_commune(commune))
-    if re.search(r"[^\w\s'’-]|[\d_]", commune):
+    # « Ota (Porto) » : la commune ou le hameau entre parenthèses
+    dep = next((COMMUNES[k] for k in map(cle_commune, [commune] + re.findall(r"[^()]+", commune)) if k in COMMUNES), None)
+    if re.search(r"[^\w\s'’()-]|[\d_]", commune):
         r.append("caractères inattendus dans la commune")
     elif not dep:
         r.append("commune inconnue en Corse")
@@ -127,8 +116,42 @@ def verifier(d):
     return r
 
 
+def unifier(t):
+    """Tirets et espaces Unicode (insécables, fines…) ramenés à « - » et « », pour ne pas tromper les recherches."""
+    return re.sub(r"[  -​  　]", " ", re.sub(r"[‐-―−﹘﹣－]", "-", t))
+
+
+def contenu(texte, coordonnees=True):
+    """Raisons liées au texte lui-même ; coordonnees=False pour la discussion privée, où s'échanger un numéro est normal."""
+    r = []
+    texte = unifier(texte)
+    n = " " + normal(texte).replace("’", "'").replace("'", " ") + " "
+    if coordonnees:
+        colle = re.sub(r"(?<=\d)[\s.\-/,]+(?=\d)", "", texte)  # « 0 6 . 1 2 . 3 4… » : chiffres recollés
+        if TELEPHONE.search(texte) or EN_LETTRES.search(n) or re.search(r"(?<!\d)0[1-9]\d{8}(?!\d)", colle):
+            r.append("numéro de téléphone")
+        for motif, raison in ((EMAIL, "adresse e-mail"), (LIEN, "lien vers un site")):
+            if motif.search(texte):
+                r.append(raison)
+        if RE_RESEAUX.search(n):
+            r.append("réseau social ou messagerie")
+    if RE_INSULTES.search(n):
+        r.append("mot grossier")
+    if RE_PUB.search(n):
+        r.append("publicité ou spam")
+    if re.search(r"([^\W\d_])\1{3,}|[!?]{4,}", texte) or re.search(r"\b(\w+)(?:\W+\1\b){3,}", n):
+        r.append("répétitions")
+    return r
+
+
+def criarde(t):
+    lettres = [c for c in t if c.isalpha()]
+    return len(lettres) >= 12 and sum(c.isupper() for c in lettres) > 0.6 * len(lettres)
+
+
 def masquer(t):
     """Titre du message : sans numéro, adresse ni lien (le message sort du site)."""
+    t = unifier(t)
     for motif in (TELEPHONE, EMAIL, LIEN, EN_LETTRES):
         t = motif.sub("[masqué]", t)
     return " ".join(t.split())
@@ -191,6 +214,81 @@ def moderer(demandes, vues, essai, signaler):
     return garder
 
 
+# Discussions privées (lot 18.6) : lues avec le compte admin du site (les règles le permettent pour la modération).
+# Mot de passe dans le trousseau du Mac, jamais dans un fichier :
+#   security add-generic-password -s aocorse-admin -a <e-mail admin> -w      (le mot de passe est demandé)
+TROUSSEAU = "aocorse-admin"
+BASE = f"https://firestore.googleapis.com/v1/projects/{PROJET}/databases/(default)/documents"
+
+
+def verifier_message(texte):
+    """Raisons de signaler un message de discussion. Pas les coordonnées : s'échanger un numéro y est normal."""
+    return contenu(texte, coordonnees=False) + (["trop de majuscules"] if criarde(texte) else [])
+
+
+def connexion_admin():
+    """Jeton du compte admin, ou None si le trousseau n'a pas son mot de passe."""
+    try:
+        att = subprocess.run(["security", "find-generic-password", "-s", TROUSSEAU], capture_output=True, text=True, timeout=20)
+        mdp = subprocess.run(["security", "find-generic-password", "-s", TROUSSEAU, "-w"], capture_output=True, text=True, timeout=20)
+    except OSError:
+        return None
+    email = re.search(r'"acct"<blob>="([^"]+)"', att.stdout)
+    if att.returncode or mdp.returncode or not email:
+        return None
+    corps = {"email": email.group(1), "password": mdp.stdout.rstrip("\n"), "returnSecureToken": True}
+    req = urllib.request.Request(f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={CLE_API}",
+                                 data=json.dumps(corps).encode(), headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())["idToken"]
+
+
+def requete_admin(parent, q, jeton):
+    req = urllib.request.Request(f"{parent}:runQuery", data=json.dumps({"structuredQuery": q}).encode(),
+                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + jeton})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return [x["document"] for x in json.loads(r.read()) if "document" in x]
+
+
+def apres(champ, depuis):
+    return {"fieldFilter": {"field": {"fieldPath": champ}, "op": "GREATER_THAN", "value": {"timestampValue": depuis}}}
+
+
+def quand(iso):
+    """Heure Firestore (« …T10:00:00.123456789Z ») → datetime, pour comparer (le texte seul ne se trie pas toujours bien)."""
+    return datetime.fromisoformat(re.sub(r"(\.\d{6})\d+", r"\1", iso).replace("Z", "+00:00"))
+
+
+def nouveaux_messages(jeton, depuis):
+    """Messages écrits après « depuis », avec leur demande : discussions mises à jour depuis, puis leurs nouveaux messages."""
+    out = []
+    for d in requete_admin(BASE, {"from": [{"collectionId": "discussions"}], "where": apres("maj", depuis)}, jeton):
+        demande = d["fields"]["demande"]["stringValue"]
+        for m in requete_admin(f"https://firestore.googleapis.com/v1/{d['name']}",
+                               {"from": [{"collectionId": "messages"}], "where": apres("cree", depuis),
+                                "orderBy": [{"field": {"fieldPath": "cree"}}]}, jeton):
+            out.append({"demande": demande, "texte": m["fields"]["texte"]["stringValue"], "cree": m["fields"]["cree"]["timestampValue"]})
+    return out
+
+
+def moderer_messages(messages, depuis, essai, signaler):
+    """Signale les messages qui posent problème, dans l'ordre. Renvoie le nouveau « depuis » : arrêté au premier envoi raté."""
+    for m in sorted(messages, key=lambda m: quand(m["cree"])):
+        raisons = verifier_message(m["texte"])
+        if raisons:
+            extrait = masquer(m["texte"])
+            extrait = extrait if len(extrait) <= 80 else extrait[:79] + "…"
+            texte = f"Message à vérifier : « {extrait} » — {', '.join(raisons)} — {ADMIN}#d-{m['demande']}"
+            print(f"message du {m['cree']} (demande {m['demande']}) : à vérifier ({', '.join(raisons)})")
+            if essai:
+                print(f"  essai, pas envoyé : {texte}")
+            elif not signaler(texte):
+                return depuis  # réessayé au prochain passage
+        if quand(m["cree"]) > quand(depuis):
+            depuis = m["cree"]
+    return depuis
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--essai", action="store_true", help="vraies données : rien n'est noté ni envoyé")
@@ -200,10 +298,19 @@ def main():
         demandes = publiees()
     except (OSError, ValueError) as e:  # pas de réseau, Firestore indisponible : on réessaie dans une heure
         sys.exit(f"Lecture impossible ({type(e).__name__} : {e}) : rien de changé.")
-    vues = set(json.loads(ETAT.read_text()).get("vues", [])) if ETAT.exists() else set()
-    garder = moderer(demandes, vues, a.essai, signaler)
+    etat = json.loads(ETAT.read_text()) if ETAT.exists() else {}
+    garder = moderer(demandes, set(etat.get("vues", [])), a.essai, signaler)
+    depuis = etat.get("messages_depuis", "2026-01-01T00:00:00Z")
+    try:
+        jeton = connexion_admin()
+        if jeton:
+            depuis = moderer_messages(nouveaux_messages(jeton, depuis), depuis, a.essai, signaler)
+        else:
+            print("Discussions pas contrôlées : mot de passe admin absent du trousseau (voir README).")
+    except (OSError, ValueError, KeyError) as e:
+        print(f"Discussions pas contrôlées ({type(e).__name__}) : nouvel essai dans une heure.")
     if not a.essai:
-        ETAT.write_text(json.dumps({"vues": sorted(garder)}, indent=0))
+        ETAT.write_text(json.dumps({"vues": sorted(garder), "messages_depuis": depuis}, indent=0))
 
 
 if __name__ == "__main__":

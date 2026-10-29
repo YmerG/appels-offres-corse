@@ -1,7 +1,10 @@
 // Firebase (Firestore Lite + Auth), chargé à la demande depuis gstatic : script classique + import(), pour marcher aussi en file://.
 window.AOC_FB = {
   sdk: 'https://www.gstatic.com/firebasejs/13.1.0/',
-  config: { apiKey: 'AIzaSyBG6sWwr4SNxzzDN0PyXQWWxWB5QqtjaAw', projectId: 'appels-offres-corse', authDomain: 'appels-offres-corse.firebaseapp.com', appId: '1:380685371693:web:8fd32fb211860a362feba4' },
+  config: { apiKey: 'AIzaSyBG6sWwr4SNxzzDN0PyXQWWxWB5QqtjaAw', projectId: 'appels-offres-corse', authDomain: 'appels-offres-corse.firebaseapp.com', messagingSenderId: '380685371693', appId: '1:380685371693:web:8fd32fb211860a362feba4' },
+  // clé publique « Web Push » (console Firebase › Paramètres du projet › Cloud Messaging › Certificats Web Push) ;
+  // vide : pas de notifications (rien n'est proposé)
+  vapid: '',
   // émulateur sur localhost, ou sur un domaine .test (captures Playwright) ; projet « demo- » : jamais le vrai projet
   emulateur: /^(localhost|127\.0\.0\.1|.+\.test)$/.test(location.hostname),
   // une seule ouverture par page : le premier appel décide si Auth est chargé
@@ -35,9 +38,13 @@ window.AOC_FB = {
           c.parentNode.classList.add('avec-sortir');
         }
         b.hidden = !u;
-        // pastille sur « Compte » : nombre de demandes qui ont changé depuis la dernière visite de Mes demandes
-        if (u) m[1].getDocs(m[1].query(m[1].collection(db, 'demandes'), m[1].where('uid', '==', u.uid))).then(function (res) {
-          var n = F.nouveautes(u.uid, res.docs).length;
+        // pastille sur « Compte » : demandes qui ont changé depuis la dernière visite de Mes demandes, et discussions non lues
+        // (celles-ci aussi sur l'icône de l'appli installée)
+        if (u) Promise.all([m[1].getDocs(m[1].query(m[1].collection(db, 'demandes'), m[1].where('uid', '==', u.uid))),
+          F.discussions({ fs: m[1], db: db }, u.uid)]).then(function (r) {
+          var lues = r[1].filter(function (s) { return F.nonLue(s.data(), u.uid); }).length;
+          F.badge(lues);
+          var n = F.nouveautes(u.uid, r[0].docs).length + lues;
           if (!n || c.querySelector('.pastille-compte')) return;
           var p = document.createElement('span');
           p.className = 'pastille-compte';
@@ -46,7 +53,7 @@ window.AOC_FB = {
           c.setAttribute('aria-label', 'Compte : ' + n + (n > 1 ? ' nouveautés' : ' nouveauté'));
         }).catch(function () {});
       });
-      return { fs: m[1], db: db, au: m[2], auth: auth };
+      return { fs: m[1], db: db, au: m[2], auth: auth, app: app };
     });
     F._ouvert.catch(function () { F._ouvert = null; }); // réseau coupé : on pourra réessayer
     return F._ouvert;
@@ -63,6 +70,78 @@ window.AOC_FB = {
     var vu = {};
     docs.forEach(function (s) { vu[s.id] = window.AOC_FB.etat(s.data()); });
     try { localStorage.setItem('aoc-vu-' + uid, JSON.stringify(vu)); } catch (e) { /* navigation privée : pas de pastille */ }
+  },
+  // Discussions du compte (discussions/{demande}_{uid entreprise}) : comme demandeur ou comme entreprise. Une requête par rôle :
+  // les règles n'autorisent que ces deux filtres. Règles pas encore publiées, panne : liste vide plutôt qu'une erreur.
+  discussions: function (f, uid) {
+    var q = function (champ) {
+      return f.fs.getDocs(f.fs.query(f.fs.collection(f.db, 'discussions'), f.fs.where(champ, '==', uid))).then(function (r) { return r.docs; }, function () { return []; });
+    };
+    return Promise.all([q('particulier'), q('entreprise')]).then(function (r) { return r[0].concat(r[1]); });
+  },
+  // non lue : le dernier message vient de l'autre, et on ne l'a pas ouverte depuis
+  nonLue: function (d, uid) {
+    var lu = uid === d.particulier ? d.luP : d.luE;
+    return d.dernier !== uid && !!d.maj && (!lu || lu.toMillis() < d.maj.toMillis());
+  },
+  // pastille sur l'icône de l'appli installée (Badging API ; ignorée là où elle n'existe pas)
+  badge: function (n) {
+    if (navigator.setAppBadge) (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(function () {});
+  },
+  // Notifications d'un nouveau message (Firebase Cloud Messaging, envoyées par outils/notifier.py) : jeton de cet appareil
+  // rangé dans jetons/{uid} (5 appareils au plus). L'autorisation doit être demandée pendant le clic (Safari) : en premier.
+  activerNotifs: function () {
+    var F = window.AOC_FB;
+    return Notification.requestPermission().then(function (p) {
+      if (p !== 'granted') throw { code: 'refus' };
+      return Promise.all([F.ouvrir(true), import(F.sdk + 'firebase-messaging.js'), navigator.serviceWorker.ready]);
+    }).then(function (r) {
+      var f = r[0], fm = r[1];
+      return fm.getToken(fm.getMessaging(f.app), { vapidKey: F.vapid, serviceWorkerRegistration: r[2] }).then(function (jeton) {
+        var ref = f.fs.doc(f.db, 'jetons', f.auth.currentUser.uid);
+        return f.fs.getDoc(ref).then(function (s) {
+          var liste = [jeton].concat((s.exists() ? s.data().liste : []).filter(function (j) { return j !== jeton; })).slice(0, 5);
+          return f.fs.setDoc(ref, { liste: liste, maj: f.fs.serverTimestamp() });
+        });
+      });
+    });
+  },
+  // bouton « Être prévenu » (Compte, discussion) ; rien tant que la clé Web Push n'est pas renseignée.
+  // Déjà autorisé : jeton rafraîchi sans rien demander. iPhone : seulement depuis l'icône de l'écran d'accueil (iOS 16.4 et plus).
+  boutonNotifs: function (box) {
+    var F = window.AOC_FB;
+    box.textContent = '';
+    if (!F.vapid || !('serviceWorker' in navigator)) return;
+    var p = document.createElement('p');
+    p.className = 'aide-bloc';
+    p.setAttribute('role', 'status');
+    if (!('PushManager' in window) || !('Notification' in window)) {
+      if (/iPhone|iPad/.test(navigator.userAgent)) {
+        p.textContent = 'Sur iPhone, pour être prévenu d’un nouveau message : ajoutez ce site à l’écran d’accueil (bouton Partager, puis « Sur l’écran d’accueil »), puis ouvrez-le depuis son icône.';
+        box.append(p);
+      }
+      return;
+    }
+    if (Notification.permission === 'granted') return F.activerNotifs().catch(function (e) { console.warn('Notifications :', e && (e.code || e.message)); });
+    if (Notification.permission === 'denied') {
+      p.textContent = 'Les notifications sont bloquées pour ce site : vous pouvez les autoriser dans les réglages du navigateur.';
+      return box.append(p);
+    }
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bouton-sortir';
+    b.textContent = 'Être prévenu des nouveaux messages sur cet appareil';
+    b.onclick = function () {
+      b.disabled = true;
+      F.activerNotifs().then(function () {
+        p.textContent = 'C’est fait : vous serez prévenu ici d’un nouveau message.';
+        b.remove();
+      }, function (e) {
+        b.disabled = false;
+        p.textContent = e && e.code === 'refus' ? 'Autorisation refusée : aucune notification ne sera envoyée.' : 'L’activation a échoué. Réessayez plus tard.';
+      });
+    };
+    box.append(b, p);
   },
   // message d'erreur juste sous le champ (sous son groupe pour les cases), visible au téléphone ; msg vide : efface.
   // Liste de cases (métiers) : au-dessus, sous la légende, sinon il tombe hors de l'écran au téléphone.

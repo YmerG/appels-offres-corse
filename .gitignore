@@ -4,4 +4,5 @@ outils/__pycache__/
 .claude/
 etat-emails.json
 .moderation-vues.json
+etat-notifications.json
 *-debug.log

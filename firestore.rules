@@ -188,6 +188,72 @@ service cloud.firestore {
       }
     }
 
+    function partie(x) {
+      return request.auth != null && (request.auth.uid == x.particulier || request.auth.uid == x.entreprise);
+    }
+
+    // Discussions (lot 18.6) : discussions/{demande}_{uid entreprise}, entre le demandeur et une entreprise qui a répondu.
+    // Ouverte par l'entreprise dans la même écriture que son « Je suis intéressé » (qui contrôle déjà compte vérifié,
+    // demande ouverte, pas la sienne), avec son message comme premier message. Lisible par les 2 participants seulement,
+    // et par l'admin (modération, outils/moderer.py). Le demandeur peut la fermer : plus aucun message ensuite.
+    // maj / dernier / dernierMsg : changent seulement avec un nouveau message (lus par outils/notifier.py) ;
+    // luP / luE : dernière lecture du demandeur / de l'entreprise (heure du serveur), pour les « non lus ».
+    match /discussions/{did} {
+      allow get, list: if estAdmin() || partie(resource.data);
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['demande', 'particulier', 'entreprise', 'titre', 'nomEntreprise', 'ouverte', 'cree', 'maj', 'dernier', 'dernierMsg'])
+        && request.resource.data.demande is string
+        && did == request.resource.data.demande + '_' + request.auth.uid
+        && request.resource.data.entreprise == request.auth.uid
+        && request.resource.data.particulier == get(/databases/$(database)/documents/demandes/$(request.resource.data.demande)).data.uid
+        && request.resource.data.titre == get(/databases/$(database)/documents/demandes/$(request.resource.data.demande)).data.titre
+        && request.resource.data.nomEntreprise == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.nom
+        && request.resource.data.ouverte == true
+        && request.resource.data.cree == request.time && request.resource.data.maj == request.time
+        && request.resource.data.dernier == request.auth.uid
+        && !exists(/databases/$(database)/documents/demandes/$(request.resource.data.demande)/interets/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/demandes/$(request.resource.data.demande)/interets/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/discussions/$(did)/messages/$(request.resource.data.dernierMsg));
+      allow update: if (partie(resource.data) && resource.data.ouverte == true
+          // nouveau message, écrit dans la même écriture
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['maj', 'dernier', 'dernierMsg'])
+          && request.resource.data.maj == request.time && request.resource.data.dernier == request.auth.uid
+          && !exists(/databases/$(database)/documents/discussions/$(did)/messages/$(request.resource.data.dernierMsg))
+          && existsAfter(/databases/$(database)/documents/discussions/$(did)/messages/$(request.resource.data.dernierMsg)))
+        // lu : chacun le sien, à l'heure du serveur
+        || (request.auth != null && request.auth.uid == resource.data.particulier
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['luP']) && request.resource.data.luP == request.time)
+        || (request.auth != null && request.auth.uid == resource.data.entreprise
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['luE']) && request.resource.data.luE == request.time)
+        // fermeture, définitive : par le demandeur, ou par l'admin
+        || ((estAdmin() || (request.auth != null && request.auth.uid == resource.data.particulier))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ouverte']) && request.resource.data.ouverte == false);
+      allow delete: if estAdmin();
+
+      match /messages/{mid} {
+        allow get, list: if estAdmin() || partie(get(/databases/$(database)/documents/discussions/$(did)).data);
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasOnly(['auteur', 'texte', 'cree'])
+          && request.resource.data.auteur == request.auth.uid
+          && texte(request.resource.data.texte, 1, 1000)
+          && request.resource.data.cree == request.time
+          && partie(getAfter(/databases/$(database)/documents/discussions/$(did)).data)
+          && getAfter(/databases/$(database)/documents/discussions/$(did)).data.ouverte == true
+          && getAfter(/databases/$(database)/documents/discussions/$(did)).data.dernierMsg == mid
+          && getAfter(/databases/$(database)/documents/discussions/$(did)).data.maj == request.time;
+        allow delete: if estAdmin();
+      }
+    }
+
+    // jetons/{uid} : jetons de notification (Firebase Cloud Messaging) des appareils du compte, 5 au plus ;
+    // lus par outils/notifier.py (compte de service) pour prévenir d'un nouveau message. Jamais lisibles par un autre compte.
+    match /jetons/{uid} {
+      allow get, delete: if connecte(uid);
+      allow create, update: if connecte(uid) && request.resource.data.keys().hasOnly(['liste', 'maj'])
+        && request.resource.data.liste is list && request.resource.data.liste.size() <= 5
+        && request.resource.data.maj == request.time;
+    }
+
     // « Je cherche un partenaire » sur un appel d'offres public : lisible par l'admin seulement, qui met en relation les
     // entreprises d'un même avis. Une par entreprise et par avis (identifiant = <n° d'avis>_<uid> ; elle voit qu'elle a déjà écrit).
     // shortcut: la date limite de l'avis n'est pas vérifiée ici (les avis BOAMP ne sont pas dans Firestore) ; l'admin écarte les avis clos

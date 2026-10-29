@@ -38,7 +38,7 @@ for t in ("contactez-moi sur WhatsApp", "voir mon Insta", "écrivez sur Facebook
 # déguisements trouvés par le Testeur (rapport 45)
 for t in ("au 06/12/34/56/78", "au 06,12,34,56,78", "zéro six douze trente-quatre cinquante-six soixante-dix-huit"):
     assert "numéro de téléphone" in avec(t), t
-for t in ("jean.dupont at gmail point com", "mon gmail : jeandupont2B", "écrire sur hotmail"):
+for t in ("jean.dupont at gmail point com", "mon gmail : jeandupont2B", "écrire à jean point dupont hotmail.fr"):
     assert "adresse e-mail" in avec(t), t
 assert "lien vers un site" in avec("voir monsite . fr")
 assert "réseau social ou messagerie" in avec("whatsapp0612")
@@ -50,6 +50,13 @@ for t in ("Porte forcée par des voleurs, serrure à changer.", "Le précédent 
     assert avec(t) == [], (t, avec(t))
 assert raisons(commune="Porticcio", departement="2A") == []
 assert M.masquer("Fuite 06/12/34/56/78") == "Fuite [masqué]"
+# 2e série (rapport 46) : tirets insécables, chiffres espacés, lien sans points, Viber ; « Ota (Porto) », « pas de compte Gmail »
+for t, raison in (("au 06\u201112\u201134\u201156\u201178", "numéro de téléphone"), ("au 0 6 . 1 2 . 3 4 . 5 6 . 7 8", "numéro de téléphone"),
+                  ("voir www monsite fr", "lien vers un site"), ("écrivez-moi sur Viber", "réseau social ou messagerie")):
+    assert raison in avec(t), t
+assert avec("Je n'ai pas de compte Gmail, merci de passer par le site.") == []
+assert raisons(commune="Ota (Porto)", departement="2A") == []
+assert M.masquer("Fuite 06\u202f12\u202f34\u202f56\u202f78") == "Fuite [masqué]"
 # pas de faux numéro : montants, dates, surfaces
 for t in ("Budget 10 000 €, 120 m², le 12/03/2026 ou le 15.11.2026.", "Devis attendu sous 3 semaines, 2 x 50 m."):
     assert avec(t) == [], (t, avec(t))
@@ -93,4 +100,17 @@ assert M.moderer(demandes, garder, False, lambda t: messages.append(t) or True) 
 assert M.moderer(demandes[1:2], set(), False, lambda t: False) == set()
 # essai : rien noté, rien envoyé
 assert M.moderer(demandes, set(), True, lambda t: messages.append(t) or True) == {"a"} and not messages
+# messages des discussions (lot 18.6) : pas les coordonnées (normales en privé), mais insultes, pub, répétitions, majuscules
+assert M.verifier_message("Je peux passer mardi, appelez-moi au 06 12 34 56 78.") == []
+assert M.verifier_message("Espèce de connard") == ["mot grossier"]
+assert "publicité ou spam" in M.verifier_message("Gagnez des bitcoins")
+assert M.verifier_message("RAPPELEZ MOI VITE SVP") == ["trop de majuscules"]
+msgs = [{"demande": "d1", "texte": "Bonjour, dispo jeudi ?", "cree": "2026-10-29T10:00:00Z"},
+        {"demande": "d2", "texte": "Bande de connards, appelez le 06 12 34 56 78", "cree": "2026-10-29T10:05:00.123456789Z"},
+        {"demande": "d1", "texte": "Merci", "cree": "2026-10-29T10:10:00.5Z"}]
+messages = []
+assert M.moderer_messages(msgs, "2026-10-29T09:00:00Z", False, lambda t: messages.append(t) or True) == "2026-10-29T10:10:00.5Z"
+assert messages == [f"Message à vérifier : « Bande de connards, appelez le [masqué] » — mot grossier — {M.ADMIN}#d-d2"], messages
+# envoi raté : arrêt avant ce message, revu au passage suivant
+assert M.moderer_messages(msgs, "2026-10-29T09:00:00Z", False, lambda t: False) == "2026-10-29T10:00:00Z"
 print("OK : contrôle des demandes (propre, téléphone, e-mail, lien, réseaux, insultes, pub, commune, photos, passage complet)")

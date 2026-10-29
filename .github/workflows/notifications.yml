@@ -1,0 +1,44 @@
+# Toutes les 5 min (GitHub peut retarder de quelques minutes) : notification sur le téléphone d'un nouveau message de
+# discussion (outils/notifier.py, Firebase Cloud Messaging, gratuit). Pas d'e-mail. Ne fait rien sans le secret
+# FIREBASE_SERVICE_ACCOUNT, qui doit avoir en plus le rôle « Administrateur de l'API Firebase Cloud Messaging ».
+name: Notifications des discussions
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      essai:
+        description: "Essai sur les vraies données : compter, sans rien envoyer"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: notifications   # jamais deux passages en même temps (sinon doubles notifications)
+  cancel-in-progress: false
+jobs:
+  notifications:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 outils/test_notifier.py
+      # heure du dernier message notifié (etat-notifications.json, sans nom ni identifiant) : gardée d'un passage à l'autre
+      - uses: actions/cache/restore@v4
+        with:
+          path: etat-notifications.json
+          key: etat-notifications-${{ github.run_id }}
+          restore-keys: etat-notifications-
+      - if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        run: pip install --quiet "firebase-admin==7.7.0"
+      - run: python3 outils/notifier.py ${{ inputs.essai && '--essai' || '' }}
+      - if: always() && hashFiles('etat-notifications.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: etat-notifications.json
+          key: etat-notifications-${{ github.run_id }}
