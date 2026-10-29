@@ -285,6 +285,18 @@
   }
   window.addEventListener('hashchange', depuisAdresse);
   depuisAdresse();
+  // « Taille et tri » (téléphone seulement, le CSS cache le bouton sur ordinateur) : replié, sauf si l'un des deux est déjà choisi
+  var plus = document.getElementById('plus-filtres'); // absent : ancienne page encore en cache
+  function plier(ouvert) {
+    plus.parentNode.classList.toggle('replie', !ouvert);
+    plus.setAttribute('aria-expanded', String(ouvert));
+  }
+  if (plus) {
+    plus.parentNode.classList.add('pliable');
+    plus.hidden = false;
+    plier(!!choix.taille || tri.value !== 'limite');
+    plus.addEventListener('click', function () { plier(plus.getAttribute('aria-expanded') !== 'true'); });
+  }
   if (choix.mes) versListe('auto'); // arrivée par « Mes appels d'offres » (compte) ou un favori #mes=1
 
   // Demandes publiées par les visiteurs (demandes.js, après la lecture sur Firestore) : ajoutées puis triées et filtrées comme les autres

@@ -60,6 +60,7 @@
             <button type="button" class="filtre" data-dep="2B" aria-pressed="false" title="Haute-Corse">2B</button>
           </div>
         </div>
+        <button type="button" class="action plus-filtres" id="plus-filtres" aria-expanded="true" aria-controls="bloc-taille bloc-tri" hidden>Taille et tri</button>
         <div id="bloc-taille">
           <label class="titre-outil" for="taille">Taille du marché</label>
           <select id="taille">
@@ -69,7 +70,7 @@
             <option value="europeen">Gros (marchés européens)</option>
           </select>
         </div>
-        <div>
+        <div id="bloc-tri">
           <label class="titre-outil" for="tri">Trier par</label>
           <select id="tri">
             <option value="limite">Date limite</option>
@@ -208,7 +209,7 @@
   <footer class="pied">
     <div class="cadre">
       <p class="source">Données BOAMP (licence ouverte)</p>
-      <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <time datetime="2026-10-29T03:33:48+00:00">29/10/2026 à 04 h 33</time>.</p>
+      <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <time datetime="2026-10-29T03:43:51+00:00">29/10/2026 à 04 h 43</time>.</p>
       <p>Seul l'avis officiel fait foi : vérifiez toujours la date limite et le dossier de consultation sur la plateforme de l'acheteur. Les petits marchés publiés seulement sur le site de l'acheteur, sans passer par le BOAMP, n'apparaissent pas ici.</p>
       <p>Dans les onglets « Privé – sociétés » et « Particuliers », les avis marqués « Exemple » sont fictifs. Les demandes publiées par les visiteurs y apparaissent après vérification, sans leurs coordonnées.</p>
       <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun cookie. <a href="comment-ca-marche.html">Comment ça marche</a> · <a href="resultats.html">Marchés attribués</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a>. Prototype, version de test.</p>

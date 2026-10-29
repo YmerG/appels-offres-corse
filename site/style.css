@@ -112,6 +112,12 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
 .pastille { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 16%, transparent); }
 .ligne-outils { display: grid; grid-template-columns: auto 1fr; gap: 14px; }
 #bloc-taille { grid-column: 1 / -1; order: 1; }
+/* Téléphone : « Taille et tri » replie la taille et le tri à côté du département (INTERFACE.md n° 5) ; ordinateur : tout est affiché */
+.plus-filtres { align-self: end; justify-self: start; --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M4 7h9M17 7h3M4 17h3M11 17h9'/%3E%3Ccircle cx='15' cy='7' r='2'/%3E%3Ccircle cx='9' cy='17' r='2'/%3E%3C/svg%3E"); }
+.plus-filtres[aria-expanded="true"] { color: #f4f1ea; background: var(--encre); border-color: var(--encre); }
+@media (max-width: 899px) { .replie > #bloc-taille, .replie > #bloc-tri { display: none; } .pliable > #bloc-tri { grid-column: 1 / -1; order: 2; } }
+@media (max-width: 359px) { .plus-filtres { margin-top: 14px; } }
+@media (min-width: 900px) { .action.plus-filtres { display: none; } } /* .action (plus bas) remettrait inline-flex */
 /* Sous 360 px, « Trier par » prend sa ligne (sinon « Date lim… » coupé) */
 @media (max-width: 359px) { .ligne-outils { grid-template-columns: 1fr; gap: 0; } }
 .segments { display: flex; background: var(--carte); border: 1px solid var(--filet); border-radius: 14px; padding: 3px; }
@@ -233,6 +239,10 @@ button.lien-compte { border: 0; cursor: pointer; }
 .cases label:has(:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 #garde p, .a-verifier p { margin: 0 0 8px; }
 .a-verifier { margin-top: 12px; }
+/* compte : les deux liens sous le bouton principal, alignés sur son bord gauche (rapport 36) */
+.liens-profil { margin-top: 8px; gap: 0 22px; }
+.liens-profil .lien-bouton { display: inline-flex; align-items: center; padding-left: 0; padding-right: 0; }
+#etat { scroll-margin-top: 16px; }
 #r-decennale .lien-bouton { padding-left: 0; color: var(--exemple); font-weight: 600; }
 .publiee { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 /* Compte : alertes par e-mail dans une carte */

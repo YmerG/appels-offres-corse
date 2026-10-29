@@ -175,9 +175,11 @@
     dire('erreur', '');
     form.hidden = false;
   }
-  $('annuler').onclick = function () { form.hidden = true; $('espace').hidden = false; };
-  $('modifier').onclick = function () { ouvrirFormulaire('modifier'); form.querySelector('fieldset:not([disabled]):not([hidden]) input').focus(); };
-  $('r-decennale-maj').onclick = function () { ouvrirFormulaire('modifier'); $('d-assureur').focus(); };
+  // « Annuler » rend le focus au bouton qui a ouvert le formulaire (rapport 36)
+  var ouvreur = null;
+  $('annuler').onclick = function () { form.hidden = true; $('espace').hidden = false; if (ouvreur) ouvreur.focus(); };
+  $('modifier').onclick = function () { ouvreur = this; ouvrirFormulaire('modifier'); form.querySelector('fieldset:not([disabled]):not([hidden]) input').focus(); };
+  $('r-decennale-maj').onclick = function () { ouvreur = this; ouvrirFormulaire('modifier'); $('d-assureur').focus(); };
 
   var NOMS = { email: "l'e-mail", mdp: 'le mot de passe (8 caractères au moins)', 'p-nom': 'votre nom', 'p-commune': 'la commune',
     'e-nom': 'la raison sociale', siret: 'le SIRET (14 chiffres)', telephone: 'le téléphone', consentement: "l'accord sur vos informations",

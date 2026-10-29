@@ -60,6 +60,7 @@
             <button type="button" class="filtre" data-dep="2B" aria-pressed="false" title="Haute-Corse">2B</button>
           </div>
         </div>
+        <button type="button" class="action plus-filtres" id="plus-filtres" aria-expanded="true" aria-controls="bloc-taille bloc-tri" hidden>Taille et tri</button>
         <div id="bloc-taille">
           <label class="titre-outil" for="taille">Taille du marché</label>
           <select id="taille">
@@ -69,7 +70,7 @@
             <option value="europeen">Gros (marchés européens)</option>
           </select>
         </div>
-        <div>
+        <div id="bloc-tri">
           <label class="titre-outil" for="tri">Trier par</label>
           <select id="tri">
             <option value="limite">Date limite</option>
