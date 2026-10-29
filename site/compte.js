@@ -177,6 +177,7 @@
   }
   $('annuler').onclick = function () { form.hidden = true; $('espace').hidden = false; };
   $('modifier').onclick = function () { ouvrirFormulaire('modifier'); form.querySelector('fieldset:not([disabled]):not([hidden]) input').focus(); };
+  $('r-decennale-maj').onclick = function () { ouvrirFormulaire('modifier'); $('d-assureur').focus(); };
 
   var NOMS = { email: "l'e-mail", mdp: 'le mot de passe (8 caractères au moins)', 'p-nom': 'votre nom', 'p-commune': 'la commune',
     'e-nom': 'la raison sociale', siret: 'le SIRET (14 chiffres)', telephone: 'le téléphone', consentement: "l'accord sur vos informations",
@@ -316,17 +317,22 @@
           + profil.metiers.map(function (m) { return METIERS[m] || m; }).join(', ') + ' · intervient en ' + profil.zone.join(' et ')
         : 'Particulier · ' + profil.commune;
       if (profil.telephone) $('r-details').textContent += ' · ' + profil.telephone;
-      if (ent) $('r-details').textContent += profil.decennale
-        ? ' · Décennale : ' + profil.decennale.assureur + ', jusqu\'au ' + new Date(profil.decennale.fin + 'T12:00').toLocaleDateString('fr-FR')
-        : ' · Décennale non renseignée (Modifier le profil)';
+      if (ent && profil.decennale) $('r-details').textContent += ' · Décennale : ' + profil.decennale.assureur + ', jusqu\'au ' +
+        new Date(profil.decennale.fin + 'T12:00').toLocaleDateString('fr-FR');
+      // décennale absente, expirée ou proche de l'échéance : bandeau avec son bouton (INTERFACE.md n° 4)
       var jours = ent && profil.decennale ? Math.floor((new Date(profil.decennale.fin + 'T23:59') - Date.now()) / 864e5) : 30;
-      $('r-decennale').hidden = jours >= 30;
-      if (jours < 30) $('r-decennale').firstChild.innerHTML = '<strong>Votre assurance décennale ' +
+      var sansDec = ent && !profil.decennale;
+      $('r-decennale').hidden = !sansDec && jours >= 30;
+      if (sansDec) $('r-decennale').firstChild.innerHTML = '<strong>Assurance décennale non renseignée.</strong> ' +
+        'C’est le premier critère de confiance des particuliers : déclarée, elle est transmise au demandeur avec vos coordonnées.';
+      else if (jours < 30) $('r-decennale').firstChild.innerHTML = '<strong>Votre assurance décennale ' +
         (jours < 0 ? 'a expiré' : 'expire') + ' le ' + new Date(profil.decennale.fin + 'T12:00').toLocaleDateString('fr-FR') +
-        (jours < 0 ? '.</strong> Le demandeur verra qu’elle est expirée.' : '</strong> (' + (jours ? 'dans ' + jours + ' jour' + (jours > 1 ? 's' : '') : 'aujourd’hui') + ').') +
-        ' Mettez-la à jour avec « Modifier mon profil ».';
-      $('r-action').textContent = ent ? 'Voir les demandes' : 'Publier une demande de travaux';
-      $('r-action').href = ent ? 'index.html#onglet=particulier' : 'publier.html';
+        (jours < 0 ? '.</strong> Le demandeur verra qu’elle est expirée.' : '</strong> (' + (jours ? 'dans ' + jours + ' jour' + (jours > 1 ? 's' : '') : 'aujourd’hui') + ').');
+      $('r-decennale-maj').textContent = sansDec ? 'Ajouter ma décennale' : 'Mettre à jour ma décennale';
+      // entreprise : d'abord ses appels d'offres (bouton « Mes métiers » de l'accueil), puis les demandes de particuliers
+      $('r-action').textContent = ent ? 'Mes appels d’offres' : 'Publier une demande de travaux';
+      $('r-action').href = ent ? 'index.html#mes=1' : 'publier.html';
+      $('r-demandes').hidden = !ent;
       $('mes-demandes').hidden = false;
       mesDemandes();
       $('alertes').hidden = $('fiche').hidden = !ent;

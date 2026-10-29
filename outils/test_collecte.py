@@ -137,6 +137,7 @@ assert resultat(avis_res({"efac:LotResult": lot("clos-nw", "0")})) == ()  # infr
 assert resultat(FNS) is None
 ancien = lambda t: {"FNSimple": {"attribution": {"attributionMarche": t}}}
 assert resultat(ancien("Cet avis a été déclaré Sans Suite.\nRenseignements complémentaires : …")) == ()
+assert resultat(ancien("Nombre d'offres reçues : 2\nNéant, - -\nMontant indéfini\nRenseignements complémentaires : \nClassement sans suite du marché")) == ()  # rapport 35
 assert resultat(ancien("Procédure de passation déclarée infructueuse par décision du 20/04/2026.")) == ()
 assert resultat(ancien("Lot N° 01 - Aéroport\nCe lot a été déclaré Infructueux.\nLot N° 02 - Port\nCe lot a été déclaré Infructueux")) == ()
 assert resultat(ancien("Lot N° 1 - Lot n°1 - Vrd\nCe lot a été déclaré Infructueux.\nLot N° 2 - Peinture\nMontant Ht : 30 370,00 Euros")) is None

@@ -310,7 +310,7 @@ def resultat(donnees):
     if not isinstance(nr, dict):
         # ancien format : écarté si l'avis entier, ou chacun de ses lots, est déclaré infructueux ou sans suite (rapport 34)
         t = chercher(donnees, "attributionMarche")
-        if isinstance(t, str) and all(re.search(r"(?i)déclarée? (infructueu|sans suite)", p)
+        if isinstance(t, str) and all(re.search(r"(?i)déclarée? (infructueu|sans suite)|classement sans suite", p)
                                       for p in re.split(r"(?im)^lot n°", t) if p.strip()):
             return ()
         return None

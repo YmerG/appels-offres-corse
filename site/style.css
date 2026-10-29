@@ -233,6 +233,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 .cases label:has(:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 #garde p, .a-verifier p { margin: 0 0 8px; }
 .a-verifier { margin-top: 12px; }
+#r-decennale .lien-bouton { padding-left: 0; color: var(--exemple); font-weight: 600; }
 .publiee { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 /* Compte : alertes par e-mail dans une carte */
 #alertes { margin-top: 26px; padding: 20px; background: var(--carte); border: 1px solid var(--filet); border-radius: 20px; box-shadow: var(--ombre); }

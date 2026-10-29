@@ -199,6 +199,11 @@
     cartes.forEach(function (c) { liste.appendChild(c); });
   }
 
+  // une colonne (téléphone) : la liste est sous les filtres, on l'amène à l'écran après « Mes métiers » (rapport 35)
+  function versListe(comment) {
+    if (!matchMedia('(max-width: 899px)').matches) return;
+    etat.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : comment });
+  }
   var boutonSuivis = document.querySelector('.filtre[data-suivi]');
   filtres.forEach(function (b) {
     b.addEventListener('click', function () {
@@ -209,6 +214,7 @@
       if (k === 'mes' && choix.mes) { choisir('metier', ''); choisir('dep', ''); choisir('suivi', ''); }
       if (k === 'metier' || k === 'dep' || (k === 'suivi' && choix.suivi)) choisir('mes', '');
       appliquer();
+      if (k === 'mes' && choix.mes) versListe('smooth');
     });
   });
   liste.addEventListener('click', function (e) {
@@ -273,10 +279,13 @@
       var connu = kv[0] === 'taille' ? taille && taille.querySelector('option[value="' + v + '"]') : document.querySelector('.filtre[data-' + kv[0] + '="' + v + '"]');
       if (CLES.indexOf(kv[0]) !== -1 && connu) choisir(kv[0], kv[1]);
     });
+    // même règle qu'au toucher : « Mes métiers » remplace métier, département et suivis (adresse écrite à la main, rapport 35)
+    if (choix.mes) { choisir('metier', ''); choisir('dep', ''); choisir('suivi', ''); }
     appliquer();
   }
   window.addEventListener('hashchange', depuisAdresse);
   depuisAdresse();
+  if (choix.mes) versListe('auto'); // arrivée par « Mes appels d'offres » (compte) ou un favori #mes=1
 
   // Demandes publiées par les visiteurs (demandes.js, après la lecture sur Firestore) : ajoutées puis triées et filtrées comme les autres
   window.ajouterAvis = function (nouvelles) {
