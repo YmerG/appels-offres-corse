@@ -127,6 +127,7 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
 .segments .filtre[aria-pressed="true"], .onglets .filtre[aria-pressed="true"], .bascule .filtre[aria-pressed="true"] { font-weight: 600; }
 /* largeur du gras réservée par une 2e rangée invisible (data-texte = libellé) : les libellés ne bougent pas quand on change de segment */
 .filtre[data-texte] { display: inline-grid; justify-items: start; row-gap: 0; }
+.segments .filtre[data-texte] { justify-content: center; } /* cases égales : le bloc à la largeur du gras est centré, le libellé ne bouge toujours pas */
 .filtre[data-texte] .nb { grid-area: 1 / 2; font-weight: 500; }
 .filtre[data-texte]::after { content: attr(data-texte); content: attr(data-texte) / ""; grid-area: 2 / 1; height: 0; overflow: hidden; visibility: hidden; font-weight: 600; }
 
@@ -363,6 +364,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 /* En-tête de la liste : nombre d'avis et bouton « Vue compacte » */
 .tete-liste { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 30px 0 14px; }
 .tete-liste .etat { margin: 0; }
+.maj { margin: -6px 0 16px; font-size: .8rem; color: var(--doux); font-variant-numeric: tabular-nums; }
 html:not(.js) .vue { display: none; }
 .vue { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M4 6h16M4 12h16M4 18h16'/%3E%3C/svg%3E"); }
 .vue[aria-pressed="true"] { color: var(--bouton-texte); background: var(--bouton); border-color: var(--bouton); }

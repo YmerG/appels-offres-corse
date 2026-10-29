@@ -421,6 +421,12 @@ def date_fr(iso, heure=True):
     return f"{JOURS[d.weekday()]} {d.day}{'er' if d.day == 1 else ''} {MOIS[d.month - 1]} {d.year}{h}"
 
 
+def maj_court(d):
+    """« 29 oct. à 06:12 » (heure de Paris) : ligne « Dernière mise à jour » au-dessus de la liste."""
+    p = d.astimezone(PARIS)
+    return f'<time datetime="{d.isoformat(timespec="seconds")}">{p.day} {MOIS[p.month - 1]} à {p:%H:%M}</time>'
+
+
 def taille(procedure):
     """Taille du marché d'après la famille de procédure du BOAMP : petit (< 90 k€), moyen, europeen, ou "" (DSP…)."""
     p = normal(procedure).replace(" ", "")
@@ -533,6 +539,7 @@ def main():
         "<!--NB_2A-->": str(sum(a["departement"] == "2A" for a in avis)),
         "<!--NB_2B-->": str(sum(a["departement"] == "2B" for a in avis)),
         "<!--MAJ-->": f'<time datetime="{maintenant.isoformat(timespec="seconds")}">{maintenant.astimezone(PARIS):%d/%m/%Y à %H h %M}</time>',
+        "<!--MAJ_COURT-->": maj_court(maintenant),
     }
     page = (ICI / "modele.html").read_text(encoding="utf-8")
     for cle, val in remplacements.items():

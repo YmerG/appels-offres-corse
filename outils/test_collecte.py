@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from collecte import (METIERS, analyser, insecable, avis_de, carte, date_limite, dossier, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
-                      metiers_de, nom_lieu, propre, carte_resultat, resultat, resultats_de, taille)
+                      metiers_de, nom_lieu, propre, carte_resultat, resultat, resultats_de, taille, maj_court)
 
 # métiers par préfixe CPV, le plus long l'emporte
 assert metier_cpv("45310000") == "electricite"
@@ -63,6 +63,8 @@ assert lieu_texte("Lieu(x) d'exécution : voir lot") is None and lieu_texte("FRM
 assert propre("MISE EN \x9cUVRE DES TRAVAUX") == "Mise en œuvre des travaux"
 assert euros(1_500_000) == "1,5\u00a0M€" and euros(2_000_000) == "2\u00a0M€" and euros(32000) == "32\u202f000\u00a0€"
 # rapport 39 : ni l'unité ni « (MAPA) » ne passent seules à la ligne
+assert maj_court(datetime(2026, 10, 29, 5, 12, tzinfo=timezone.utc)).endswith('>29 oct. à 06:12</time>')  # UTC+1 en hiver
+assert maj_court(datetime(2026, 7, 1, 4, 5, tzinfo=timezone.utc)).endswith('>1 juil. à 06:05</time>')  # UTC+2 en été
 assert insecable("Marchés <90 k€ (MAPA)") == "Marchés <90\u00a0k€\u00a0(MAPA)" and insecable("Marchés européens") == "Marchés européens"
 
 # l'heure écrite dans l'avis est l'heure de Paris, quel que soit le fuseau annoncé (comme boamp.fr : 26-99420, 26-93441, 26-92291)
