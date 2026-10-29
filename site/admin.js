@@ -167,7 +167,15 @@
     var bascule = el('button', publiee ? 'bouton-sortir' : 'bouton-publier', publiee ? 'Retirer' : 'Republier');
     bascule.type = 'button';
     bascule.dataset.bascule = '';
-    bascule.onclick = function () { agir(f.fs.updateDoc(ref, { statut: publiee ? 'en_attente' : 'validee' })); };
+    // Retirer ferme aussi ses discussions ouvertes, dans la même écriture (sinon l'entreprise pourrait encore écrire) ; définitif
+    var ouvertes = l.discussions.filter(function (x) { return x.s.data().ouverte; });
+    bascule.onclick = function () {
+      if (publiee && ouvertes.length && !confirm('Retirer cette demande ? Ses ' + ouvertes.length + ' discussion(s) ouverte(s) seront fermées, définitivement.')) return;
+      var lot = f.fs.writeBatch(f.db);
+      lot.update(ref, { statut: publiee ? 'en_attente' : 'validee' });
+      if (publiee) ouvertes.forEach(function (x) { lot.update(x.s.ref, { ouverte: false }); });
+      agir(lot.commit());
+    };
     actions.append(bascule);
     var non = el('button', 'bouton-refus', 'Supprimer');
     non.type = 'button';

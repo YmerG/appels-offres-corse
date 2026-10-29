@@ -82,7 +82,8 @@ def message(cle, d, abonne, nom, site):
         quoi = f"{n} entreprises ont répondu : nous vous avons transmis leurs coordonnées" if n > 1 \
             else "Une entreprise a répondu : nous vous avons transmis ses coordonnées"
         lignes = [f"Bonjour {nom},", f"{quoi}, pour votre demande {cite}, à {lieu}.",
-                  ("Suivre ma demande", f"{site}compte.html#mes-demandes")]
+                  "Leurs messages sont dans « Mes discussions », sur le site : vous pouvez leur répondre.",
+                  ("Lire leurs messages", f"{site}compte.html#discussions")]
         pourquoi = "Vous recevez cet e-mail parce que vous avez publié cette demande sur Appels d'offres Corse."
     else:
         metier = METIERS.get(d["metier"], (d["metier"],))[0]

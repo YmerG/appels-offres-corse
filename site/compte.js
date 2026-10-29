@@ -441,10 +441,10 @@
     p.className = 'suite';
     p.textContent = d.statut !== 'validee' ? 'Votre demande a été retirée du site : elle n\'est plus visible. Nous vous écrivons si quelque chose doit être corrigé.'
       : d.pourvue ? "Vous avez indiqué que votre demande est pourvue : elle n'est plus affichée et ne reçoit plus de réponses."
-      : n ? (n > 1 ? n + ' entreprises ont répondu : nous vous avons transmis leurs' : 'Une entreprise a répondu : nous vous avons transmis ses') + ' coordonnées par e-mail ou par téléphone.'
+      : n ? (n > 1 ? n + ' entreprises ont répondu : nous vous avons transmis leurs' : 'Une entreprise a répondu : nous vous avons transmis ses') + ' coordonnées. Les messages des entreprises arrivent dans « Mes discussions », plus haut sur cette page : vous pouvez leur répondre.'
       : close ? 'Close depuis le ' + fin + " : elle ne reçoit plus de réponses."
       : (d.nbInterets || 0) >= 5 ? '5 entreprises ont répondu, le maximum : la demande n\'est plus affichée. Nous vous transmettons leurs coordonnées.'
-      : 'La suite : les entreprises peuvent répondre jusqu\'au ' + fin + ' (5 au plus). Nous vous transmettons leurs coordonnées dès qu\'elles répondent.';
+      : 'La suite : les entreprises peuvent répondre jusqu\'au ' + fin + ' (5 au plus). Les messages des entreprises arrivent dans « Mes discussions », plus haut sur cette page : vous pouvez leur répondre.';
     return [ol, p];
   }
 

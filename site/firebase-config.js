@@ -42,7 +42,8 @@ window.AOC_FB = {
         // (celles-ci aussi sur l'icône de l'appli installée)
         if (u) Promise.all([m[1].getDocs(m[1].query(m[1].collection(db, 'demandes'), m[1].where('uid', '==', u.uid))),
           F.discussions({ fs: m[1], db: db }, u.uid)]).then(function (r) {
-          var lues = r[1].filter(function (s) { return F.nonLue(s.data(), u.uid); }).length;
+          // la discussion à l'écran (discussion.js) compte comme lue : elle l'est aussitôt ouverte
+          var lues = r[1].filter(function (s) { return s.id !== F.ouverte && F.nonLue(s.data(), u.uid); }).length;
           F.badge(lues);
           var n = F.nouveautes(u.uid, r[0].docs).length + lues;
           if (!n || c.querySelector('.pastille-compte')) return;

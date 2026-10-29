@@ -5,6 +5,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var id = new URLSearchParams(location.search).get('id') || '';
   var F = window.AOC_FB, f, moi, ref, disc, nb = -1;
+  F.ouverte = id; // pastille « Compte » et icône : sans cette discussion, lue dès son ouverture (firebase-config.js)
 
   function heure(ts) {
     return ts ? ts.toDate().toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'à l’instant';
