@@ -125,6 +125,7 @@ html:not(.js) .onglets { display: none; }
 @media (max-width: 459px) { .onglets .filtre { flex: 1 1 auto; justify-content: center; padding: 10px 8px; font-size: .86rem; } .onglets .nb { display: none; } }
 .bandeau-exemple { margin: 20px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--exemple-fond); border: 1px solid var(--exemple-filet); color: var(--texte); font-size: .9rem; }
 .bandeau-exemple strong { color: var(--exemple); }
+.autres-sources { margin: 20px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--tuile); border: 1px solid var(--filet); font-size: .9rem; overflow-wrap: anywhere; }
 .exemple { font-size: .68rem; font-weight: 700; line-height: 1; padding: 5px 8px; border-radius: 99px; letter-spacing: .1em; text-transform: uppercase; color: var(--exemple); background: var(--exemple-fond); box-shadow: inset 0 0 0 1px var(--exemple-filet); }
 .avis:has(.exemple) { border-style: dashed; }
 .bandeau-prive { display: grid; gap: 12px; justify-items: start; margin-top: 20px; }

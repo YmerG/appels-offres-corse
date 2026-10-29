@@ -145,7 +145,8 @@ def lieu_texte(t):
 def nom_lieu(l):
     """« Bastia cedex », « Mairie de San martino di lota » -> Bastia, San Martino di Lota ;
     « Cantine scolaire », « Section F » -> None (le département prendra la place)."""
-    l = re.sub(r"\s*\(2[ab]\)|\s+cedex.*|\s+(?:mail|courriel|t[ée]l)\b.*|^(?:mairie|commune|ville|village)(?: d[eu])?\s+", "", propre(l), flags=re.I).strip(" -")
+    l = re.sub(r"\s*\(2[ab]\)|\s+cedex.*|\s+(?:mail|courriel|t[ée]l)\b.*|^(?:mairie|commune|ville|village)\s+(?!di\s)(?:de\s+|du\s+|d['’]\s*)?", "", propre(l), flags=re.I).strip(" -")
+    # rapport 30 : « Ville d'Ajaccio » -> Ajaccio, mais « Ville di Pietrabugno » est une commune
     # rapport 29 : « Sans Objet », « Services Techniques Municipaux », « Hôtel Consulaire », « 20620 », « Ba », phrase entière
     if (sum(c.isalpha() for c in l) < 3 or len(l) > 60
             or re.search(r"\b(?:cantine|section|ecole|college|lycee|locaux|plusieurs|divers|voir|sans objet|services?|hotel|lieux)\b", normal(l))):

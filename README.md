@@ -19,6 +19,7 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
   - **« Agenda »** : un fichier .ics avec la date limite et un rappel 2 jours avant (à essayer sur iPhone et Android une fois en ligne).
   - Pastille **« Nouveau »** sur les avis publiés depuis la visite précédente (jour de visite gardé dans le navigateur).
   - Étude des concurrents : `captures/VEILLE-CONCURRENCE.md`.
+- **Autres plateformes (v12, lot 10, point 13 de la veille)** : dans l'onglet Public, un encadré rappelle que les marchés de moins de 90 000 € ne passent pas toujours au BOAMP et renvoie vers l'alerte gratuite de marches-publics.info et d'achatspublicscorse.com (aussi dans la FAQ de « Comment ça marche »). Simples liens : leurs annonces ne sont pas recopiées (robots.txt, pas d'API ouverte).
 - **5 entreprises au plus par demande (v12, lot 3)** :
   - chaque entreprise ne répond qu'une fois à une demande (son message porte l'identifiant de son compte) ; la carte affiche « 2 entreprises sur 5 ont déjà répondu » ;
   - dans « Mes demandes », le demandeur peut cliquer **« Ma demande est pourvue »** (et la rouvrir) ;

@@ -134,6 +134,7 @@
     compter();
     // vue « Mes avis suivis » : tous onglets confondus, donc ni onglet marqué ni bandeau des exemples
     bandeau.hidden = choix.onglet === 'public' || !!choix.suivi;
+    document.getElementById('autres-sources').hidden = choix.onglet !== 'public' || !!choix.suivi;
     filtres.forEach(function (b) { if (b.dataset.onglet) b.setAttribute('aria-pressed', String(!choix.suivi && b.dataset.onglet === choix.onglet)); });
     publier.href = 'publier.html?type=' + choix.onglet;
     cartes.forEach(function (c) {
