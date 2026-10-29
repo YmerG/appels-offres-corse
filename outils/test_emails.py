@@ -36,6 +36,8 @@ assert "&lt;électrique&gt;" in page and "<électrique>" not in page
 d2 = next(d for d in demandes if d["id"] == "d2")
 assert "ses coordonnées" in E.message("reponses:d2:1", d2, None, "Paul", "https://s/")[1]
 assert "leurs coordonnées" in E.message("reponses:d1:3", d1, None, "Jeanne", "https://s/")[1]
+assert "Son message est" in E.message("reponses:d2:1", d2, None, "Paul", "https://s/")[1]
+assert "Leurs messages sont" in E.message("reponses:d1:3", d1, None, "Jeanne", "https://s/")[1]
 assert "alertes=non" in E.message("alerte:d1:e1", d1, abonnes[0], "Élec", "https://s/")[1]
 assert "alertes=non" not in texte
 assert 'href="https://s/compte.html?alertes=non#alertes"' in E.message("alerte:d1:e1", d1, abonnes[0], "Élec", "https://s/")[2]
@@ -43,6 +45,7 @@ assert 'href="https://s/compte.html?alertes=non#alertes"' in E.message("alerte:d
 d4 = next(d for d in demandes if d["id"] == "d4")
 assert "est passée" in E.message("validee:d4", d4, None, "Paul", "https://s/")[1]
 assert "peuvent y répondre" in texte
+assert "Mes discussions" in texte
 # adresse du demandeur : celle du compte vérifié, pas l'e-mail tapé dans la demande
 assert source.contact(d1) == ("jeanne.compte@exemple.invalid", "Jeanne Exemple")
 

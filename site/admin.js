@@ -167,14 +167,18 @@
     var bascule = el('button', publiee ? 'bouton-sortir' : 'bouton-publier', publiee ? 'Retirer' : 'Republier');
     bascule.type = 'button';
     bascule.dataset.bascule = '';
-    // Retirer ferme aussi ses discussions ouvertes, dans la même écriture (sinon l'entreprise pourrait encore écrire) ; définitif
-    var ouvertes = l.discussions.filter(function (x) { return x.s.data().ouverte; });
+    // Retirer ferme aussi ses discussions ouvertes, dans la même écriture (sinon l'entreprise pourrait encore écrire) ; définitif.
+    // Relues au clic : une entreprise a pu en ouvrir une depuis le chargement de la page
     bascule.onclick = function () {
-      if (publiee && ouvertes.length && !confirm('Retirer cette demande ? Ses ' + ouvertes.length + ' discussion(s) ouverte(s) seront fermées, définitivement.')) return;
-      var lot = f.fs.writeBatch(f.db);
-      lot.update(ref, { statut: publiee ? 'en_attente' : 'validee' });
-      if (publiee) ouvertes.forEach(function (x) { lot.update(x.s.ref, { ouverte: false }); });
-      agir(lot.commit());
+      (publiee ? discussionsDe(ref.id) : Promise.resolve([])).then(function (ds) {
+        var ouvertes = ds.filter(function (x) { return x.s.data().ouverte; });
+        if (ouvertes.length && !confirm('Retirer cette demande ? ' + (ouvertes.length === 1 ? 'Sa discussion ouverte sera fermée'
+          : 'Ses ' + ouvertes.length + ' discussions ouvertes seront fermées') + ', définitivement.')) return;
+        var lot = f.fs.writeBatch(f.db);
+        lot.update(ref, { statut: publiee ? 'en_attente' : 'validee' });
+        ouvertes.forEach(function (x) { lot.update(x.s.ref, { ouverte: false }); });
+        agir(lot.commit());
+      });
     };
     actions.append(bascule);
     var non = el('button', 'bouton-refus', 'Supprimer');

@@ -70,7 +70,8 @@ def message(cle, d, abonne, nom, site):
     stop = None  # lien de désinscription (alertes seulement)
     if cle.startswith("validee:"):
         sujet = f"Votre demande est publiée : {titre}"
-        suite = (f"Les entreprises peuvent y répondre jusqu'au {fin}. Nous vous transmettons leurs coordonnées dès qu'elles répondent."
+        suite = (f"Les entreprises peuvent y répondre jusqu'au {fin}. Leurs messages arriveront dans « Mes discussions », sur le site,"
+                 " et nous vous transmettons leurs coordonnées dès qu'elles répondent."
                  if d["delai"] > datetime.now(timezone.utc)
                  else f"Sa date limite, le {fin}, est passée : elle ne reçoit plus de réponses.")  # validée trop tard
         lignes = [f"Bonjour {nom},", f"Votre demande {cite}, à {lieu}, est publiée.", suite,
@@ -82,8 +83,9 @@ def message(cle, d, abonne, nom, site):
         quoi = f"{n} entreprises ont répondu : nous vous avons transmis leurs coordonnées" if n > 1 \
             else "Une entreprise a répondu : nous vous avons transmis ses coordonnées"
         lignes = [f"Bonjour {nom},", f"{quoi}, pour votre demande {cite}, à {lieu}.",
-                  "Leurs messages sont dans « Mes discussions », sur le site : vous pouvez leur répondre.",
-                  ("Lire leurs messages", f"{site}compte.html#discussions")]
+                  f"{'Leurs messages sont' if n > 1 else 'Son message est'} dans « Mes discussions », sur le site : vous pouvez "
+                  f"{'leur' if n > 1 else 'lui'} répondre.",
+                  ("Lire leurs messages" if n > 1 else "Lire son message", f"{site}compte.html#discussions")]
         pourquoi = "Vous recevez cet e-mail parce que vous avez publié cette demande sur Appels d'offres Corse."
     else:
         metier = METIERS.get(d["metier"], (d["metier"],))[0]
