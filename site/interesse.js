@@ -66,6 +66,12 @@
       form.telephone.value = m.profil.telephone || '';
       form.email.value = m.user.email;
       form.hidden = false;
+      if (!m.profil.decennale) {
+        var astuce = document.createElement('p');
+        astuce.className = 'aide-bloc';
+        astuce.innerHTML = 'Astuce : déclarez votre assurance décennale dans <a href="compte.html">votre compte</a>. Elle sera transmise au demandeur avec votre message.';
+        form.before(astuce);
+      }
     });
   }).catch(function (e) {
     if (e && e.code === 'redirection') return;

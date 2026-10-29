@@ -162,6 +162,10 @@
         $('siret').value = profil.siret;
         form.querySelectorAll('[name=metiers]').forEach(function (c) { c.checked = profil.metiers.indexOf(c.value) !== -1; });
         form.querySelectorAll('[name=zone]').forEach(function (c) { c.checked = profil.zone.indexOf(c.value) !== -1; });
+        var dec = profil.decennale || {};
+        $('d-assureur').value = dec.assureur || '';
+        $('d-fin').value = dec.fin || '';
+        $('d-contrat').value = dec.contrat || '';
       }
       $('telephone').value = profil.telephone || '';
       $('espace').hidden = true;
@@ -174,7 +178,8 @@
   $('modifier').onclick = function () { ouvrirFormulaire('modifier'); form.querySelector('fieldset:not([disabled]):not([hidden]) input').focus(); };
 
   var NOMS = { email: "l'e-mail", mdp: 'le mot de passe (8 caractères au moins)', 'p-nom': 'votre nom', 'p-commune': 'la commune',
-    'e-nom': 'la raison sociale', siret: 'le SIRET (14 chiffres)', telephone: 'le téléphone', consentement: "l'accord sur vos informations" };
+    'e-nom': 'la raison sociale', siret: 'le SIRET (14 chiffres)', telephone: 'le téléphone', consentement: "l'accord sur vos informations",
+    'd-assureur': "l'assureur", 'd-fin': 'la date de fin de validité', 'd-contrat': 'le n° de contrat' };
 
   function coches(nom) { return Array.prototype.filter.call(form.querySelectorAll('[name=' + nom + ']'), function (c) { return c.checked; }).map(function (c) { return c.value; }); }
 
@@ -193,6 +198,14 @@
       if (!siretValide(champs.siret)) return AOC_FB.sous($('siret'), SIRET_FAUX);
       if (!champs.metiers.length) return AOC_FB.sous(form.querySelector('[name=metiers]'), 'Cochez au moins un métier.');
       if (!champs.zone.length) return AOC_FB.sous(form.querySelector('[name=zone]'), "Cochez au moins un département d'intervention.");
+      // décennale : rien, ou l'assureur et la date de fin (le n° de contrat reste facultatif)
+      var dec = { assureur: v('d-assureur'), fin: v('d-fin'), contrat: v('d-contrat') };
+      if (dec.assureur || dec.fin || dec.contrat) {
+        if (dec.assureur.length < 2) return AOC_FB.sous($('d-assureur'), "Indiquez l'assureur (ou videz les champs de la décennale).");
+        if (!dec.fin) return AOC_FB.sous($('d-fin'), 'Indiquez la date de fin de validité.');
+        if (!dec.contrat) delete dec.contrat;
+        champs.decennale = dec;
+      } else if (mode === 'modifier') champs.decennale = f.fs.deleteField();
     }
     // minlength ne compte pas les espaces retirés par trim()
     var nomId = type === 'entreprise' ? 'e-nom' : 'p-nom';
@@ -292,6 +305,9 @@
           + profil.metiers.map(function (m) { return METIERS[m] || m; }).join(', ') + ' · intervient en ' + profil.zone.join(' et ')
         : 'Particulier · ' + profil.commune;
       if (profil.telephone) $('r-details').textContent += ' · ' + profil.telephone;
+      if (ent) $('r-details').textContent += profil.decennale
+        ? ' · Décennale : ' + profil.decennale.assureur + ', jusqu\'au ' + new Date(profil.decennale.fin + 'T12:00').toLocaleDateString('fr-FR')
+        : ' · Décennale non renseignée (Modifier le profil)';
       $('r-action').textContent = ent ? 'Voir les demandes' : 'Publier une demande de travaux';
       $('r-action').href = ent ? 'index.html#onglet=particulier' : 'publier.html';
       $('mes-demandes').hidden = false;

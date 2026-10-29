@@ -108,7 +108,7 @@
       x.type = 'button';
       x.textContent = '×';
       x.setAttribute('aria-label', 'Retirer la photo ' + (i + 1));
-      x.onclick = function () { photos.splice(i, 1); afficherPhotos(); champPhotos.focus(); };
+      x.onclick = function () { photos.splice(i, 1); AOC_FB.sous(champPhotos, ''); afficherPhotos(); champPhotos.focus(); };
       li.append(img, x);
       vignettes.append(li);
     });

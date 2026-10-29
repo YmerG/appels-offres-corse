@@ -8,6 +8,7 @@
     restauration: 'Restauration, alimentation', services: 'Services', fournitures: 'Fournitures, équipements' };
   var $ = function (id) { return document.getElementById(id); };
   var f;
+  var profils = {}; // users/{uid}, pour la décennale des entreprises qui répondent
 
   function el(tag, cls, texte) {
     var e = document.createElement(tag);
@@ -95,6 +96,12 @@
         bloc.append(el('p', 'qui-interet', i.nom + ' · ' + date(i.cree)));
         lien(bloc, i);
         bloc.append(el('p', 'description description-entiere', i.message));
+        // décennale déclarée dans le profil de l'entreprise : à transmettre avec le message (non vérifiée)
+        var dec = profils[i.uid] && profils[i.uid].decennale;
+        var finDec = dec && new Date(dec.fin + 'T23:59');
+        bloc.append(el('p', 'aide-bloc', !dec ? 'Décennale : non déclarée'
+          : 'Décennale déclarée : ' + dec.assureur + (dec.contrat ? ', contrat ' + dec.contrat : '') + ', ' +
+            (finDec < new Date() ? 'EXPIRÉE le ' : "valable jusqu'au ") + finDec.toLocaleDateString('fr-FR') + ' (attestation à demander)'));
         var sup = el('button', 'lien-bouton', 'Supprimer ce message');
         sup.type = 'button';
         // le compteur public (5 entreprises au plus) suit : une place se libère
@@ -191,7 +198,7 @@
   function charger() {
     erreur('erreur', '');
     var auteurs = {};
-    return comptes().then(function (a) { auteurs = a; return f.fs.getDocs(f.fs.collection(f.db, 'demandes')); }).then(function (res) {
+    return comptes().then(function (a) { auteurs = profils = a; return f.fs.getDocs(f.fs.collection(f.db, 'demandes')); }).then(function (res) {
       return Promise.all(res.docs.map(function (d) {
         return Promise.all([f.fs.getDoc(f.fs.doc(f.db, d.ref.path, 'prive', 'contact')), f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'interets')),
           d.data().photos ? f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'photos')) : { docs: [] }])

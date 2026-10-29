@@ -40,6 +40,8 @@ def valeur(v):
         return {"timestampValue": v.isoformat().replace("+00:00", "Z")}
     if isinstance(v, list):
         return {"arrayValue": {"values": [valeur(x) for x in v]}}
+    if isinstance(v, dict):
+        return {"mapValue": {"fields": {k: valeur(x) for k, x in v.items()}}}
     return {"stringValue": v}
 
 
@@ -172,6 +174,25 @@ def main():
     assert maj(f"users/{ent_uid}", None, {"alertes": True}) == 403, "alertes sans connexion"
     assert maj(f"users/{part_uid}", part_jeton, {"alertes": True}) == 403, "alertes sur un profil Particulier"
     assert profil(intrus_uid, {**PROFIL_E, "alertes": "oui"}, intrus_jeton) == 403, "alertes pas booléen (création)"
+    # assurance décennale déclarée : assureur + date de fin (n° de contrat facultatif), sur un profil Entreprise seulement
+    DEC = {"assureur": "Mutuelle Test", "contrat": "AB-123", "fin": "2027-06-30"}
+    assert maj(f"users/{ent_uid}", ent_jeton, {"decennale": DEC}) == 200
+    assert maj(f"users/{ent_uid}", ent_jeton, {"decennale": sans(DEC, "contrat")}) == 200
+    refus_dec = {
+        "sans assureur": sans(DEC, "assureur"),
+        "sans date": sans(DEC, "fin"),
+        "date mal écrite": {**DEC, "fin": "30/06/2027"},
+        "mois 13": {**DEC, "fin": "2027-13-01"},
+        "champ en trop": {**DEC, "attestation": "vérifiée"},
+        "assureur trop long": {**DEC, "assureur": "a" * 81},
+        "contrat trop long": {**DEC, "contrat": "c" * 41},
+        "pas un objet": "Mutuelle Test",
+    }
+    for nom, d in refus_dec.items():
+        assert maj(f"users/{ent_uid}", ent_jeton, {"decennale": d}) == 403, f"décennale : {nom}"
+    assert maj(f"users/{ent_uid}", intrus_jeton, {"decennale": DEC}) == 403, "décennale d'un autre"
+    assert maj(f"users/{part_uid}", part_jeton, {"decennale": DEC}) == 403, "décennale sur un profil Particulier"
+    assert profil(intrus_uid, {**PROFIL_E, "decennale": {**DEC, "fin": "demain"}}, intrus_jeton) == 403, "décennale fausse (création)"
 
     # publication : par un compte Particulier vérifié, ou Entreprise vérifié (onglet Privé – sociétés seulement),
     # demande + coordonnées ensemble, toujours en attente
@@ -414,7 +435,8 @@ def main():
     for chemin in ("ph1/photos/1", "ph1/prive/contact", "ph1"):
         appel(FS + f"/demandes/{chemin}", jeton="owner", methode="DELETE")
 
-    print(f"OK : règles Firestore (profils : {len(refus_profil) + 16} refus de création, lecture et modification ; "
+    print(f"OK : règles Firestore (profils : {len(refus_profil) + 16} refus de création, lecture et modification, "
+          f"décennale : {len(refus_dec) + 3} refus ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
           f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus ; "
           f"photos : {len(refus_photos) + 6} refus, publiques après validation seulement)")

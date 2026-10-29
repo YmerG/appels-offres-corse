@@ -107,6 +107,22 @@
             <label><input type="checkbox" name="zone" value="2B"> Haute-Corse (2B)</label>
           </div>
         </fieldset>
+        <fieldset class="dep-form" id="f-decennale">
+          <legend>Assurance décennale <span class="aide">facultatif</span></legend>
+          <p class="aide-bloc">Transmise au demandeur avec chacune de vos réponses. Il vous demandera l'attestation : elle n'est pas vérifiée par le site.</p>
+          <div class="deux-col">
+            <div>
+              <label for="d-assureur">Assureur</label>
+              <input id="d-assureur" name="d-assureur" maxlength="80" autocomplete="off" placeholder="Nom de votre assureur">
+            </div>
+            <div>
+              <label for="d-fin">Valable jusqu'au</label>
+              <input id="d-fin" name="d-fin" type="date" min="2020-01-01" max="2099-12-31">
+            </div>
+          </div>
+          <label for="d-contrat">N° de contrat <span class="aide">facultatif</span></label>
+          <input id="d-contrat" name="d-contrat" maxlength="40" autocomplete="off">
+        </fieldset>
       </fieldset>
 
       <fieldset>

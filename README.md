@@ -28,6 +28,10 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
   - jusqu'à 3 photos dans « Publier », réduites dans le navigateur en JPEG de 300 Ko au plus (ce qui retire la position GPS) ; vignettes avec bouton « × » pour en retirer une ;
   - stockées en octets dans Firestore (`demandes/{id}/photos/1 à 3`), pas dans Cloud Storage (payant) ; écrites seulement en même temps que la demande, par son auteur ;
   - visibles par l'admin avant validation, puis par tous via le bouton « Photos (n) » de la carte (chargées seulement au clic) ; supprimées avec la demande.
+- **Assurance décennale déclarée (v12, lot 5)** :
+  - une entreprise peut indiquer dans son compte son assureur, la date de fin et le n° de contrat (facultatif) ; rien n'est vérifié par le site ;
+  - l'admin la voit sous chaque réponse (« EXPIRÉE » si la date est passée) et la transmet au demandeur avec les coordonnées ;
+  - « Je suis intéressé » rappelle de la déclarer si elle manque ; règles Firestore : `decennaleValide` (profil Entreprise seulement).
 - **Interface (v12, lot 2)** :
   - bouton **« Vue compacte »** à côté du nombre d'avis : seulement l'essentiel de chaque carte (sur téléphone, environ 250 px au lieu de 540, boutons réduits à leur icône) ; le choix est gardé dans le navigateur ;
   - page **`comment-ca-marche.html`** (lien sous les chiffres de l'en-tête et dans le pied de page) : parcours entreprise et particulier en 3 étapes, « Combien ça coûte ? » (gratuit pendant la version de test, **à décider par Rémy pour la suite**), ce qui est vérifié et ce qu'il faut vérifier soi-même (décennale, devis écrit), questions fréquentes.
