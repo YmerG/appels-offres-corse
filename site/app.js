@@ -13,9 +13,10 @@
   var bandeau = document.getElementById('bandeau');
   var publier = document.getElementById('publier');
   var filtres = Array.prototype.slice.call(document.querySelectorAll('.filtre'));
-  var CLES = ['onglet', 'metier', 'dep', 'suivi'];
-  var DEFAUT = { onglet: 'public', metier: '', dep: '', suivi: '' };
-  var choix = { onglet: 'public', metier: '', dep: '', suivi: '' };
+  var taille = document.getElementById('taille'); // absent : ancienne page encore en cache
+  var CLES = ['onglet', 'metier', 'dep', 'suivi', 'taille'];
+  var DEFAUT = { onglet: 'public', metier: '', dep: '', suivi: '', taille: '' };
+  var choix = { onglet: 'public', metier: '', dep: '', suivi: '', taille: '' };
   var JOUR = 864e5;
   var maintenant = new Date();
   var aujourdhui = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
@@ -133,6 +134,8 @@
       var ok = (choix.suivi ? suivis.indexOf(c.dataset.id) !== -1 : c.dataset.source === choix.onglet) &&
         (!choix.metier || c._metiers.indexOf(choix.metier) !== -1) &&
         (!choix.dep || c.dataset.dep === choix.dep) &&
+        // taille : avis du BOAMP seulement (les demandes privées n'en ont pas)
+        (!choix.taille || c.dataset.source !== 'public' || c.dataset.taille === choix.taille) &&
         mots.every(function (m) { return c._texte.indexOf(m) !== -1; });
       c.hidden = !ok;
       if (ok) n++;
@@ -142,7 +145,8 @@
       ordre.forEach(function (t, i) { t.hidden = i >= 2; c._ancre.parentNode.insertBefore(t, c._ancre); });
       if (ordre.length > 2) c._ancre.title = ordre.slice(2).map(function (t) { return t.textContent; }).join(', ');
     });
-    var filtre = mots.length || choix.metier || choix.dep;
+    if (taille) document.getElementById('bloc-taille').hidden = choix.onglet !== 'public' && !choix.suivi;
+    var filtre = mots.length || choix.metier || choix.dep || (choix.taille && (choix.onglet === 'public' || choix.suivi));
     var ex = cartes.filter(function (c) { return !c.hidden && c.querySelector('.exemple'); }).length;
     etat.textContent = choix.suivi ? n + (n > 1 ? ' avis suivis' : ' avis suivi') : n + ' avis ' + (filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours'
       : ex === n ? "d'exemple" : 'en cours' + (ex ? ', dont ' + ex + " d'exemple" : ''));
@@ -155,6 +159,7 @@
   function choisir(k, valeur) {
     choix[k] = valeur;
     filtres.forEach(function (x) { if (cle(x) === k) x.setAttribute('aria-pressed', String(x.dataset[k] === valeur)); });
+    if (k === 'taille' && taille) taille.value = valeur;
   }
 
   function trier() {
@@ -201,11 +206,13 @@
   });
   q.addEventListener('input', appliquer);
   tri.addEventListener('change', trier);
+  if (taille) taille.addEventListener('change', function () { choisir('taille', taille.value); appliquer(); });
   document.getElementById('effacer').addEventListener('click', function () {
     q.value = '';
     choisir('metier', '');
     choisir('dep', '');
     choisir('suivi', '');
+    choisir('taille', '');
     appliquer();
     etat.focus();
   });
@@ -231,7 +238,9 @@
     CLES.forEach(function (k) { choisir(k, DEFAUT[k]); });
     location.hash.slice(1).split('&').forEach(function (p) {
       var kv = p.split('=');
-      if (CLES.indexOf(kv[0]) !== -1 && document.querySelector('.filtre[data-' + kv[0] + '="' + CSS.escape(kv[1] || '') + '"]')) choisir(kv[0], kv[1]);
+      var v = CSS.escape(kv[1] || '');
+      var connu = kv[0] === 'taille' ? taille && taille.querySelector('option[value="' + v + '"]') : document.querySelector('.filtre[data-' + kv[0] + '="' + v + '"]');
+      if (CLES.indexOf(kv[0]) !== -1 && connu) choisir(kv[0], kv[1]);
     });
     appliquer();
   }

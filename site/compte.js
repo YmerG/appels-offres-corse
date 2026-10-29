@@ -308,6 +308,12 @@
       if (ent) $('r-details').textContent += profil.decennale
         ? ' · Décennale : ' + profil.decennale.assureur + ', jusqu\'au ' + new Date(profil.decennale.fin + 'T12:00').toLocaleDateString('fr-FR')
         : ' · Décennale non renseignée (Modifier le profil)';
+      var jours = ent && profil.decennale ? Math.floor((new Date(profil.decennale.fin + 'T23:59') - Date.now()) / 864e5) : 30;
+      $('r-decennale').hidden = jours >= 30;
+      if (jours < 30) $('r-decennale').firstChild.innerHTML = '<strong>Votre assurance décennale ' +
+        (jours < 0 ? 'a expiré' : 'expire') + ' le ' + new Date(profil.decennale.fin + 'T12:00').toLocaleDateString('fr-FR') +
+        (jours < 0 ? '.</strong> Le demandeur verra qu’elle est expirée.' : '</strong> (' + (jours ? 'dans ' + jours + ' jour' + (jours > 1 ? 's' : '') : 'aujourd’hui') + ').') +
+        ' Mettez-la à jour avec « Modifier mon profil ».';
       $('r-action').textContent = ent ? 'Voir les demandes' : 'Publier une demande de travaux';
       $('r-action').href = ent ? 'index.html#onglet=particulier' : 'publier.html';
       $('mes-demandes').hidden = false;

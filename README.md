@@ -31,7 +31,9 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
 - **Assurance décennale déclarée (v12, lot 5)** :
   - une entreprise peut indiquer dans son compte son assureur, la date de fin et le n° de contrat (facultatif) ; rien n'est vérifié par le site ;
   - l'admin la voit sous chaque réponse (« EXPIRÉE » si la date est passée) et la transmet au demandeur avec les coordonnées ;
-  - « Je suis intéressé » rappelle de la déclarer si elle manque ; règles Firestore : `decennaleValide` (profil Entreprise seulement).
+  - « Je suis intéressé » rappelle de la déclarer si elle manque ou si elle est expirée (lien vers le compte dans un nouvel onglet) ; règles Firestore : `decennaleValide` (profil Entreprise seulement).
+  - lot 6 : « EXPIRÉE » en rouge et en gras côté admin ; dans « Mon compte », un bandeau prévient l'entreprise si sa décennale est expirée ou expire sous 30 jours (pas d'e-mail).
+- **Filtre « Taille du marché » (v12, lot 7)** : Toutes, moins de 90 000 €, de 90 000 € au seuil européen, marchés européens. Lu dans la famille de procédure du BOAMP (`collecte.py`, fonction `taille`), car le montant manque sur un avis sur deux. Avis publics seulement (caché dans les onglets des demandes), gardé dans l'adresse (`#taille=petit`).
 - **Interface (v12, lot 2)** :
   - bouton **« Vue compacte »** à côté du nombre d'avis : seulement l'essentiel de chaque carte (sur téléphone, environ 250 px au lieu de 540, boutons réduits à leur icône) ; le choix est gardé dans le navigateur ;
   - page **`comment-ca-marche.html`** (lien sous les chiffres de l'en-tête et dans le pied de page) : parcours entreprise et particulier en 3 étapes, « Combien ça coûte ? » (gratuit pendant la version de test, **à décider par Rémy pour la suite**), ce qui est vérifié et ce qu'il faut vérifier soi-même (décennale, devis écrit), questions fréquentes.

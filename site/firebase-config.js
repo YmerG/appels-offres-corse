@@ -80,15 +80,21 @@ window.AOC_FB = {
     }
     p.textContent = msg;
     p.hidden = !msg;
+    window.AOC_FB.sansErreur(champ);
     if (!msg) return champ.removeAttribute('aria-invalid');
     champ.setAttribute('aria-invalid', 'true');
-    champ.setAttribute('aria-describedby', p.id);
+    champ.setAttribute('aria-describedby', ((champ.getAttribute('aria-describedby') || '') + ' ' + p.id).trim());
     champ.focus();
     p.scrollIntoView({ block: 'nearest' }); // message entier visible, pas sous le bouton collé en bas au téléphone
   },
+  // retire de aria-describedby les messages d'erreur (err-…), garde les aides du champ (ex. photos-aide)
+  sansErreur: function (c) {
+    var reste = (c.getAttribute('aria-describedby') || '').split(' ').filter(function (id) { return id && id.indexOf('err-') !== 0; }).join(' ');
+    if (reste) c.setAttribute('aria-describedby', reste); else c.removeAttribute('aria-describedby');
+  },
   effacer: function (form) {
     form.querySelectorAll('.erreur-champ').forEach(function (p) { p.hidden = true; });
-    form.querySelectorAll('[aria-invalid]').forEach(function (c) { c.removeAttribute('aria-invalid'); });
+    form.querySelectorAll('[aria-invalid]').forEach(function (c) { c.removeAttribute('aria-invalid'); window.AOC_FB.sansErreur(c); });
   },
   // déconnexion depuis n'importe quelle page : retour à l'accueil, qui affiche « Déconnexion réussie. »
   deconnecter: function () {

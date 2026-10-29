@@ -303,6 +303,16 @@ def date_fr(iso, heure=True):
     return f"{JOURS[d.weekday()]} {d.day}{'er' if d.day == 1 else ''} {MOIS[d.month - 1]} {d.year}{h}"
 
 
+def taille(procedure):
+    """Taille du marché d'après la famille de procédure du BOAMP : petit (< 90 k€), moyen, europeen, ou "" (DSP…)."""
+    p = normal(procedure).replace(" ", "")
+    if "<90" in p or "mapa" in p:
+        return "petit"
+    if "entre90" in p:
+        return "moyen"
+    return "europeen" if "europeen" in p else ""
+
+
 def carte(a):
     e = html.escape
     d = datetime.fromisoformat(a["date_limite"]).astimezone(PARIS)
@@ -332,6 +342,8 @@ def carte(a):
         actions = (f'<p class="actions"><a class="action dossier" href="{e(url)}" rel="noopener" target="_blank" '
                    f'aria-label="{nom} (nouvel onglet) : {e(a["objet"])}">{nom}</a></p>')
     ident = f' data-id="{e(a["id"])}"' if a.get("id") else ""
+    if source == "public":
+        ident += f' data-taille="{taille(a["procedure"])}"'
     return (f'<article class="avis"{ident} data-source="{source}" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" '
             f'data-limite="{e(a["date_limite"])}" data-publie="{e(a["publie"] or "")}" data-montant="{round(a["montant"] or 0)}" style="--c:{METIERS[a["metiers"][0]][1]}"'
             f'{" hidden" if exemple else ""}>'

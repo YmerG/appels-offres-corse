@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from collecte import (METIERS, analyser, avis_de, carte, date_limite, dossier, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
-                      metiers_de, nom_lieu, propre)
+                      metiers_de, nom_lieu, propre, taille)
 
 # métiers par préfixe CPV, le plus long l'emporte
 assert metier_cpv("45310000") == "electricite"
@@ -47,6 +47,10 @@ html_dce = carte({"id": "26-1", "objet": "X", "acheteur": "A", "lieu": "Bastia",
 assert dossier({"communication": {"urlDocConsul": "https://www.marches-publics.gouv.fr/", "urlProfilAch": "https://p.fr/acheteur/12"}}) == \
     ("https://p.fr/acheteur/12", "profil"), "accueil de plateforme : pas un dossier"
 assert dossier({"communication": {"urlDocConsul": "https://www.klekoon.com"}}) == ("https://www.klekoon.com", "profil")
+# taille du marché (filtre de l'accueil), d'après les 4 familles de procédure vues dans le BOAMP
+assert [taille(p) for p in ("Marchés <90 k€ (MAPA)", "Marchés entre 90 k€ et seuils européens", "Marchés européens",
+                            "Délégation de service public")] == ["petit", "moyen", "europeen", ""]
+assert 'data-taille="petit"' in html_dce
 assert 'data-id="26-1"' in html_dce and 'href="https://a.fr/?a=1&amp;b=2"' in html_dce and "Dossier de consultation" in html_dce
 
 assert lieu_texte("Lieu(x) d'exécution : voir lot") is None and lieu_texte("FRM01") is None

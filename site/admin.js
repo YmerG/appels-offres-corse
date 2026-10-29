@@ -99,7 +99,7 @@
         // décennale déclarée dans le profil de l'entreprise : à transmettre avec le message (non vérifiée)
         var dec = profils[i.uid] && profils[i.uid].decennale;
         var finDec = dec && new Date(dec.fin + 'T23:59');
-        bloc.append(el('p', 'aide-bloc', !dec ? 'Décennale : non déclarée'
+        bloc.append(el('p', finDec < new Date() ? 'aide-bloc dec-expiree' : 'aide-bloc', !dec ? 'Décennale : non déclarée'
           : 'Décennale déclarée : ' + dec.assureur + (dec.contrat ? ', contrat ' + dec.contrat : '') + ', ' +
             (finDec < new Date() ? 'EXPIRÉE le ' : "valable jusqu'au ") + finDec.toLocaleDateString('fr-FR') + ' (attestation à demander)'));
         var sup = el('button', 'lien-bouton', 'Supprimer ce message');

@@ -66,10 +66,13 @@
       form.telephone.value = m.profil.telephone || '';
       form.email.value = m.user.email;
       form.hidden = false;
-      if (!m.profil.decennale) {
+      var dec = m.profil.decennale, finDec = dec && new Date(dec.fin + 'T23:59');
+      if (!dec || finDec < new Date()) {
         var astuce = document.createElement('p');
         astuce.className = 'aide-bloc';
-        astuce.innerHTML = 'Astuce : déclarez votre assurance décennale dans <a href="compte.html">votre compte</a>. Elle sera transmise au demandeur avec votre message.';
+        var compte = '<a href="compte.html" target="_blank" rel="noopener">votre compte</a> (nouvel onglet)';
+        astuce.innerHTML = !dec ? 'Astuce : déclarez votre assurance décennale dans ' + compte + '. Elle sera transmise au demandeur avec votre message.'
+          : '<strong>Votre assurance décennale déclarée a expiré le ' + finDec.toLocaleDateString('fr-FR') + '.</strong> Mettez-la à jour dans ' + compte + ' : sinon le demandeur la verra expirée.';
         form.before(astuce);
       }
     });
