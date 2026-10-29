@@ -66,6 +66,13 @@
     agenda.setAttribute('aria-label', 'Ajouter la date limite à mon agenda : ' + titre);
     p.insertBefore(agenda, p.firstChild);
     p.insertBefore(suivre, p.firstChild);
+    if (c.dataset.source !== 'public') return;
+    // groupement : l'admin met en relation les entreprises qui cherchent un partenaire sur le même avis (partenaire.html)
+    var partenaire = document.createElement('a');
+    partenaire.className = 'action partenaire'; partenaire.textContent = 'Partenaire';
+    partenaire.href = 'partenaire.html?a=' + encodeURIComponent(c.dataset.id);
+    partenaire.setAttribute('aria-label', 'Chercher un partenaire pour : ' + titre);
+    p.appendChild(partenaire);
   }
 
   // La page peut dater de quelques heures : on retire les avis dont la date limite est passée

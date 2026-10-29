@@ -373,6 +373,50 @@ def main():
     assert maj("demandes/e1", admin_jeton, {"statut": "validee"}) == 200
     assert interet({**INTERET}, "e1") == 403, "sa propre demande"
 
+    # « Je cherche un partenaire » sur un avis BOAMP : identifiant <avis>_<uid>, entreprise vérifiée, lu par l'admin seulement
+    AVIS = "26-93354"
+    PARTENAIRE = {**INTERET, "avis": AVIS, "objet": "Construction d'un chalet thermal - Lot 5", "limite": dans(20)}
+
+    def partenaire(champs, jeton=ent_jeton, pid=None, nouveau=True):
+        return commit([ecriture(f"partenaires/{pid or champs.get('avis', AVIS) + '_' + qui.get(jeton, 'anonyme')}", champs, nouveau)], jeton)
+
+    assert partenaire(PARTENAIRE) == 200
+    assert partenaire({**PARTENAIRE, "uid": ent2_uid}, ent2_jeton) == 200
+    P3 = {**PARTENAIRE, "uid": ent3_uid}
+    refus_partenaire = {
+        "sans connexion": (PARTENAIRE, None, None),
+        "compte sans profil": ({**PARTENAIRE, "uid": intrus_uid}, intrus_jeton, None),
+        "e-mail pas vérifié": ({**PARTENAIRE, "uid": ent_nv_uid}, ent_nv_jeton, None),
+        "compte particulier": ({**PARTENAIRE, "uid": part_uid}, part_jeton, None),
+        "uid d'un autre": ({**PARTENAIRE, "uid": part_uid}, ent3_jeton, None),
+        "identifiant d'un autre": (P3, ent3_jeton, f"{AVIS}_{ent2_uid}"),
+        "identifiant d'un autre avis": (P3, ent3_jeton, f"26-1_{ent3_uid}"),
+        "n° d'avis faux": ({**P3, "avis": "abc"}, ent3_jeton, f"abc_{ent3_uid}"),
+        "sans titre": (sans(P3, "objet"), ent3_jeton, None),
+        "sans date limite": (sans(P3, "limite"), ent3_jeton, None),
+        "date limite en texte": ({**P3, "limite": "2026-11-02"}, ent3_jeton, None),
+        "titre trop long": ({**P3, "objet": "t" * 301}, ent3_jeton, None),
+        "message trop court": ({**P3, "message": "dispo"}, ent3_jeton, None),
+        "ni téléphone ni e-mail": (sans(P3, "email"), ent3_jeton, None),
+        "sans consentement": ({**P3, "consentement": False}, ent3_jeton, None),
+        "champ en trop": ({**P3, "lot": "5"}, ent3_jeton, None),
+    }
+    for nom, (champs, jeton, pid) in refus_partenaire.items():
+        assert partenaire(champs, jeton, pid) == 403, nom
+    assert partenaire(PARTENAIRE, nouveau=False) == 403, "écrasement de son message (partenaire)"
+    w = ecriture(f"partenaires/{AVIS}_{ent3_uid}", P3)
+    del w["updateTransforms"]
+    w["update"]["fields"]["cree"] = valeur(dans(-30))
+    assert commit([w], ent3_jeton) == 403, "date imposée (partenaire)"
+    assert appel(FS + f"/partenaires/{AVIS}_{ent_uid}", jeton=ent_jeton)[0] == 200, "l'entreprise voit son message"
+    for jeton in (None, intrus_jeton, ent3_jeton, part_jeton, ent2_jeton):
+        assert appel(FS + f"/partenaires/{AVIS}_{ent_uid}", jeton=jeton)[0] == 403
+        assert appel(FS + "/partenaires", jeton=jeton)[0] == 403
+        assert appel(FS + f"/partenaires/{AVIS}_{ent_uid}", jeton=jeton, methode="DELETE")[0] == 403
+    code, res = appel(FS + "/partenaires", jeton=admin_jeton)
+    assert code == 200 and len(res["documents"]) == 2
+    assert appel(FS + f"/partenaires/{AVIS}_{ent2_uid}", jeton=admin_jeton, methode="DELETE")[0] == 200
+
     # « Ma demande est pourvue » : l'auteur seulement, un booléen, sur une demande publiée ; plus aucune réponse ensuite
     assert maj("demandes/ok1", ent_jeton, {"pourvue": True}) == 403, "pourvue par une entreprise"
     assert maj("demandes/ok1", None, {"pourvue": True}) == 403, "pourvue sans connexion"
@@ -439,6 +483,7 @@ def main():
           f"décennale : {len(refus_dec) + 3} refus ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
           f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus ; "
+          f"partenaires : {len(refus_partenaire) + 17} refus, lus par l'admin seulement ; "
           f"photos : {len(refus_photos) + 6} refus, publiques après validation seulement)")
 
     for _, u in autres[:4]:
@@ -450,6 +495,7 @@ def main():
               " (e-mails vérifiés) ; entreprise2 à entreprise6@test.local, même mot de passe")
     else:
         appel(FS + f"/demandes/ok1/interets/{ent_uid}", jeton="owner", methode="DELETE")
+        appel(FS + f"/partenaires/{AVIS}_{ent_uid}", jeton="owner", methode="DELETE")
         for i in ("ok1", "x1", "e1"):
             appel(FS + f"/demandes/{i}/prive/contact", jeton="owner", methode="DELETE")
             appel(FS + f"/demandes/{i}", jeton="owner", methode="DELETE")

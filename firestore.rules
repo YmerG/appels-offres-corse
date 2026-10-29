@@ -101,6 +101,18 @@ service cloud.firestore {
         && texte(i.message, 10, 1000);
     }
 
+    // « Je cherche un partenaire » : n° d'avis BOAMP (26-93354), son titre et sa date limite (pour l'admin, qui supprime 3 mois après),
+    // les coordonnées et le message
+    function partenaireValide(p) {
+      return p.keys().hasOnly(['avis', 'objet', 'limite', 'nom', 'telephone', 'email', 'message', 'consentement', 'cree', 'uid'])
+        && p.uid == request.auth.uid
+        && p.avis is string && p.avis.matches('[0-9]{2}-[0-9]{1,7}')
+        && texte(p.objet, 1, 300)
+        && p.limite is timestamp
+        && coordonneesValides(p)
+        && texte(p.message, 10, 1000);
+    }
+
     // au plus 5 entreprises par demande (nbInterets, tenu à jour avec chaque message « Je suis intéressé »)
     function nbInterets(d) {
       return d.get('nbInterets', 0);
@@ -173,6 +185,16 @@ service cloud.firestore {
           && nbInterets(getAfter(/databases/$(database)/documents/demandes/$(id)).data)
             == nbInterets(get(/databases/$(database)/documents/demandes/$(id)).data) + 1;
       }
+    }
+
+    // « Je cherche un partenaire » sur un appel d'offres public : lisible par l'admin seulement, qui met en relation les
+    // entreprises d'un même avis. Une par entreprise et par avis (identifiant = <n° d'avis>_<uid> ; elle voit qu'elle a déjà écrit).
+    // shortcut: la date limite de l'avis n'est pas vérifiée ici (les avis BOAMP ne sont pas dans Firestore) ; l'admin écarte les avis clos
+    match /partenaires/{pid} {
+      allow get: if estAdmin() || (request.auth != null && pid.matches('[0-9]{2}-[0-9]{1,7}_' + request.auth.uid));
+      allow list, delete: if estAdmin();
+      allow create: if request.auth != null && pid == request.resource.data.avis + '_' + request.auth.uid
+        && compteVerifie('entreprise') && partenaireValide(request.resource.data);
     }
 
     // Comptes : chacun lit et écrit seulement son profil ; le type ne change plus après la création ; l'admin lit tout ; aucune lecture publique.

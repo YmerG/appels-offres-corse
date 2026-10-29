@@ -40,12 +40,15 @@
     <div id="espace" hidden>
       <p class="ligne-admin"><span id="qui"></span> <button type="button" class="lien-bouton" id="deconnexion">Se déconnecter</button></p>
       <p class="erreur" id="erreur" role="alert" hidden></p>
-      <p class="aide-bloc">Une demande est « échue » 3 mois après sa date limite : la page Confidentialité promet de la supprimer.</p>
+      <p class="aide-bloc">Une demande ou une recherche de partenaire est « échue » 3 mois après sa date limite : la page Confidentialité promet de la supprimer.</p>
       <button type="button" class="bouton-refus" id="purger" hidden></button>
       <h2 class="etat">En attente <span class="nb" id="nb-attente"></span></h2>
       <div class="avis-liste" id="attente"></div>
       <h2 class="etat">Publiées <span class="nb" id="nb-publiees"></span></h2>
       <div class="avis-liste" id="publiees"></div>
+      <h2 class="etat">Recherches de partenaires <span class="nb" id="nb-partenaires"></span></h2>
+      <p class="aide-bloc">Entreprises qui veulent se grouper sur un appel d'offres public. Dès que deux entreprises ou plus cherchent sur le même avis, transmettez à chacune les coordonnées des autres.</p>
+      <div class="avis-liste" id="partenaires"></div>
       <h2 class="etat">Comptes <span class="nb" id="nb-comptes"></span></h2>
       <p class="aide-bloc">En lecture seule. Les e-mails des comptes ne sont visibles que dans la console Firebase (Authentication).</p>
       <ul class="comptes" id="comptes"></ul>

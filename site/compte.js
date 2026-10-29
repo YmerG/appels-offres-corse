@@ -7,15 +7,16 @@
   form.querySelectorAll('[name=metiers]').forEach(function (c) { METIERS[c.value] = c.parentNode.textContent.trim(); });
   var f, moi, profil, typeFige = null, enCours = false;
 
-  // retour après connexion vers la page qui l'a demandée (seulement nos deux formulaires)
+  // retour après connexion vers la page qui l'a demandée (seulement nos trois formulaires)
   var retour = new URLSearchParams(location.search).get('retour') || '';
-  if (!/^(publier|interesse)\.html(\?(d|type)=[A-Za-z0-9_-]{1,64})?$/.test(retour)) retour = '';
+  if (!/^(publier|interesse|partenaire)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$/.test(retour)) retour = '';
+  var pourEntreprise = /^(interesse|partenaire)/.test(retour);
   if (retour) {
-    $('raison').textContent = retour.indexOf('interesse') === 0
-      ? 'Pour répondre à une demande, connectez-vous avec un compte Entreprise de travaux, ou créez-en un.'
+    $('raison').textContent = pourEntreprise
+      ? (retour.indexOf('partenaire') === 0 ? 'Pour chercher un partenaire' : 'Pour répondre à une demande') + ', connectez-vous avec un compte Entreprise de travaux, ou créez-en un.'
       : 'Pour publier une demande de travaux, connectez-vous ou créez un compte (Particulier, ou Entreprise de travaux pour une demande de société).';
     $('raison').hidden = false;
-    if (retour.indexOf('interesse') === 0) form.type.value = 'entreprise';
+    if (pourEntreprise) form.type.value = 'entreprise';
   }
   // lien « Ne plus recevoir ces alertes » des e-mails (outils/envoyer_emails.py) : décoché et enregistré après connexion
   var stopAlertes = new URLSearchParams(location.search).get('alertes') === 'non';
@@ -287,14 +288,14 @@
         });
       }
       var ent = profil.type === 'entreprise';
-      // publier : tous les comptes (entreprise : onglet Privé – sociétés) ; répondre : comptes Entreprise
-      var bonType = retour.indexOf('interesse') !== 0 || ent;
+      // publier : tous les comptes (entreprise : onglet Privé – sociétés) ; répondre, chercher un partenaire : comptes Entreprise
+      var bonType = !pourEntreprise || ent;
       if (retour && u.emailVerified && bonType) return location.replace(retour);
       montrer('espace');
       $('raison').hidden = !retour;
       if (retour) $('raison').textContent = bonType
         ? 'Vérifiez votre e-mail, puis vous serez renvoyé vers le formulaire.'
-        : 'Répondre à une demande est réservé aux comptes Entreprise de travaux.';
+        : (retour.indexOf('partenaire') === 0 ? 'Chercher un partenaire' : 'Répondre à une demande') + ' est réservé aux comptes Entreprise de travaux.';
       $('qui').textContent = 'Connecté : ' + u.email;
       $('a-verifier').hidden = u.emailVerified;
       $('mail-verif').textContent = u.email;

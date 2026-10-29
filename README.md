@@ -38,6 +38,10 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
   - Le **nom de l'entreprise retenue n'est pas recopié** : c'est parfois une personne (entrepreneur individuel). Il reste sur l'avis officiel. Décision de Rémy en attente.
   - Les petits marchés à l'ancien format du BOAMP (environ 3 sur 10) n'ont le prix et le titulaire qu'en texte libre : la fiche renvoie vers l'avis officiel.
   - Les lots sans gagnant (infructueux, sans suite) sont écartés.
+- **« Chercher un partenaire » (`partenaire.html`, lot 9)** : bouton « Partenaire » sous chaque avis public. Un compte Entreprise à l'e-mail vérifié laisse un message (ce qu'il apporte, ce qu'il cherche) et ses coordonnées. Rangé dans Firestore `partenaires/<n° d'avis>_<uid>` (un par entreprise et par avis), lu par l'admin seulement : la page admin les regroupe par avis, et dès 2 entreprises l'admin transmet à chacune les coordonnées des autres, à la main. Supprimé 3 mois après la date limite de l'avis (bouton de purge de l'admin).
+  - Les règles ne vérifient pas que l'avis est encore ouvert (les avis BOAMP ne sont pas dans Firestore) : la page le vérifie dans `data.json`, et l'admin écarte les avis clos.
+  - Pas d'e-mail automatique à l'admin ni aux entreprises pour l'instant.
+  - Lieux : « Sans objet », code postal seul, « Services techniques… », phrases entières sont remplacés par le département (`nom_lieu`, rapport 29).
 - **Interface (v12, lot 2)** :
   - bouton **« Vue compacte »** à côté du nombre d'avis : seulement l'essentiel de chaque carte (sur téléphone, environ 250 px au lieu de 540, boutons réduits à leur icône) ; le choix est gardé dans le navigateur ;
   - page **`comment-ca-marche.html`** (lien sous les chiffres de l'en-tête et dans le pied de page) : parcours entreprise et particulier en 3 étapes, « Combien ça coûte ? » (gratuit pendant la version de test, **à décider par Rémy pour la suite**), ce qui est vérifié et ce qu'il faut vérifier soi-même (décennale, devis écrit), questions fréquentes.

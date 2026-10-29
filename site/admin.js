@@ -1,5 +1,5 @@
 // Modération : connexion Firebase Auth (compte admin listé dans config/admins), puis valider / refuser / retirer les demandes,
-// et lire les messages « Je suis intéressé » des artisans pour les transmettre au demandeur.
+// lire les messages « Je suis intéressé » des artisans pour les transmettre au demandeur, et les recherches de partenaires.
 // Les règles Firestore font foi : un autre compte connecté ne lit rien.
 (function () {
   var METIERS = { 'gros-oeuvre': 'Gros œuvre, bâtiment', 'second-oeuvre': 'Second œuvre, finitions', electricite: 'Électricité, éclairage',
@@ -161,7 +161,7 @@
   function echue(d) { return d.delai && d.delai.toMillis() < Date.now() - 90 * 864e5; }
   var echues = [];
   $('purger').addEventListener('click', function () {
-    if (!confirm('Supprimer définitivement ' + echues.length + ' demande(s) échue(s), leurs coordonnées et les messages des artisans ?')) return;
+    if (!confirm('Supprimer définitivement ' + echues.length + ' demande(s) ou recherche(s) de partenaire échue(s), leurs coordonnées et les messages des artisans ?')) return;
     var lot = f.fs.writeBatch(f.db);
     echues.forEach(function (refs) { refs.forEach(function (r) { lot.delete(r); }); });
     agir(lot.commit());
@@ -195,10 +195,53 @@
     }, function (e) { erreur('erreur', 'Comptes illisibles : ' + (e && e.code || e)); return {}; });
   }
 
+  // « Je cherche un partenaire » : regroupées par avis BOAMP ; dès 2 entreprises, l'admin transmet à chacune les coordonnées des autres
+  function partenaires(docs) {
+    var box = $('partenaires'), par = {};
+    box.textContent = '';
+    docs.forEach(function (s) { var p = s.data(); (par[p.avis] = par[p.avis] || []).push(s); });
+    Object.keys(par).forEach(function (avis) {
+      var liste = par[avis], p0 = liste[0].data();
+      var a = el('article', 'avis avis-admin'), corps = el('div', 'corps');
+      var haut = el('p', 'haut');
+      haut.append(el('span', 'dep', 'Avis ' + avis));
+      if (p0.limite && p0.limite.toMillis() < Date.now() - 90 * 864e5) haut.append(el('span', 'dep echue', 'Échue : à supprimer'));
+      var officiel = el('a', '', "Voir l'avis officiel");
+      officiel.href = 'https://www.boamp.fr/pages/avis/?q=idweb:' + encodeURIComponent(avis);
+      officiel.target = '_blank';
+      officiel.rel = 'noopener';
+      var info = el('p', 'aide-bloc', 'Réponses avant le ' + date(p0.limite) + ' · ' + (liste.length > 1
+        ? liste.length + ' entreprises : transmettez à chacune les coordonnées des autres · ' : "1 entreprise : en attente d'une autre · "));
+      info.append(officiel);
+      corps.append(haut, el('h3', '', p0.objet), info);
+      liste.forEach(function (s) {
+        var p = s.data(), bloc = el('div', 'contact-prive');
+        bloc.append(el('p', 'qui-interet', p.nom + ' · ' + date(p.cree)));
+        lien(bloc, p);
+        bloc.append(el('p', 'description description-entiere', p.message));
+        var sup = el('button', 'lien-bouton', 'Supprimer ce message');
+        sup.type = 'button';
+        sup.onclick = function () { if (confirm('Supprimer définitivement ce message et ses coordonnées ?')) agir(f.fs.deleteDoc(s.ref)); };
+        bloc.append(sup);
+        corps.append(bloc);
+      });
+      a.append(corps);
+      box.append(a);
+    });
+    $('nb-partenaires').textContent = Object.keys(par).length;
+    if (!docs.length) box.append(el('p', 'vide', 'Aucune recherche de partenaire.'));
+  }
+
   function charger() {
     erreur('erreur', '');
-    var auteurs = {};
-    return comptes().then(function (a) { auteurs = profils = a; return f.fs.getDocs(f.fs.collection(f.db, 'demandes')); }).then(function (res) {
+    var auteurs = {}, recherches = [];
+    return Promise.all([comptes(), 
+      // règles pas encore publiées, ou panne : le reste de la page doit marcher quand même
+      f.fs.getDocs(f.fs.collection(f.db, 'partenaires')).catch(function (e) { console.warn('Partenaires illisibles :', e && e.code); return { docs: [] }; })]).then(function (r) {
+      auteurs = profils = r[0];
+      recherches = r[1].docs;
+      return f.fs.getDocs(f.fs.collection(f.db, 'demandes'));
+    }).then(function (res) {
       return Promise.all(res.docs.map(function (d) {
         return Promise.all([f.fs.getDoc(f.fs.doc(f.db, d.ref.path, 'prive', 'contact')), f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'interets')),
           d.data().photos ? f.fs.getDocs(f.fs.collection(f.db, d.ref.path, 'photos')) : { docs: [] }])
@@ -213,9 +256,11 @@
       // un lot Firestore = 500 suppressions au plus ; le reste partira au clic suivant
       var n = 0;
       echues = lignes.filter(function (l) { return echue(l.d); }).map(aSupprimer)
+        .concat(recherches.filter(function (s) { return echue({ delai: s.data().limite }); }).map(function (s) { return [s.ref]; }))
         .filter(function (refs) { n += refs.length; return n <= 500; });
       $('purger').hidden = !echues.length;
-      $('purger').textContent = 'Supprimer les demandes échues (' + echues.length + ')';
+      $('purger').textContent = 'Supprimer les demandes et recherches échues (' + echues.length + ')';
+      partenaires(recherches);
       lignes.forEach(function (l) {
         $(l.d.statut === 'validee' ? 'publiees' : 'attente').append(carte(l, auteurs[l.d.uid]));
       });

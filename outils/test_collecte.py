@@ -79,6 +79,11 @@ assert nom_lieu("Mairie de San martino di lota") == "San Martino di Lota" and no
 assert nom_lieu("Isolaccio-di-fiumorbo") == "Isolaccio-di-Fiumorbo" and nom_lieu("Corse du Sud") == "Corse-du-Sud"
 assert nom_lieu("L ile rousse") == nom_lieu("Ile-Rousse") == "L'Île-Rousse" and nom_lieu("Porto Vecchio") == "Porto-Vecchio"
 assert nom_lieu("Cantine Scolaire") is None and nom_lieu("Palasca Section F") is None
+# rapport 29 : lieux sans valeur -> le département prendra la place
+assert [nom_lieu(l) for l in ("Sans Objet", "Services Techniques Municipaux", "Hôtel Consulaire", "20620", "Ba",
+        "Les lieux d'exécution des prestations sont les suivants : régions du Niolu et du Cortenais")] == [None] * 6
+assert nom_lieu("Bastelicaccia Mail") == "Bastelicaccia" and nom_lieu("Bastia") == "Bastia" and nom_lieu("Castellare-di-Casinca") == "Castellare-di-Casinca"
+assert nom_lieu("Commune San Martino di Lota") == "San Martino di Lota" and nom_lieu("Haute Corse") == "Haute-Corse"
 
 # un rectificatif remplace l'avis initial ; un avis clos est écarté
 base = {"objet": "TRAVAUX DE TOITURE", "nomacheteur": "Commune de Corte", "code_departement": ["20B"], "donnees": "{}",
