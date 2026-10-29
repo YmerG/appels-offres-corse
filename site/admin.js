@@ -83,6 +83,7 @@
     if (echue(d)) haut.append(el('span', 'dep echue', 'Échue : à supprimer'));
     if (d.pourvue) haut.append(el('span', 'dep', 'Pourvue (par le demandeur)'));
     if ((d.nbInterets || 0) >= 5) haut.append(el('span', 'dep', 'Complète : 5 entreprises'));
+    if (d.devis) haut.append(el('span', 'dep', 'Accepte les devis par le site')); // lot 20 : devis envoyés à l'acheteur, que l'admin ne lit pas
     corps.append(haut, el('h3', '', d.titre));
     if (!pub) corps.append(el('p', 'description description-entiere', d.description));
     if (pub) {

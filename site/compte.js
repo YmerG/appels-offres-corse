@@ -9,11 +9,11 @@
 
   // retour après connexion vers la page qui l'a demandée (seulement nos formulaires)
   var retour = new URLSearchParams(location.search).get('retour') || '';
-  if (!/^(publier|interesse|partenaire|acheteurs)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$|^discussion\.html\?id=[A-Za-z0-9_-]{1,200}$/.test(retour)) retour = '';
-  var pourEntreprise = /^(interesse|partenaire)/.test(retour);
+  if (!/^(publier|interesse|partenaire|acheteurs|devis)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$|^discussion\.html\?id=[A-Za-z0-9_-]{1,200}$/.test(retour)) retour = '';
+  var pourEntreprise = /^(interesse|partenaire|devis)/.test(retour);
   if (retour) {
     $('raison').textContent = pourEntreprise
-      ? (retour.indexOf('partenaire') === 0 ? 'Pour chercher un partenaire' : 'Pour répondre à une demande') + ', connectez-vous avec un compte Entreprise de travaux, ou créez-en un.'
+      ? (retour.indexOf('partenaire') === 0 ? 'Pour chercher un partenaire' : retour.indexOf('devis') === 0 ? 'Pour créer un devis' : 'Pour répondre à une demande') + ', connectez-vous avec un compte Entreprise de travaux, ou créez-en un.'
       : retour === 'acheteurs.html' ? "Pour publier un avis de marché, connectez-vous ou créez un compte (le type « Particulier » convient : il sert seulement à vous connecter)."
       : 'Pour publier une demande de travaux, connectez-vous ou créez un compte (Particulier, ou Entreprise de travaux pour une demande de société).';
     $('raison').hidden = false;
@@ -309,7 +309,7 @@
       $('raison').hidden = !retour;
       if (retour) $('raison').textContent = bonType
         ? 'Vérifiez votre e-mail, puis vous serez renvoyé vers le formulaire.'
-        : (retour.indexOf('partenaire') === 0 ? 'Chercher un partenaire' : 'Répondre à une demande') + ' est réservé aux comptes Entreprise de travaux.';
+        : (retour.indexOf('partenaire') === 0 ? 'Chercher un partenaire' : retour.indexOf('devis') === 0 ? 'Créer un devis' : 'Répondre à une demande') + ' est réservé aux comptes Entreprise de travaux.';
       $('qui').textContent = 'Connecté : ' + u.email;
       $('a-verifier').hidden = u.emailVerified;
       $('mail-verif').textContent = u.email;
@@ -339,6 +339,7 @@
       $('mes-demandes').hidden = $('discussions').hidden = false;
       mesDemandes();
       mesDiscussions(ent);
+      mesDevis(ent);
       AOC_FB.boutonNotifs($('notifs'));
       $('alertes').hidden = $('fiche').hidden = !ent;
       if (ent) maFiche();
@@ -355,6 +356,7 @@
         }
       }
       if (location.hash === '#mes-demandes' || location.hash === '#discussions' || (ent && location.hash === '#alertes')) $(location.hash.slice(1)).scrollIntoView();
+      if (location.hash === '#devis') { $('devis').hidden = false; $('devis').scrollIntoView(); } // lien de l'e-mail « Devis reçu »
     });
   }
 
@@ -590,6 +592,65 @@
     });
   }
 
+  // devis (lot 20) : envoyés (entreprise) et reçus (auteur d'une demande ou d'un avis), lus dans devis/ ; PDF refait ici (devis-pdf.js),
+  // jsPDF (420 Ko) chargé seulement au premier téléchargement
+  function jspdf() {
+    return window.jspdf ? Promise.resolve() : new Promise(function (ok, ko) {
+      var s = document.createElement('script');
+      s.src = 'lib/jspdf.umd.min.js';
+      s.onload = ok;
+      s.onerror = ko;
+      document.head.append(s);
+    });
+  }
+  function mesDevis(ent) {
+    var liste = $('liste-devis');
+    var q = function (champ) {
+      return f.fs.getDocs(f.fs.query(f.fs.collection(f.db, 'devis'), f.fs.where(champ, '==', moi.uid))).then(function (r) { return r.docs; }, function () { return []; });
+    };
+    $('devis-aide').textContent = ent ? 'Créez un devis depuis une carte de l’accueil (bouton « Devis »). Il s’envoie directement pour les demandes auxquelles vous avez répondu, et pour les avis d’acheteurs qui acceptent les devis par le site.'
+      : 'Les devis que les entreprises vous envoient par le site arrivent ici, et par e-mail avec le PDF.';
+    return Promise.all([q('entreprise'), q('destinataire')]).then(function (r) {
+      var docs = r[0].concat(r[1]).sort(function (a, b) { return (b.data().cree ? b.data().cree.toMillis() : 0) - (a.data().cree ? a.data().cree.toMillis() : 0); });
+      liste.textContent = '';
+      $('nb-devis').textContent = docs.length;
+      $('devis').hidden = !ent && !docs.length; // particulier sans devis : rien à montrer
+      docs.forEach(function (s) {
+        var d = s.data(), envoye = d.entreprise === moi.uid, date = d.cree ? d.cree.toDate() : new Date();
+        var a = document.createElement('article'), corps = document.createElement('div'), haut = document.createElement('p');
+        a.className = 'avis avis-admin';
+        corps.className = 'corps';
+        haut.className = 'haut';
+        var etat = document.createElement('span');
+        etat.className = envoye ? 'dep' : 'pastille-neuf';
+        etat.textContent = envoye ? 'Devis envoyé' : 'Devis reçu';
+        var qui = document.createElement('span');
+        qui.className = 'dep';
+        qui.textContent = envoye ? d.client.nom : d.emetteur.nom;
+        haut.append(etat, qui);
+        var h = document.createElement('h3');
+        h.textContent = d.titre;
+        var p = document.createElement('p');
+        p.className = 'suite';
+        p.textContent = 'N° ' + AOC_DEVIS.numero(date, s.id) + ' du ' + date.toLocaleDateString('fr-FR') + ' · ' +
+          AOC_DEVIS.euros(AOC_DEVIS.totaux(d.lignes, d.emetteur.franchise).ttc) + ' TTC' + (envoye ? ' · le destinataire le reçoit aussi par e-mail' : '');
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'bouton-sortir';
+        b.textContent = 'Télécharger le PDF';
+        b.setAttribute('aria-label', 'Télécharger le PDF du devis : ' + d.titre);
+        b.onclick = function () {
+          jspdf().then(function () {
+            AOC_DEVIS.telecharger(Object.assign({}, d, { id: s.id, date: date, logo: d.logo ? d.logo.toUint8Array() : null }));
+          }, function () { b.textContent = 'PDF indisponible : réessayez'; });
+        };
+        corps.append(haut, h, p, b);
+        a.append(corps);
+        liste.append(a);
+      });
+    });
+  }
+
   $('renvoyer').onclick = function () {
     f.au.sendEmailVerification(moi).then(function () { bravo('Lien renvoyé à ' + moi.email + '. La suite : cliquez dessus (pensez à regarder dans les indésirables), puis sur « J\'ai cliqué sur le lien ».'); },
       function (e) { dire('verif-info', messageAuth(e)); });
@@ -611,8 +672,9 @@
     // Firebase demande une connexion récente pour supprimer un compte : on la refait avec le mot de passe
     f.au.reauthenticateWithCredential(u, f.au.EmailAuthProvider.credential(u.email, $('s-mdp').value))
       .then(function () {
-        var lot = f.fs.writeBatch(f.db); // la fiche publique part avec le profil
+        var lot = f.fs.writeBatch(f.db); // la fiche publique et l'en-tête des devis partent avec le profil
         lot.delete(f.fs.doc(f.db, 'fiches', u.uid));
+        lot.delete(f.fs.doc(f.db, 'entetes', u.uid));
         lot.delete(f.fs.doc(f.db, 'users', u.uid));
         return lot.commit();
       })

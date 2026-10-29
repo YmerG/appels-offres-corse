@@ -84,8 +84,10 @@ service cloud.firestore {
 
     // avis d'un acheteur public (mairie, communauté de communes…) : invisible jusqu'à la validation par l'admin, puis dans l'onglet
     // Public ; lien obligatoire vers l'avis ou le dossier officiel (les entreprises répondent là-bas, jamais sur le site)
+    // devis : « J'accepte les devis par le site » (lot 20), seulement sous le seuil (montant absent ou < 40 000 € HT)
     function avisPublicValide(d) {
-      return d.keys().hasOnly(['type', 'metier', 'titre', 'acheteur', 'lien', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree', 'uid'])
+      return d.keys().hasOnly(['type', 'metier', 'titre', 'acheteur', 'lien', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree', 'uid', 'devis'])
+        && (!('devis' in d) || (d.devis == true && d.get('budget', 0) < 40000))
         && d.keys().hasAll(['type', 'metier', 'titre', 'acheteur', 'lien', 'commune', 'departement', 'delai', 'statut', 'cree', 'uid'])
         && d.uid == request.auth.uid
         && d.type == 'public'
@@ -275,6 +277,65 @@ service cloud.firestore {
       allow create, update: if connecte(uid) && request.resource.data.keys().hasOnly(['liste', 'maj'])
         && request.resource.data.liste is list && request.resource.data.liste.size() <= 5
         && request.resource.data.maj == request.time;
+    }
+
+    // Devis (lot 20). entetes/{uid} : en-tête des devis d'une entreprise (adresse, mentions légales, assurance, franchise de TVA,
+    // logo JPEG de 60 Ko au plus), gardé pour les suivants ; nom et SIRET viennent du profil. Lu et écrit par l'entreprise seulement.
+    function optTexte(m, k, max) {
+      return !(k in m) || texte(m[k], 0, max);
+    }
+    match /entetes/{uid} {
+      allow get, delete: if connecte(uid);
+      allow create, update: if connecte(uid) && compteVerifie('entreprise')
+        && request.resource.data.keys().hasOnly(['adresse', 'mentions', 'assurance', 'franchise', 'logo', 'maj'])
+        && texte(request.resource.data.adresse, 5, 200) && optTexte(request.resource.data, 'mentions', 400)
+        && optTexte(request.resource.data, 'assurance', 300)
+        && (!('franchise' in request.resource.data) || request.resource.data.franchise is bool)
+        && (!('logo' in request.resource.data) || (request.resource.data.logo is bytes && request.resource.data.logo.size() <= 60000))
+        && request.resource.data.maj == request.time;
+    }
+
+    // devis/{demande}_{uid entreprise} : un devis envoyé par le site, un seul par entreprise et par demande (jamais modifié ni
+    // supprimé : pas de deuxième envoi). Lisible par son auteur et son destinataire (l'auteur de la demande) seulement, pas
+    // même par l'admin ; le PDF est refait à partir de ces données (site/devis-pdf.js), et joint à l'e-mail par
+    // outils/envoyer_emails.py. Nom, SIRET et décennale = ceux du profil.
+    // shortcut: les lignes ne sont contrôlées qu'en nombre (pas de boucle dans les règles) ; site/devis-pdf.js les remet en forme
+    function devisValide(v, p) {
+      return v.keys().hasOnly(['demande', 'entreprise', 'destinataire', 'titre', 'lieu', 'emetteur', 'logo', 'decennale', 'client',
+          'lignes', 'validite', 'debut', 'duree', 'conditions', 'frais', 'cree'])
+        && v.keys().hasAll(['demande', 'entreprise', 'destinataire', 'titre', 'lieu', 'emetteur', 'client', 'lignes', 'validite', 'frais', 'cree'])
+        && v.demande is string && v.entreprise == request.auth.uid
+        && v.emetteur is map && v.emetteur.keys().hasOnly(['nom', 'siret', 'adresse', 'mentions', 'assurance', 'franchise'])
+        && v.emetteur.nom == p.nom && v.emetteur.siret == p.siret && texte(v.emetteur.adresse, 5, 200)
+        && optTexte(v.emetteur, 'mentions', 400) && optTexte(v.emetteur, 'assurance', 300)
+        && (!('franchise' in v.emetteur) || v.emetteur.franchise is bool)
+        && (!('logo' in v) || (v.logo is bytes && v.logo.size() <= 60000))
+        && (!('decennale' in v) || v.decennale == p.decennale)
+        && v.client is map && v.client.keys().hasOnly(['nom', 'adresse']) && texte(v.client.nom, 2, 120) && optTexte(v.client, 'adresse', 200)
+        && texte(v.lieu, 2, 200)
+        && v.lignes is list && v.lignes.size() >= 1 && v.lignes.size() <= 40
+        && v.validite is int && v.validite >= 1 && v.validite <= 365
+        && optTexte(v, 'debut', 80) && optTexte(v, 'duree', 80) && optTexte(v, 'conditions', 1500)
+        && v.frais is int && v.frais >= 0 && v.frais <= 100000000
+        && v.cree == request.time;
+    }
+    // envoi direct : demande Privé / Particuliers publiée, pas pourvue, à laquelle l'entreprise a déjà répondu (« Je suis intéressé »,
+    // 5 entreprises au plus) ; ou avis d'acheteur public publié, ouvert, qui accepte les devis par le site (moins de 40 000 € HT)
+    function recoitDevis(d, v) {
+      return d.statut == 'validee' && v.destinataire == d.uid && d.uid != request.auth.uid && v.titre == d.titre && (
+        (d.type in ['prive', 'particulier'] && d.get('pourvue', false) == false
+          && exists(/databases/$(database)/documents/demandes/$(v.demande)/interets/$(request.auth.uid)))
+        || (d.type == 'public' && d.get('devis', false) == true && d.get('budget', 0) < 40000 && d.delai > request.time));
+    }
+    match /devis/{did} {
+      // l'entreprise lit aussi « son » identifiant encore vide (devis.html : déjà envoyé ou pas ?)
+      allow get: if request.auth != null
+        && (did.matches('.+_' + request.auth.uid) || resource.data.destinataire == request.auth.uid);
+      allow list: if request.auth != null
+        && (resource.data.entreprise == request.auth.uid || resource.data.destinataire == request.auth.uid);
+      allow create: if compteVerifie('entreprise') && did == request.resource.data.demande + '_' + request.auth.uid
+        && devisValide(request.resource.data, get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+        && recoitDevis(get(/databases/$(database)/documents/demandes/$(request.resource.data.demande)).data, request.resource.data);
     }
 
     // « Je cherche un partenaire » sur un appel d'offres public : lisible par l'admin seulement, qui met en relation les

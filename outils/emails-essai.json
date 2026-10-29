@@ -28,5 +28,12 @@
     "p2": { "email": "paul.compte@exemple.invalid", "verifie": true },
     "e1": { "email": "elec.compte@exemple.invalid", "verifie": true },
     "e3": { "email": "pasverifiee@exemple.invalid", "verifie": false }
+  },
+  "devis": {
+    "d1_e1": { "demande": "d1", "entreprise": "e1", "destinataire": "p1", "titre": "Changer le tableau <électrique>", "lieu": "Corte (2B)",
+      "emetteur": { "nom": "Élec Exemple", "siret": "12345678000014", "adresse": "1 rue Exemple, 20250 Corte", "franchise": false },
+      "client": { "nom": "Le demandeur", "adresse": "Corte" }, "validite": 30, "frais": 0, "cree": "2026-10-29T09:30:00+00:00",
+      "lignes": [{ "designation": "Tableau électrique 3 rangées", "quantite": 1, "unite": "u", "prix": 45000, "tva": 10 },
+                 { "designation": "Pose", "quantite": 4, "unite": "h", "prix": 4500, "tva": 10 }] }
   }
 }

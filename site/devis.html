@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Créer un devis · Appels d'offres Corse</title>
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icones/favicon-16.png">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html"><picture><source srcset="icones/logo-sombre.png" media="(prefers-color-scheme: dark)"><img class="logo" src="icones/logo-clair.png" alt="AO Corse, appels d'offres en Corse" width="122" height="32"></picture></a><span class="proto">Test</span><a class="lien-compte" href="compte.html">Compte</a></p>
+      <h1>Créer un devis</h1>
+      <p class="chapo">Vos lignes, la TVA et les totaux calculés pour vous, les mentions obligatoires ajoutées toutes seules. Vous obtenez un PDF, à télécharger ou, quand c'est possible, à envoyer directement.</p>
+    </div>
+  </header>
+
+  <main class="cadre page-form">
+    <p class="bandeau-test bandeau-test-fort">Version de test : ne mettez pas de vraies coordonnées.</p>
+
+    <div class="merci" id="demande"><h2 id="demande-titre" hidden></h2><p id="demande-texte">Chargement…</p></div>
+
+    <!-- avis BOAMP, ou marché de 40 000 € HT ou plus : on répond sur la plateforme de l'acheteur -->
+    <section class="merci" id="plateforme" hidden aria-labelledby="plateforme-titre">
+      <h2 id="plateforme-titre">Déposer sur la plateforme officielle</h2>
+      <p>Pour ce marché, l'offre se dépose sur la plateforme de l'acheteur, avec les pièces de son dossier de consultation. Votre devis PDF peut servir de base à votre offre de prix (bordereau, détail estimatif).</p>
+      <p><a class="bouton-publier" id="plateforme-lien" href="index.html" rel="noopener noreferrer" target="_blank">Déposer sur la plateforme officielle</a></p>
+      <p><strong>Pièces souvent demandées</strong> (le règlement de la consultation fait foi) :</p>
+      <ul>
+        <li>Kbis de moins de 3 mois (ou extrait d'immatriculation au répertoire des métiers) ;</li>
+        <li>attestation de vigilance URSSAF de moins de 6 mois ;</li>
+        <li>attestation de régularité fiscale (sur impots.gouv.fr, espace professionnel) ;</li>
+        <li>formulaires DC1 (lettre de candidature) et DC2 (déclaration du candidat), ou le DUME à leur place ;</li>
+        <li>attestations d'assurance (responsabilité civile, décennale pour les travaux) ;</li>
+        <li>mémoire technique, références de chantiers, RIB ;</li>
+        <li>offre de prix : acte d'engagement, bordereau des prix ou détail estimatif.</li>
+      </ul>
+    </section>
+
+    <form id="form" novalidate hidden>
+      <fieldset>
+        <legend>Votre entreprise</legend>
+        <p class="aide-bloc" id="e-ident"></p>
+        <label for="adresse">Adresse <span class="aide">obligatoire sur un devis</span></label>
+        <textarea id="adresse" name="adresse" required minlength="5" maxlength="200" rows="2" autocomplete="street-address" placeholder="1 rue du Port, 20200 Bastia"></textarea>
+        <label for="mentions">Mentions légales <span class="aide">facultatif</span></label>
+        <textarea id="mentions" name="mentions" maxlength="400" rows="2" placeholder="SARL au capital de 10 000 € · RCS Bastia 123 456 789 · TVA FR12 123456789 (entreprise individuelle : « EI »)"></textarea>
+        <label for="assurance">Assurance : coordonnées de l'assureur et zone couverte <span class="aide">facultatif</span></label>
+        <input id="assurance" name="assurance" maxlength="300" placeholder="Mutuelle Exemple, 1 avenue …, 75000 Paris · zone couverte : France">
+        <p class="aide-bloc" id="e-decennale"></p>
+        <label class="consentement"><input type="checkbox" id="franchise" name="franchise"> <span>Franchise en base de TVA (micro-entreprise) : aucune TVA, avec la mention « TVA non applicable, article 293 B du CGI »</span></label>
+        <label for="logo">Logo <span class="aide">facultatif, JPEG ou PNG</span></label>
+        <input id="logo" name="logo" type="file" accept="image/jpeg,image/png">
+        <p class="aide-bloc" id="logo-etat" hidden><img id="logo-apercu" alt="Votre logo" height="40"> <button type="button" class="lien-bouton" id="logo-retirer">Retirer le logo</button></p>
+        <p class="aide-bloc">Gardés pour vos prochains devis. Nom et SIRET : ceux de votre compte.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Client et chantier</legend>
+        <label for="client">Nom du client</label>
+        <input id="client" name="client" required minlength="2" maxlength="120">
+        <label for="client-adresse">Adresse du client <span class="aide">facultatif</span></label>
+        <input id="client-adresse" name="client-adresse" maxlength="200">
+        <label for="lieu">Lieu d'exécution</label>
+        <input id="lieu" name="lieu" required minlength="2" maxlength="200">
+      </fieldset>
+
+      <fieldset>
+        <legend>Lignes du devis</legend>
+        <p class="aide-bloc">Une ligne par prestation ou produit. Main-d'œuvre : une ligne en heures (unité « h »), le taux horaire TTC est ajouté au devis. Frais de déplacement, enlèvement des déchets : une ligne chacun.</p>
+        <div id="lignes"></div>
+        <p><button type="button" class="bouton-sortir" id="ajouter">Ajouter une ligne</button></p>
+        <dl class="totaux" id="totaux" aria-live="polite"></dl>
+      </fieldset>
+
+      <fieldset>
+        <legend>Conditions</legend>
+        <div class="deux-col">
+          <div><label for="validite">Validité (jours)</label>
+            <input id="validite" name="validite" type="number" inputmode="numeric" min="1" max="365" step="1" value="30" required></div>
+          <div><label for="frais">Coût du devis (€ TTC) <span class="aide">0 : gratuit</span></label>
+            <input id="frais" name="frais" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" value="0"></div>
+          <div><label for="debut">Début des travaux <span class="aide">facultatif</span></label>
+            <input id="debut" name="debut" maxlength="80" placeholder="Janvier 2027"></div>
+          <div><label for="duree">Durée estimée <span class="aide">facultatif</span></label>
+            <input id="duree" name="duree" maxlength="80" placeholder="3 jours"></div>
+        </div>
+        <label for="conditions">Autres conditions <span class="aide">facultatif</span></label>
+        <textarea id="conditions" name="conditions" maxlength="1500" rows="3" placeholder="Acompte de 30 % à la commande, solde à la fin des travaux. Temps compté à la demi-heure. Déchets évacués en déchetterie (compris)."></textarea>
+      </fieldset>
+
+      <p class="erreur" id="erreur" role="alert" hidden></p>
+      <button type="button" class="bouton-sortir" id="telecharger">Télécharger le PDF</button>
+      <p class="aide-bloc" id="envoi-aide" hidden></p>
+      <button type="submit" class="bouton-publier" id="envoyer" hidden>Envoyer le devis</button>
+    </form>
+
+    <div class="merci ok" id="merci" hidden tabindex="-1">
+      <h2 id="merci-titre">Devis envoyé</h2>
+      <p id="merci-texte"><strong>La suite :</strong> le destinataire le reçoit par e-mail, avec le PDF, dans la demi-heure, et le retrouve dans son compte. Vous le retrouvez dans Compte › Mes devis.</p>
+      <p class="actions-admin"><button type="button" class="bouton-publier" id="pdf-envoye">Télécharger ce devis</button>
+        <a class="lien-bouton" href="compte.html#devis">Mes devis</a></p>
+    </div>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p><a href="index.html">Appels d'offres Corse</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a></p>
+      <p>Prototype, version de test. Aucun cookie.</p>
+    </div>
+  </footer>
+
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script src="devis-pdf.js"></script>
+  <script src="devis.js"></script>
+</body>
+</html>

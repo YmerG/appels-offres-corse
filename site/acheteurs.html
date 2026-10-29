@@ -94,6 +94,14 @@
         <label for="lien">Lien vers l'avis ou le dossier officiel</label>
         <input id="lien" name="lien" type="url" required maxlength="500" pattern="https://[^ <>&quot;]+" placeholder="https://…" autocomplete="url" aria-describedby="lien-aide">
         <p class="aide-bloc" id="lien-aide">L'adresse de votre avis sur votre plateforme (marches-publics.info, achatspublicscorse.com…) ou d'un PDF en ligne. Elle doit commencer par https://.</p>
+
+        <div id="bloc-devis">
+          <label class="consentement">
+            <input type="checkbox" id="devis" name="devis" aria-describedby="devis-aide">
+            <span>J'accepte les devis par le site</span>
+          </label>
+          <p class="aide-bloc" id="devis-aide">Petits achats seulement (montant non renseigné ou inférieur à 40&nbsp;000&nbsp;€&nbsp;HT)&nbsp;: les entreprises peuvent vous envoyer leur devis en PDF, que vous recevez par e-mail et dans votre compte, en plus de votre procédure habituelle.</p>
+        </div>
       </fieldset>
 
       <fieldset>

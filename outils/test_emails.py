@@ -57,21 +57,31 @@ assert 'href="https://exemple.invalid/avis?a=1&amp;b=2"' in page_pub and "Commun
 # adresse du demandeur : celle du compte vérifié, pas l'e-mail tapé dans la demande
 assert source.contact(d1) == ("jeanne.compte@exemple.invalid", "Jeanne Exemple")
 
+# devis (lot 20) : e-mail au destinataire, n° comme sur le site (date à Paris), PDF refait par Node, titre échappé
+v = source.devis()[0]
+assert E.numero(v) == "D20261029-D1E1"
+sujet, texte_devis, page_devis = E.message("devis:d1_e1", v, None, "", "https://s/")
+assert sujet == "Devis de Élec Exemple : Changer le tableau <électrique>"
+assert "D20261029-D1E1" in texte_devis and "bon pour accord" in texte_devis and "compte.html#devis" in texte_devis
+assert "&lt;électrique&gt;" in page_devis and "<électrique>" not in page_devis
+assert E.pdf_devis(v)[:5] == b"%PDF-"
+
 # programme complet en essai, deux fois : 7 e-mails puis plus rien ; aucune adresse dans le journal
 with tempfile.TemporaryDirectory() as t:
     cmd = [sys.executable, str(ICI / "envoyer_emails.py"), "--essai", str(ICI / "emails-essai.json"),
            "--etat", f"{t}/etat.json", "--apercus", f"{t}/apercus"]
     sortie1 = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
     sortie2 = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
-    assert "envoyés 7, sans adresse 3, échecs 0" in sortie1, sortie1
+    assert "envoyés 8, sans adresse 3, échecs 0" in sortie1, sortie1
     assert "envoyés 0, sans adresse 0" in sortie2, sortie2
     assert "@" not in sortie1 + sortie2
-    assert len(list(Path(t, "apercus").glob("*.html"))) == 7
+    assert len(list(Path(t, "apercus").glob("*.html"))) == 8
+    assert Path(t, "apercus", "devis-D20261029-D1E1.pdf").read_bytes()[:5] == b"%PDF-"
     # tout premier passage : ce qui existe déjà est noté, rien n'est envoyé, puis rien au passage suivant
     cmd = cmd[:4] + ["--etat", f"{t}/etat2.json"]
     sortie3 = subprocess.run(cmd + ["--premier-passage"], capture_output=True, text=True, check=True).stdout
     sortie4 = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
-    assert "Premier passage : 10 e-mails" in sortie3 and "envoyés 0, sans adresse 0" in sortie3, sortie3
+    assert "Premier passage : 11 e-mails" in sortie3 and "envoyés 0, sans adresse 0" in sortie3, sortie3
     assert "envoyés 0, sans adresse 0" in sortie4, sortie4
 
 # sans secrets : ne fait rien

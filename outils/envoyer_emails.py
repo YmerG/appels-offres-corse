@@ -4,7 +4,9 @@
   1. au demandeur, quand sa demande est publiée (statut « validee » ; avis d'acheteur public : quand l'admin le valide) ;
   2. au demandeur, quand l'admin a noté des réponses transmises (champ « reponses ») ;
   3. aux comptes Entreprise qui ont coché les alertes (users/{uid}.alertes == true), pour une demande publiée
-     de leur métier et de leur département, encore ouverte.
+     de leur métier et de leur département, encore ouverte ;
+  4. au destinataire d'un devis envoyé par le site (lot 20), avec le PDF en pièce jointe, refait par outils/devis_pdf.js
+     (Node, le même code que le site).
 
 Firestore est seulement LU (compte de service en lecture seule, voir ETUDE-EMAILS.md) : rien n'y est écrit.
 Ce qui est déjà envoyé est noté dans etat-emails.json (cache GitHub), jamais deux fois le même e-mail.
@@ -17,13 +19,15 @@ Essai sans aucun envoi ni réseau (Testeur) :
 Essai sur les vraies données, sans envoi ni état modifié : --sans-envoi (bouton « Run workflow » sur GitHub).
 """
 import argparse
+import base64
 import html
 import json
 import os
+import subprocess
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -61,13 +65,40 @@ def a_envoyer(demandes, abonnes, deja, maintenant):
     return [e for e in out if e[0] not in deja]
 
 
+def numero(v):
+    """n° du devis, comme site/devis-pdf.js (date à Paris + début de l'identifiant) : D20261029-AB12C"""
+    return "D" + v["cree"].astimezone(PARIS).strftime("%Y%m%d") + "-" + "".join(c for c in v["id"] if c.isalnum())[:5].upper()
+
+
+def pdf_devis(v):
+    """PDF du devis par outils/devis_pdf.js (même code que le site, heure de Paris), ou None si Node échoue."""
+    entree = {k: x for k, x in v.items() if k != "cree"}
+    entree["date"] = v["cree"].isoformat()
+    entree["logo"] = base64.b64encode(v["logo"]).decode() if v.get("logo") else None
+    try:
+        r = subprocess.run(["node", str(Path(__file__).resolve().parent / "devis_pdf.js")], input=json.dumps(entree, default=str).encode(),
+                           capture_output=True, timeout=60, env=dict(os.environ, TZ="Europe/Paris"))
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout if r.returncode == 0 and r.stdout[:5] == b"%PDF-" else None
+
+
 def message(cle, d, abonne, nom, site):
     """(sujet, texte, html) ; tout ce qui vient des utilisateurs est échappé dans le HTML."""
     titre = d["titre"].replace("\n", " ").replace("\r", " ")
-    lieu = f"{d['commune']} ({d['departement']})"
     cite = f"« {titre} »"  # espaces insécables : les guillemets restent collés au titre
-    fin = date_fr(d["delai"])
     stop = None  # lien de désinscription (alertes seulement)
+    if cle.startswith("devis:"):  # d : le devis (devis/{id}), envoyé à son destinataire avec le PDF
+        ent = d["emetteur"]["nom"].replace("\n", " ").replace("\r", " ")
+        sujet = f"Devis de {ent} : {titre}"
+        lignes = ["Bonjour,", f"{ent} vous envoie son devis n° {numero(d)} pour {cite}, à {d['lieu']}. Il est en pièce jointe (PDF).",
+                  f"Il est valable {d['validite']} jours. Pour l'accepter : imprimez-le, écrivez « Devis reçu avant l'exécution des travaux, "
+                  "bon pour accord », datez, signez, et renvoyez-le à l'entreprise. Rien ne vous engage tant que vous ne l'avez pas signé.",
+                  ("Voir mes devis", f"{site}compte.html#devis")]
+        pourquoi = "Vous recevez cet e-mail parce qu'une entreprise vous a envoyé un devis par Appels d'offres Corse, en réponse à votre publication."
+        return mise_en_page(lignes, pourquoi, stop, sujet)
+    lieu = f"{d['commune']} ({d['departement']})"
+    fin = date_fr(d["delai"])
     pub = d.get("type") == "public"  # avis d'acheteur public (lot 19) : on y répond sur sa plateforme, par le lien officiel
     if cle.startswith("validee:") and pub:
         sujet = f"Votre avis est publié : {titre}"
@@ -116,6 +147,10 @@ def message(cle, d, abonne, nom, site):
                   ("Voir la demande et répondre", f"{site}interesse.html?d={d['id']}")]
         pourquoi = "Vous recevez cette alerte parce que vous l'avez demandée dans votre compte Entreprise."
         stop = f"{site}compte.html?alertes=non#alertes"
+    return mise_en_page(lignes, pourquoi, stop, sujet)
+
+
+def mise_en_page(lignes, pourquoi, stop, sujet):
     texte = "\n\n".join(l if isinstance(l, str) else f"{l[0]} : {l[1]}" for l in lignes) + f"\n\n--\n{pourquoi}\n" \
         + (f"Pour ne plus la recevoir : {stop}\n" if stop else "")
     corps = "".join(
@@ -130,9 +165,11 @@ def message(cle, d, abonne, nom, site):
     return sujet, texte, page
 
 
-def envoyer_brevo(cle_api, expediteur, adresse, nom, sujet, texte, page, site, alerte):
+def envoyer_brevo(cle_api, expediteur, adresse, nom, sujet, texte, page, site, alerte, piece=None):
     corps = {"sender": {"name": "Appels d'offres Corse", "email": expediteur}, "to": [dict({"email": adresse}, **({"name": nom} if nom else {}))],
              "subject": sujet, "textContent": texte, "htmlContent": page}
+    if piece:  # (nom du fichier, octets) : le PDF du devis
+        corps["attachment"] = [{"name": piece[0], "content": base64.b64encode(piece[1]).decode()}]
     if alerte:  # bouton « Se désabonner » des messageries
         corps["headers"] = {"List-Unsubscribe": f"<mailto:{expediteur}?subject=desinscription>, <{site}compte.html?alertes=non#alertes>"}
     req = urllib.request.Request(BREVO, data=json.dumps(corps).encode(), method="POST",
@@ -163,6 +200,9 @@ class Fichier:
     def abonnes(self):
         return [dict(p, uid=u) for u, p in self.j.get("users", {}).items() if p.get("type") == "entreprise" and p.get("alertes") is True]
 
+    def devis(self):
+        return [dict(v, id=i, cree=datetime.fromisoformat(v["cree"])) for i, v in self.j.get("devis", {}).items()]
+
     def compte(self, uid):
         c = self.comptes.get(uid)
         return c["email"] if c and c.get("verifie") else None
@@ -173,7 +213,7 @@ class Fichier:
 
 
 class Firestore:
-    """Lecture seule : demandes publiées, leurs coordonnées privées, profils abonnés aux alertes, e-mails des comptes."""
+    """Lecture seule : demandes publiées, leurs coordonnées privées, profils abonnés aux alertes, devis récents, e-mails des comptes."""
     def __init__(self, compte_json):
         import firebase_admin
         from firebase_admin import auth, credentials, firestore
@@ -188,6 +228,12 @@ class Firestore:
     def abonnes(self):
         q = self.db.collection("users").where(filter=self.FieldFilter("alertes", "==", True))
         return [dict(s.to_dict(), uid=s.id) for s in q.stream() if s.to_dict().get("type") == "entreprise"]
+
+    def devis(self):
+        """devis des 3 derniers jours seulement (un passage toutes les 30 min : l'e-mail part au plus tard au passage suivant)"""
+        depuis = datetime.now(timezone.utc) - timedelta(days=3)
+        q = self.db.collection("devis").where(filter=self.FieldFilter("cree", ">=", depuis))
+        return [dict(s.to_dict(), id=s.id) for s in q.stream()]
 
     def compte(self, uid):
         try:
@@ -226,11 +272,11 @@ def main():
     chemin = Path(a.etat)
     etat = json.loads(chemin.read_text()) if chemin.exists() else None
     maintenant = datetime.now(timezone.utc)
-    demandes, abonnes = source.demandes(), source.abonnes()
+    demandes, abonnes, devis = source.demandes(), source.abonnes(), source.devis()
     ids = {d["id"] for d in demandes}
-    # demande supprimée ou dépubliée : on oublie ce qui la concerne
-    deja = {c for c in (etat or {}).get("cles", []) if c.split(":")[1] in ids}
-    evts = a_envoyer(demandes, abonnes, deja, maintenant)
+    # demande supprimée ou dépubliée, devis de plus de 3 jours : on oublie ce qui les concerne
+    deja = {c for c in (etat or {}).get("cles", []) if c.split(":")[1] in ids | {v["id"] for v in devis}}
+    evts = a_envoyer(demandes, abonnes, deja, maintenant) + [(f"devis:{v['id']}", v, None) for v in devis if f"devis:{v['id']}" not in deja]
 
     if etat is None and (not a.essai or a.premier_passage):
         print(f"Premier passage : {len(evts)} e-mails déjà justifiés notés comme envoyés, aucun envoi.")
@@ -252,6 +298,8 @@ def main():
             continue
         if abonne:
             adresse, nom = source.compte(abonne["uid"]), abonne.get("nom") or ""
+        elif cle.startswith("devis:"):
+            adresse, nom = source.compte(d["destinataire"]), ""
         else:
             adresse, nom = source.contact(d)
         if not adresse:  # pas d'e-mail vérifié : on n'essaiera plus
@@ -260,13 +308,23 @@ def main():
             continue
         sujet, texte, page = message(cle, d, abonne, nom, site)
         genre = cle.split(":")[0]
+        piece = None
+        if genre == "devis":
+            octets = pdf_devis(d)
+            if not octets:  # Node absent ou en erreur : réessayé au prochain passage
+                print(f"devis {d['id']} : échec (PDF)")
+                bilan["échecs"] += 1
+                continue
+            piece = (f"devis-{numero(d)}.pdf", octets)
         if a.essai or a.sans_envoi:
             if a.apercus:
                 (Path(a.apercus) / (cle.replace(":", "_") + ".html")).write_text(
                     f"<p><b>À :</b> {html.escape(adresse)}<br><b>Objet :</b> {html.escape(sujet)}</p><hr>{page}", encoding="utf-8")
+                if piece:
+                    (Path(a.apercus) / piece[0]).write_bytes(piece[1])
             ok, code = True, "essai"
         else:
-            ok, code = envoyer_brevo(cle_api, expediteur, adresse, nom, sujet, texte, page, site, bool(abonne))
+            ok, code = envoyer_brevo(cle_api, expediteur, adresse, nom, sujet, texte, page, site, bool(abonne), piece)
         print(f"{genre} {d['id']} : {('prêt, pas envoyé' if code == 'essai' else 'envoyé') if ok else 'échec'} ({code})")
         if ok:
             deja.add(cle)

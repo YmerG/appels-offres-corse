@@ -81,6 +81,14 @@
     agenda.setAttribute('aria-label', 'Ajouter la date limite à mon agenda : ' + titre);
     p.insertBefore(agenda, p.firstChild);
     p.insertBefore(suivre, p.firstChild);
+    // créer un devis (lot 20) : comptes Entreprise (mes : gardé par compte.js) ; demande Firestore (d-<id>) ou avis BOAMP
+    if (mes) {
+      var devis = document.createElement('a');
+      devis.className = 'action devis'; devis.textContent = 'Devis';
+      devis.href = 'devis.html?' + (c.classList.contains('demande') ? 'd=' + encodeURIComponent(c.dataset.id.slice(2)) : 'a=' + encodeURIComponent(c.dataset.id));
+      devis.setAttribute('aria-label', 'Créer un devis : ' + titre);
+      p.appendChild(devis);
+    }
     if (c.dataset.source !== 'public' || c.classList.contains('demande')) return; // avis d'acheteur (lot 19) : pas de n° BOAMP
     // groupement : l'admin met en relation les entreprises qui cherchent un partenaire sur le même avis (partenaire.html)
     var partenaire = document.createElement('a');

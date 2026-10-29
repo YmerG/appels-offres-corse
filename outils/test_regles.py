@@ -36,6 +36,8 @@ def valeur(v):
         return {"booleanValue": v}
     if isinstance(v, int):
         return {"integerValue": str(v)}
+    if isinstance(v, float):
+        return {"doubleValue": v}
     if isinstance(v, datetime):
         return {"timestampValue": v.isoformat().replace("+00:00", "Z")}
     if isinstance(v, list):
@@ -688,7 +690,103 @@ def main():
     assert appel(FS + "/demandes/pub1/prive/contact")[0] == 403
     assert appel(FS + "/demandes/pub1/prive/contact", jeton=admin_jeton)[0] == 200
     assert interet({**INTERET, "uid": ent2_uid}, d="pub1", jeton=ent2_jeton) == 403, "« Je suis intéressé » sur un avis public"
-    for i in ("pub1", "pub2", "pub3"):
+    # « J'accepte les devis par le site » (lot 20) : seulement sous 40 000 € HT, ou sans montant
+    assert avis_public("pubD", {"devis": True, "budget": 30000}) == 200
+    assert avis_public("pubE", {"devis": True}, enlever="budget") == 200, "devis acceptés, sans montant"
+    refus_avis_devis = {
+        "40 000 € ou plus": {"devis": True, "budget": 40000},
+        "case pas booléenne": {"devis": "oui", "budget": 30000},
+        "case décochée enregistrée": {"devis": False, "budget": 30000},
+    }
+    for nom, champs in refus_avis_devis.items():
+        assert avis_public("refus-pub", champs) == 403, f"avis public : {nom}"
+    assert maj("demandes/pubD", admin_jeton, {"statut": "validee"}) == 200
+
+    # en-tête des devis : l'entreprise seulement, lu par elle seule
+    ENTETE = {"adresse": "1 rue de l'Église, 20250 Corte", "mentions": "SARL au capital de 10 000 €", "franchise": False,
+              "logo": b"\xff\xd8\xff" + b"0" * 1000, "maj": True}
+    assert commit([ecriture(f"entetes/{ent3_uid}", ENTETE, nouveau=False)], ent3_jeton) == 200
+    refus_entete = {
+        "compte particulier": (part_uid, part_jeton, {}),
+        "en-tête d'un autre": (ent3_uid, ent2_jeton, {}),
+        "sans adresse": (ent3_uid, ent3_jeton, {"adresse": ""}),
+        "logo trop lourd": (ent3_uid, ent3_jeton, {"logo": b"0" * 60001}),
+        "logo en texte": (ent3_uid, ent3_jeton, {"logo": "data:image/jpeg;base64,AAAA"}),
+        "champ en trop": (ent3_uid, ent3_jeton, {"iban": "FR76"}),
+    }
+    for nom, (uid, jeton, champs) in refus_entete.items():
+        assert commit([ecriture(f"entetes/{uid}", {**ENTETE, **champs}, nouveau=False)], jeton) == 403, f"en-tête : {nom}"
+    assert appel(FS + f"/entetes/{ent3_uid}", jeton=ent3_jeton)[0] == 200
+    for jeton in (None, part_jeton, ent2_jeton, admin_jeton):
+        assert appel(FS + f"/entetes/{ent3_uid}", jeton=jeton)[0] == 403, "en-tête lu par un autre"
+
+    # devis envoyés par le site (lot 20) : un par entreprise et par demande, jamais modifié ; lu par l'auteur et le destinataire seulement
+    (ent4_jeton, ent4_uid) = autres[2]
+    qui[ent4_jeton] = ent4_uid
+    DEVIS = {"demande": "t1", "entreprise": ent3_uid, "destinataire": part_uid, "titre": DEMANDE["titre"], "lieu": "Corte (2B)",
+             "emetteur": {"nom": PROFIL_E["nom"], "siret": PROFIL_E["siret"], "adresse": ENTETE["adresse"], "franchise": False},
+             "client": {"nom": "Demandeur", "adresse": "Corte"}, "validite": 30, "frais": 0, "cree": True,
+             "lignes": [{"designation": "Pose", "quantite": 2.5, "unite": "h", "prix": 4500, "tva": 5.5}]}
+
+    def devis(champs=None, jeton=ent3_jeton, did=None, enlever=None):
+        v = {**DEVIS, **(champs or {})}
+        v = sans(v, enlever) if enlever else v
+        return commit([ecriture(f"devis/{did or v['demande'] + '_' + qui.get(jeton, 'anonyme')}", v)], jeton)
+
+    refus_devis = {
+        "sans connexion": dict(jeton=None),
+        "compte particulier": dict(jeton=part_jeton, champs={"entreprise": part_uid}),
+        "sans « Je suis intéressé »": dict(jeton=ent4_jeton, champs={"entreprise": ent4_uid}),
+        "auteur d'un autre": dict(champs={"entreprise": ent4_uid}),
+        "identifiant d'une autre entreprise": dict(did=f"t1_{ent4_uid}"),
+        "destinataire d'un autre": dict(champs={"destinataire": ent_uid}),
+        "titre changé": dict(champs={"titre": "Autre chose"}),
+        "nom différent du profil": dict(champs={"emetteur": {**DEVIS["emetteur"], "nom": "Autre SARL"}}),
+        "SIRET différent du profil": dict(champs={"emetteur": {**DEVIS["emetteur"], "siret": "98765432100018"}}),
+        "décennale inventée": dict(champs={"decennale": {"assureur": "Inventée", "fin": "2030-01-01"}}),
+        "sans adresse": dict(champs={"emetteur": sans(DEVIS["emetteur"], "adresse")}),
+        "sans client": dict(enlever="client"),
+        "aucune ligne": dict(champs={"lignes": []}),
+        "41 lignes": dict(champs={"lignes": DEVIS["lignes"] * 41}),
+        "validité 0": dict(champs={"validite": 0}),
+        "frais négatifs": dict(champs={"frais": -1}),
+        "logo trop lourd": dict(champs={"logo": b"0" * 60001}),
+        "champ en trop": dict(champs={"pdf": b"%PDF-"}),
+        "demande inexistante": dict(champs={"demande": "inconnue"}),
+    }
+    for nom, k in refus_devis.items():
+        assert devis(**k) == 403, f"devis : {nom}"
+    w = ecriture(f"devis/t1_{ent3_uid}", DEVIS)
+    del w["updateTransforms"]
+    w["update"]["fields"]["cree"] = valeur(dans(-30))
+    assert commit([w], ent3_jeton) == 403, "devis : date imposée"
+    assert devis() == 200
+    assert devis() in (403, 409), "deuxième envoi"  # 409 : création sur un devis qui existe déjà (ALREADY_EXISTS)
+    assert commit([ecriture(f"devis/t1_{ent3_uid}", {**DEVIS, "frais": 100}, nouveau=False)], ent3_jeton) == 403, "devis réécrit"
+    assert appel(FS + f"/devis/t1_{ent3_uid}", jeton=ent3_jeton, methode="DELETE")[0] == 403, "devis supprimé"
+    for jeton in (ent3_jeton, part_jeton):
+        assert appel(FS + f"/devis/t1_{ent3_uid}", jeton=jeton)[0] == 200
+    for jeton in (None, intrus_jeton, ent4_jeton, admin_jeton):
+        assert appel(FS + f"/devis/t1_{ent3_uid}", jeton=jeton)[0] == 403, "devis lu par un autre"
+    assert appel(FS + f"/devis/t1_{ent4_uid}", jeton=ent4_jeton)[0] == 404, "son devis pas encore envoyé : absent, pas refusé"
+    code, res = appel(FS + ":runQuery", requete("entreprise", ent3_uid, "devis"), ent3_jeton)
+    assert code == 200 and ids(res) == [f"t1_{ent3_uid}"], "devis envoyés"
+    code, res = appel(FS + ":runQuery", requete("destinataire", part_uid, "devis"), part_jeton)
+    assert code == 200 and ids(res) == [f"t1_{ent3_uid}"], "devis reçus"
+    assert appel(FS + ":runQuery", requete("destinataire", part_uid, "devis"), ent4_jeton)[0] == 403
+    assert appel(FS + ":runQuery", {"structuredQuery": {"from": [{"collectionId": "devis"}]}}, admin_jeton)[0] == 403
+    # demande pourvue : plus de devis ; avis public : sans « Je suis intéressé », seulement si l'acheteur accepte les devis
+    assert maj("demandes/ok1", part_jeton, {"pourvue": True}) == 200
+    assert devis({"demande": "ok1", "entreprise": ent_uid, "decennale": sans(DEC, "contrat")}, ent_jeton) == 403, "devis : demande pourvue"
+    assert maj("demandes/ok1", part_jeton, {"pourvue": False}) == 200
+    assert devis({"demande": "ok1", "entreprise": ent_uid, "decennale": sans(DEC, "contrat")}, ent_jeton) == 200, "décennale du profil"
+    pub = {"titre": AVIS_PUBLIC["titre"], "entreprise": ent2_uid}
+    assert devis({**pub, "demande": "pub1"}, ent2_jeton) == 403, "devis : avis public qui ne les accepte pas"
+    assert devis({**pub, "demande": "pubE"}, ent2_jeton) == 403, "devis : avis public pas encore validé"
+    assert devis({**pub, "demande": "pubD"}, ent2_jeton) == 200, "devis sur un avis public qui les accepte"
+    for chemin in (f"devis/t1_{ent3_uid}", f"devis/ok1_{ent_uid}", f"devis/pubD_{ent2_uid}", f"entetes/{ent3_uid}"):
+        appel(FS + f"/{chemin}", jeton="owner", methode="DELETE")
+    for i in ("pub1", "pub2", "pub3", "pubD", "pubE"):
         appel(FS + f"/demandes/{i}/prive/contact", jeton="owner", methode="DELETE")
         appel(FS + f"/demandes/{i}", jeton="owner", methode="DELETE")
 
@@ -700,7 +798,8 @@ def main():
           f"fiches : {len(refus_fiche) + 20} refus, publiques après validation seulement, jamais listées ; "
           f"photos : {len(refus_photos) + 7} refus, cachées quand la demande est retirée ; "
           f"discussions : {len(refus_ouverture) + len(refus_message) + 21} refus, lues par les 2 participants et l'admin ; jetons : 7 refus ; "
-          f"avis publics : {len(refus_public) + 5} refus, invisibles avant validation par l'admin)")
+          f"avis publics : {len(refus_public) + len(refus_avis_devis) + 5} refus, invisibles avant validation par l'admin ; "
+          f"en-têtes de devis : {len(refus_entete) + 4} refus ; devis : {len(refus_devis) + 13} refus, lus par l'auteur et le destinataire seulement)")
 
     for _, u in autres[:4]:
         appel(FS + f"/demandes/cap/interets/{u}", jeton="owner", methode="DELETE")

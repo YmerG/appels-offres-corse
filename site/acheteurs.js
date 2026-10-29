@@ -28,6 +28,14 @@
     else if (depDuSite && form.commune.value.trim()) { form.querySelectorAll('[name=departement]').forEach(function (r) { r.checked = false; }); depDuSite = false; }
   }
   form.commune.addEventListener('change', depAuto);
+
+  // « J'accepte les devis par le site » (lot 20) : seulement sous 40 000 € HT ou sans montant (les règles Firestore l'imposent aussi)
+  function majDevis() {
+    var petit = !form.budget.value || form.budget.valueAsNumber < 40000;
+    document.getElementById('bloc-devis').hidden = !petit;
+    if (!petit) form.devis.checked = false;
+  }
+  form.budget.addEventListener('input', majDevis);
   form.querySelectorAll('[name=departement]').forEach(function (r) { r.addEventListener('change', function () { depDuSite = false; }); });
 
   var NOMS = { acheteur: "le nom de l'acheteur", titre: "l'objet (5 caractères au moins)", commune: 'la commune', budget: 'le montant (un nombre entier)',
@@ -92,6 +100,8 @@
         statut: 'en_attente', cree: fs.serverTimestamp(), uid: m.user.uid
       };
       if (v('budget')) avis.budget = form.budget.valueAsNumber;
+      majDevis();
+      if (form.devis.checked) avis.devis = true;
       var contact = { nom: v('nom'), consentement: true, cree: fs.serverTimestamp() };
       if (v('telephone')) contact.telephone = v('telephone');
       if (v('email')) contact.email = v('email');
