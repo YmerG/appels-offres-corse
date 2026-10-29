@@ -365,7 +365,15 @@ def resultats_de(brut):
             "montant": res[0] if res else None, "montant_type": res[1] if res else None, "offres": res[2] if res else [],
             "lien": r.get("url_avis") or f"https://www.boamp.fr/pages/avis/?q=idweb:{r['idweb']}",
         })
-    return sorted(sortie, key=lambda a: a["publie"] or "", reverse=True)
+    # même marché publié deux fois (rapport 33) : on garde le plus récent. Sans montant, seulement le même jour,
+    # car deux attributions à des mois d'écart sont souvent deux lots différents
+    vus, uniques = set(), []
+    for a in sorted(sortie, key=lambda a: a["publie"] or "", reverse=True):
+        cle = (normal(a["objet"]), normal(a["acheteur"]), a["montant"], tuple(a["offres"]), "" if a["montant"] else a["publie"])
+        if cle not in vus:
+            vus.add(cle)
+            uniques.append(a)
+    return uniques
 
 
 def exemples_de(maintenant, chemin=SORTIE / "exemples.json"):
@@ -434,7 +442,11 @@ def carte_resultat(a):
         infos.append(("Montant, entreprise", "voir l'avis officiel"))
     infos.append(("Procédure", e(a["procedure"])))
     dl = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in infos)
-    return (f'<article class="avis" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" style="--c:{METIERS[a["metiers"][0]][1]}">'
+    # pour les repères de resultats.js : le maximum d'un accord-cadre n'est pas un prix, il est écarté
+    rep = f' data-montant="{round(a["montant"])}"' if a["montant"] and a["montant_type"] == "attribué" else ""
+    if a["offres"]:
+        rep += f' data-offres="{sorted(a["offres"])[len(a["offres"]) // 2]}"'
+    return (f'<article class="avis" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}"{rep} style="--c:{METIERS[a["metiers"][0]][1]}">'
             f'<div class="echeance" aria-hidden="true"><span class="jour">{d.day}</span><span class="mois">{MOIS[d.month - 1]}</span></div>'
             f'<div class="corps"><p class="haut">{etiquettes(a["metiers"])}<span class="dep">{e(a["departement"])}</span></p>'
             f'<h3><a href="{e(a["lien"])}" rel="noopener">{e(a["objet"])}</a></h3>'

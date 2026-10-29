@@ -263,6 +263,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 
 /* Liste */
 .etat { font: 600 1.4rem/1.2 var(--serif); margin: 30px 0 14px; letter-spacing: -.01em; }
+.reperes { margin: -4px 0 18px; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--doux); font-size: .92rem; line-height: 1.5; }
 .avis-liste { display: grid; gap: 14px; }
 .avis { position: relative; display: grid; grid-template-columns: 58px 1fr; gap: 14px; background: var(--carte); border: 1px solid var(--filet); border-radius: 20px; padding: 18px; box-shadow: var(--ombre); transition: box-shadow .35s var(--doux-mvt), transform .35s var(--doux-mvt), border-color .35s; }
 .avis:hover { border-color: color-mix(in srgb, var(--c, var(--accent)) 35%, var(--filet)); box-shadow: var(--ombre-haute); transform: translateY(-2px); }

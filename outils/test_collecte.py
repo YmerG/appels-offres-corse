@@ -141,7 +141,16 @@ brut = [{"idweb": "26-7", "objet": "TRAVAUX DE VOIRIE", "nomacheteur": "Commune 
          "donnees": json.dumps(avis_res({"efac:LotResult": lot("clos-nw", "0")}))}]
 res = resultats_de(brut)
 assert [a["id"] for a in res] == ["26-7"] and res[0]["departement"] == "2B" and "Jean" not in json.dumps(res)
+# même marché publié deux fois : gardé une fois (le plus récent) ; sans montant, seulement s'il est du même jour
+double = {**brut[0], "idweb": "26-9", "dateparution": "2026-10-20"}
+assert [a["id"] for a in resultats_de([brut[0], double])] == ["26-9"]
+sans = json.dumps(avis_res({"efac:LotResult": lot("selec-w", "2")}))
+s1, s2 = {**brut[0], "donnees": sans}, {**double, "donnees": sans}
+assert len(resultats_de([s1, s2])) == 2 and len(resultats_de([s1, {**s2, "dateparution": "2026-10-16"}])) == 1
 html_res = carte_resultat(res[0])
 assert euros(1500) + " HT" in html_res and "1 à 3 par lot" in html_res and "Travaux de voirie" in html_res and "ven. 16 oct. 2026" in html_res
 assert "voir l'avis officiel" in carte_resultat({**res[0], "montant": None, "offres": []})
+# repères : montant attribué et offres médianes du marché ; le maximum d'un accord-cadre n'est pas repris
+assert 'data-montant="1500" data-offres="3"' in html_res
+assert "data-montant" not in carte_resultat({**res[0], "montant_type": "max"})
 print("OK : lecture des avis, résultats de marché, exemples et métiers")
