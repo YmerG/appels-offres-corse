@@ -1,7 +1,7 @@
 // Service worker simple : le site s'installe comme une appli, et les pages déjà vues s'ouvrent même sans réseau.
 // Réseau d'abord (toujours la dernière version), copie en secours. Seulement les fichiers du site :
 // jamais Firebase ni l'annuaire des entreprises (autre origine), donc aucune donnée de compte en cache.
-var CACHE = 'aoc-v3'; // v3 : refonte façon macOS (style, couleurs des métiers) ; l'ancienne copie est effacée
+var CACHE = 'aoc-v4'; // v4 : logo noir et blanc (en-tête, icônes) ; l'ancienne copie est effacée
 
 self.addEventListener('install', function () { self.skipWaiting(); });
 
