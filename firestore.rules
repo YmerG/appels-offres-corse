@@ -8,6 +8,7 @@ rules_version = '2';
 // demandes/{id}/interets/{uid} : messages « Je suis intéressé » des comptes Entreprise vérifiés (un par entreprise, 5 au plus),
 // lisibles par l'administrateur seulement (l'entreprise peut seulement voir que le sien existe).
 // users/{uid} : profil du compte (particulier ou entreprise de travaux), lisible par son titulaire et l'admin seulement.
+// fiches/{uid} : fiche publique facultative d'une entreprise, lisible par tous après validation par l'admin.
 // types/{uid} : type du compte, figé pour toujours (même si le profil est supprimé puis recréé).
 // config/admins : { uids: [...] }, créé à la main dans la console Firebase (aucune écriture possible depuis le site).
 service cloud.firestore {
@@ -195,6 +196,28 @@ service cloud.firestore {
       allow list, delete: if estAdmin();
       allow create: if request.auth != null && pid == request.resource.data.avis + '_' + request.auth.uid
         && compteVerifie('entreprise') && partenaireValide(request.resource.data);
+    }
+
+    // fiches/{uid} : fiche publique facultative d'une entreprise, dont le lien est envoyé au demandeur lors d'une mise en relation.
+    // Nom, SIRET, métiers et zone = ceux du profil au moment de l'écriture, plus une présentation. Lisible par tous une fois
+    // validée par l'admin (pas de liste publique) ; chaque écriture de l'entreprise la remet en attente.
+    function ficheValide(d, p) {
+      return d.keys().hasOnly(['nom', 'siret', 'metiers', 'zone', 'presentation', 'statut', 'maj'])
+        && d.nom == p.nom && d.siret == p.siret && d.metiers == p.metiers && d.zone == p.zone
+        && texte(d.presentation, 20, 600)
+        && d.statut == 'en_attente' && d.maj == request.time;
+    }
+
+    match /fiches/{uid} {
+      allow get: if connecte(uid) || estAdmin() || resource.data.statut == 'validee';
+      allow list: if estAdmin();
+      allow create: if connecte(uid) && compteVerifie('entreprise')
+        && ficheValide(request.resource.data, get(/databases/$(database)/documents/users/$(uid)).data);
+      allow update: if (connecte(uid) && compteVerifie('entreprise')
+          && ficheValide(request.resource.data, get(/databases/$(database)/documents/users/$(uid)).data))
+        || (estAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut'])
+          && request.resource.data.statut in ['en_attente', 'validee']);
+      allow delete: if connecte(uid) || estAdmin();
     }
 
     // Comptes : chacun lit et écrit seulement son profil ; le type ne change plus après la création ; l'admin lit tout ; aucune lecture publique.

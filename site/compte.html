@@ -175,6 +175,20 @@
         <p class="erreur" id="alertes-erreur" role="alert" hidden></p>
       </section>
 
+      <section id="fiche" hidden>
+        <h2 class="etat">Ma fiche publique</h2>
+        <p class="aide-bloc">Facultative. Quand nous vous mettons en relation avec un demandeur, nous lui envoyons le lien de votre fiche : raison sociale, SIRET, métiers, zone et votre présentation. Elle n'est pas listée sur le site. Nous la relisons avant de la mettre en ligne, et après chaque modification.</p>
+        <p class="info-ok" id="fiche-etat" role="status" hidden></p>
+        <form id="fiche-form" class="carte-form" novalidate>
+          <label for="fiche-texte">Présentation <span class="aide">20 à 600 caractères</span></label>
+          <textarea id="fiche-texte" required minlength="20" maxlength="600" rows="5" aria-describedby="fiche-aide" placeholder="Votre savoir-faire, vos années d'expérience, vos chantiers types…"></textarea>
+          <p class="aide-bloc" id="fiche-aide">Sans téléphone ni e-mail : nous transmettons vos coordonnées nous-mêmes.</p>
+          <p class="erreur" id="fiche-erreur" role="alert" hidden></p>
+          <button type="submit" class="bouton-publier" id="fiche-envoyer">Envoyer ma fiche</button>
+          <p class="ligne-admin"><button type="button" class="lien-bouton" id="fiche-retirer" hidden>Retirer ma fiche</button></p>
+        </form>
+      </section>
+
       <section id="mes-demandes" hidden>
         <h2 class="etat">Mes demandes <span class="nb" id="nb-mes"></span> <span class="pastille-neuf" id="neuf-mes" hidden></span></h2>
         <div class="avis-liste" id="liste-mes"></div>
@@ -183,7 +197,7 @@
       <details class="supprimer-compte">
         <summary>Supprimer mon compte</summary>
         <form id="suppression" class="carte-form" novalidate>
-          <p class="aide-bloc">Votre compte et votre profil sont supprimés définitivement. Les demandes et messages déjà envoyés sont supprimés au plus tard 3 mois après leur date limite, ou plus tôt sur simple demande à <a href="mailto:maitreagent@gmail.com">maitreagent@gmail.com</a>.</p>
+          <p class="aide-bloc">Votre compte, votre profil et votre fiche publique sont supprimés définitivement. Les demandes et messages déjà envoyés sont supprimés au plus tard 3 mois après leur date limite, ou plus tôt sur simple demande à <a href="mailto:maitreagent@gmail.com">maitreagent@gmail.com</a>.</p>
           <label for="s-mdp">Votre mot de passe, pour confirmer</label>
           <input id="s-mdp" type="password" required autocomplete="current-password">
           <p class="erreur" id="s-erreur" role="alert" hidden></p>

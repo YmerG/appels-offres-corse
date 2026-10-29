@@ -1,5 +1,6 @@
 // Modération : connexion Firebase Auth (compte admin listé dans config/admins), puis valider / refuser / retirer les demandes,
-// lire les messages « Je suis intéressé » des artisans pour les transmettre au demandeur, et les recherches de partenaires.
+// lire les messages « Je suis intéressé » des artisans pour les transmettre au demandeur, les recherches de partenaires,
+// et relire les fiches publiques des entreprises.
 // Les règles Firestore font foi : un autre compte connecté ne lit rien.
 (function () {
   var METIERS = { 'gros-oeuvre': 'Gros œuvre, bâtiment', 'second-oeuvre': 'Second œuvre, finitions', electricite: 'Électricité, éclairage',
@@ -102,6 +103,7 @@
         bloc.append(el('p', finDec < new Date() ? 'aide-bloc dec-expiree' : 'aide-bloc', !dec ? 'Décennale : non déclarée'
           : 'Décennale déclarée : ' + dec.assureur + (dec.contrat ? ', contrat ' + dec.contrat : '') + ', ' +
             (finDec < new Date() ? 'EXPIRÉE le ' : "valable jusqu'au ") + finDec.toLocaleDateString('fr-FR') + ' (attestation à demander)'));
+        lienFiche(bloc, i.uid);
         var sup = el('button', 'lien-bouton', 'Supprimer ce message');
         sup.type = 'button';
         // le compteur public (5 entreprises au plus) suit : une place se libère
@@ -219,6 +221,7 @@
         bloc.append(el('p', 'qui-interet', p.nom + ' · ' + date(p.cree)));
         lien(bloc, p);
         bloc.append(el('p', 'description description-entiere', p.message));
+        lienFiche(bloc, p.uid);
         var sup = el('button', 'lien-bouton', 'Supprimer ce message');
         sup.type = 'button';
         sup.onclick = function () { if (confirm('Supprimer définitivement ce message et ses coordonnées ?')) agir(f.fs.deleteDoc(s.ref)); };
@@ -232,14 +235,59 @@
     if (!docs.length) box.append(el('p', 'vide', 'Aucune recherche de partenaire.'));
   }
 
+  // fiches publiques (fiches/{uid}) : à relire avant la mise en ligne ; toute modification par l'entreprise la remet en attente
+  var enLigne = {}; // uid -> lien de la fiche validée, ajouté aux messages de l'entreprise
+  function lienFiche(bloc, uid) {
+    if (!enLigne[uid]) return;
+    var p = el('p', 'aide-bloc', 'Fiche publique à transmettre : ');
+    var a = el('a', '', enLigne[uid]);
+    a.href = enLigne[uid];
+    a.target = '_blank';
+    a.rel = 'noopener';
+    p.append(a);
+    bloc.append(p);
+  }
+  function fiches(docs) {
+    var box = $('fiches');
+    box.textContent = '';
+    enLigne = {};
+    var ms = function (s) { return s.data().maj ? s.data().maj.toMillis() : 0; };
+    docs.slice().sort(function (x, y) { return (x.data().statut === 'validee') - (y.data().statut === 'validee') || ms(y) - ms(x); }).forEach(function (s) {
+      var p = s.data(), ok = p.statut === 'validee';
+      if (ok) enLigne[s.id] = new URL('entreprise.html?id=' + encodeURIComponent(s.id), location.href).href;
+      var a = el('article', 'avis avis-admin'), corps = el('div', 'corps'), haut = el('p', 'haut');
+      haut.append(el('span', 'dep', ok ? 'En ligne' : 'À relire'), el('span', 'dep', p.zone.join(', ')));
+      var infos = el('p', 'aide-bloc', ' · ' + p.metiers.map(function (m) { return METIERS[m] || m; }).join(', ') + ' · envoyée le ' + date(p.maj));
+      infos.prepend(lienSiret(p.siret));
+      corps.append(haut, el('h3', '', p.nom), infos, el('p', 'description description-entiere', p.presentation));
+      if (ok) lienFiche(corps, s.id);
+      var actions = el('p', 'actions-admin');
+      var b = el('button', ok ? 'bouton-sortir' : 'bouton-publier', ok ? 'Remettre en attente' : 'Mettre en ligne');
+      b.type = 'button';
+      b.onclick = function () { agir(f.fs.updateDoc(s.ref, { statut: ok ? 'en_attente' : 'validee' })); };
+      var non = el('button', 'bouton-refus', 'Supprimer la fiche');
+      non.type = 'button';
+      non.onclick = function () { if (confirm('Supprimer cette fiche ? L\'entreprise pourra en envoyer une autre.')) agir(f.fs.deleteDoc(s.ref)); };
+      actions.append(b, non);
+      corps.append(actions);
+      a.append(corps);
+      box.append(a);
+    });
+    $('nb-fiches').textContent = docs.length;
+    if (!docs.length) box.append(el('p', 'vide', 'Aucune fiche pour le moment.'));
+  }
+
   function charger() {
     erreur('erreur', '');
     var auteurs = {}, recherches = [];
-    return Promise.all([comptes(), 
-      // règles pas encore publiées, ou panne : le reste de la page doit marcher quand même
-      f.fs.getDocs(f.fs.collection(f.db, 'partenaires')).catch(function (e) { console.warn('Partenaires illisibles :', e && e.code); return { docs: [] }; })]).then(function (r) {
+    // règles pas encore publiées, ou panne : le reste de la page doit marcher quand même
+    var lire = function (nom) {
+      return f.fs.getDocs(f.fs.collection(f.db, nom)).catch(function (e) { console.warn(nom + ' illisibles :', e && e.code); return { docs: [] }; });
+    };
+    return Promise.all([comptes(), lire('partenaires'), lire('fiches')]).then(function (r) {
       auteurs = profils = r[0];
       recherches = r[1].docs;
+      fiches(r[2].docs);
       return f.fs.getDocs(f.fs.collection(f.db, 'demandes'));
     }).then(function (res) {
       return Promise.all(res.docs.map(function (d) {

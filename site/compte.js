@@ -229,7 +229,12 @@
     var ecrire;
     if (mode === 'modifier') {
       champs.telephone = tel || f.fs.deleteField();
-      ecrire = f.fs.updateDoc(f.fs.doc(f.db, 'users', moi.uid), champs);
+      // fiche publique : recopiée si le nom, le SIRET, les métiers ou la zone changent (elle repasse alors en relecture)
+      // shortcut: si cette 2e écriture échoue, la fiche garde les anciennes valeurs jusqu'au prochain « Enregistrer ma fiche »
+      var autre = fiche && ['nom', 'siret', 'metiers', 'zone'].some(function (k) { return String(fiche[k]) !== String(champs[k]); });
+      ecrire = f.fs.updateDoc(f.fs.doc(f.db, 'users', moi.uid), champs).then(function () {
+        if (autre) return ecrireFiche(champs, fiche.presentation).catch(function (e) { console.warn('Fiche non recopiée :', e && e.code); });
+      });
     } else {
       champs.type = type;
       champs.cree = f.fs.serverTimestamp();
@@ -319,7 +324,8 @@
       $('r-action').href = ent ? 'index.html#onglet=particulier' : 'publier.html';
       $('mes-demandes').hidden = false;
       mesDemandes();
-      $('alertes').hidden = !ent;
+      $('alertes').hidden = $('fiche').hidden = !ent;
+      if (ent) maFiche();
       if (ent) {
         $('alertes-case').checked = profil.alertes === true;
         $('alertes-mail').textContent = u.email;
@@ -353,6 +359,53 @@
     }).then(function () { c.disabled = false; });
   }
   $('alertes-case').onchange = function () { ecrireAlertes(this.checked); };
+
+  // fiche publique (fiches/{uid}) : nom, SIRET, métiers et zone copiés du profil (les règles le vérifient) + présentation ;
+  // chaque écriture la remet en attente de relecture par l'admin
+  var fiche = null;
+  function ecrireFiche(p, texte) {
+    return f.fs.setDoc(f.fs.doc(f.db, 'fiches', moi.uid), { nom: p.nom, siret: p.siret, metiers: p.metiers, zone: p.zone,
+      presentation: texte, statut: 'en_attente', maj: f.fs.serverTimestamp() });
+  }
+  function maFiche() {
+    return f.fs.getDoc(f.fs.doc(f.db, 'fiches', moi.uid)).then(function (s) {
+      fiche = s.exists() ? s.data() : null;
+      $('fiche-texte').value = fiche ? fiche.presentation : '';
+      $('fiche-retirer').hidden = !fiche;
+      $('fiche-envoyer').textContent = fiche ? 'Enregistrer ma fiche' : 'Envoyer ma fiche';
+      var etat = $('fiche-etat');
+      etat.hidden = !fiche;
+      if (!fiche) return;
+      if (fiche.statut !== 'validee') return etat.textContent = 'Fiche envoyée : nous la relisons, en général sous 48 h. Elle n\'est pas encore visible.';
+      etat.textContent = 'Votre fiche est en ligne. ';
+      var a = document.createElement('a');
+      a.href = 'entreprise.html?id=' + encodeURIComponent(moi.uid);
+      a.textContent = 'Voir ma fiche';
+      etat.append(a);
+    }, function (e) { console.warn('Fiche :', e && e.code); });
+  }
+  $('fiche-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = $('fiche-texte'), texte = t.value.trim();
+    dire('fiche-erreur', '');
+    AOC_FB.sous(t, '');
+    if (texte.length < 20) return AOC_FB.sous(t, 'Écrivez au moins 20 caractères (' + texte.length + ' pour le moment).');
+    if (!moi.emailVerified) return dire('fiche-erreur', "Vérifiez d'abord votre e-mail (lien envoyé à " + moi.email + ').');
+    $('fiche-envoyer').disabled = true;
+    ecrireFiche(profil, texte).then(maFiche).then(function () {
+      $('fiche-etat').scrollIntoView({ block: 'nearest' });
+    }, function (err) {
+      console.warn('Fiche :', err && err.code);
+      dire('fiche-erreur', "La fiche n'a pas été enregistrée. Réessayez dans un instant.");
+    }).then(function () { $('fiche-envoyer').disabled = false; });
+  });
+  $('fiche-retirer').onclick = function () {
+    if (!confirm('Retirer votre fiche publique ? Le lien ne marchera plus.')) return;
+    f.fs.deleteDoc(f.fs.doc(f.db, 'fiches', moi.uid)).then(maFiche).then(function () {
+      dire('fiche-etat', 'Votre fiche est retirée.');
+      $('fiche-texte').focus();
+    }, function () { dire('fiche-erreur', "La fiche n'a pas été retirée. Réessayez dans un instant."); });
+  };
 
   // Envoyée → En vérification → Publiée → Réponses reçues (reponses : nombre transmis par l'admin), et ce qu'il va se passer
   var ETAPES = ['Envoyée', 'En vérification', 'Publiée', 'Réponses reçues'];
@@ -474,7 +527,12 @@
     var u = moi;
     // Firebase demande une connexion récente pour supprimer un compte : on la refait avec le mot de passe
     f.au.reauthenticateWithCredential(u, f.au.EmailAuthProvider.credential(u.email, $('s-mdp').value))
-      .then(function () { return f.fs.deleteDoc(f.fs.doc(f.db, 'users', u.uid)); })
+      .then(function () {
+        var lot = f.fs.writeBatch(f.db); // la fiche publique part avec le profil
+        lot.delete(f.fs.doc(f.db, 'fiches', u.uid));
+        lot.delete(f.fs.doc(f.db, 'users', u.uid));
+        return lot.commit();
+      })
       .then(function () { enCours = true; return f.au.deleteUser(u); })
       .then(function () { montrer('supprime'); $('supprime').focus(); }, function (err) { enCours = false; dire('s-erreur', messageAuth(err)); });
   });

@@ -62,6 +62,8 @@ body { margin: 0; font: 16px/1.6 var(--sans); color: var(--texte); background: v
 a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 ::selection { background: color-mix(in srgb, var(--or) 45%, transparent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* liens dans le texte : 3 px mordaient sur la lettre d'avant (rapport 31) ; les liens-boutons (avec classe) gardent 3 px */
+:is(p, li, dd) > a:not([class]):focus-visible { outline-offset: 1px; border-radius: 2px; }
 .cadre { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 .evitement { position: absolute; left: -999px; top: 8px; z-index: 9; min-height: 44px; display: inline-flex; align-items: center; padding: 8px 14px; background: var(--carte); border-radius: 8px; }
 .evitement:focus { left: 8px; }
@@ -156,6 +158,8 @@ main > .bandeau-test:first-child { margin-top: 22px; }
 .page-texte h2 { font: 600 1.35rem/1.3 var(--serif); margin: 40px 0 10px; }
 .page-texte h2::after { content: ""; display: block; width: 32px; height: 1px; margin-top: 10px; background: var(--accent); }
 .page-texte li { margin-bottom: 8px; }
+.fiche-texte { white-space: pre-line; overflow-wrap: anywhere; }
+#e-etiquettes { margin-top: 22px; }
 .page-texte ul { padding-left: 1.2em; }
 .page-texte li::marker { color: var(--accent); }
 #form, .carte-form { display: grid; gap: 20px; margin-top: 22px; }
@@ -168,11 +172,11 @@ main > .bandeau-test:first-child { margin-top: 22px; }
 .carte-form label { margin: 0 0 -12px; }
 #form .choix-2 label, #form .consentement { font-weight: 500; }
 #form .consentement { margin: 0; display: flex; }
-#form input:not([type=radio]):not([type=checkbox]), #form select, #form textarea, .carte-form input {
+#form input:not([type=radio]):not([type=checkbox]), #form select, #form textarea, .carte-form input, .carte-form textarea {
   width: 100%; font: inherit; color: inherit; background: var(--fond); border: 1px solid var(--filet); border-radius: 14px; padding: 12px 14px; transition: border-color .2s, box-shadow .2s, background .2s; }
-#form textarea { resize: vertical; min-height: 140px; }
+#form textarea, .carte-form textarea { resize: vertical; min-height: 140px; }
 /* même spécificité que la règle ci-dessus, sinon la bordure dorée ne s'applique pas ; cases et radios gardent :focus-visible */
-#form input:not([type=radio]):not([type=checkbox]):focus, #form select:focus, #form textarea:focus, .carte-form input:focus { border-color: var(--accent); background: var(--carte); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
+#form input:not([type=radio]):not([type=checkbox]):focus, #form select:focus, #form textarea:focus, .carte-form input:focus, .carte-form textarea:focus { border-color: var(--accent); background: var(--carte); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
 .aide { font-weight: 500; font-size: .8rem; color: var(--doux); margin-left: 4px; }
 .aide-bloc { margin: 6px 0 0; font-size: .88rem; color: var(--doux); }
 .choix-2 { display: flex; gap: 8px; margin-top: 6px; }

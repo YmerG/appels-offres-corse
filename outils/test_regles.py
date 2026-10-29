@@ -417,6 +417,54 @@ def main():
     assert code == 200 and len(res["documents"]) == 2
     assert appel(FS + f"/partenaires/{AVIS}_{ent2_uid}", jeton=admin_jeton, methode="DELETE")[0] == 200
 
+    # fiche publique d'entreprise : reprend le profil, présentation 20 à 600 caractères, en attente à chaque écriture,
+    # lisible par tous seulement après validation par l'admin, jamais listée publiquement
+    FICHE = {"nom": PROFIL_E["nom"], "siret": PROFIL_E["siret"], "metiers": PROFIL_E["metiers"], "zone": PROFIL_E["zone"],
+             "presentation": "Plombier chauffagiste depuis 15 ans en Haute-Corse.", "statut": "en_attente"}
+
+    def fiche(champs, jeton=ent2_jeton, uid=None, nouveau=True):
+        w = ecriture(f"fiches/{uid or qui.get(jeton, 'anonyme')}", champs, nouveau)
+        w["updateTransforms"] = [{"fieldPath": "maj", "setToServerValue": "REQUEST_TIME"}]
+        return commit([w], jeton)
+
+    refus_fiche = {
+        "sans connexion": (FICHE, None, ent2_uid),
+        "fiche d'un autre": (FICHE, ent3_jeton, ent2_uid),
+        "compte particulier": (FICHE, part_jeton, None),
+        "e-mail pas vérifié": ({**FICHE, "zone": ["2B"]}, ent_nv_jeton, None),
+        "nom différent du profil": ({**FICHE, "nom": "Autre SARL"}, ent2_jeton, None),
+        "SIRET différent du profil": ({**FICHE, "siret": "98765432100018"}, ent2_jeton, None),
+        "métiers différents du profil": ({**FICHE, "metiers": ["electricite"]}, ent2_jeton, None),
+        "zone différente du profil": ({**FICHE, "zone": ["2A", "2B"]}, ent2_jeton, None),
+        "présentation trop courte": ({**FICHE, "presentation": "Plombier"}, ent2_jeton, None),
+        "présentation trop longue": ({**FICHE, "presentation": "p" * 601}, ent2_jeton, None),
+        "validée d'office": ({**FICHE, "statut": "validee"}, ent2_jeton, None),
+        "champ en trop": ({**FICHE, "telephone": "06 00 00 00 00"}, ent2_jeton, None),
+    }
+    for nom, (champs, jeton, uid) in refus_fiche.items():
+        assert fiche(champs, jeton, uid) == 403, f"fiche : {nom}"
+    w = ecriture(f"fiches/{ent2_uid}", {**FICHE, "maj": dans(-30)})
+    assert commit([w], ent2_jeton) == 403, "fiche : date imposée"
+    assert fiche(FICHE) == 200
+    assert appel(FS + f"/fiches/{ent2_uid}", jeton=ent2_jeton)[0] == 200, "l'entreprise voit sa fiche en attente"
+    for jeton in (None, part_jeton, ent3_jeton):
+        assert appel(FS + f"/fiches/{ent2_uid}", jeton=jeton)[0] == 403, "fiche publique avant validation"
+        assert appel(FS + "/fiches", jeton=jeton)[0] == 403, "liste des fiches"
+        assert maj(f"fiches/{ent2_uid}", jeton, {"statut": "validee"}) == 403, "fiche validée par un autre"
+        assert appel(FS + f"/fiches/{ent2_uid}", jeton=jeton, methode="DELETE")[0] == 403, "fiche supprimée par un autre"
+    assert maj(f"fiches/{ent2_uid}", ent2_jeton, {"statut": "validee"}) == 403, "fiche validée par l'entreprise"
+    assert maj(f"fiches/{ent2_uid}", admin_jeton, {"presentation": "Texte changé par l'admin."}) == 403, "admin : texte modifié"
+    assert maj(f"fiches/{ent2_uid}", admin_jeton, {"statut": "publiee"}) == 403, "admin : statut inconnu"
+    code, res = appel(FS + "/fiches", jeton=admin_jeton)
+    assert code == 200 and len(res["documents"]) == 1
+    assert maj(f"fiches/{ent2_uid}", admin_jeton, {"statut": "validee"}) == 200
+    for jeton in (None, part_jeton, ent3_jeton):
+        assert appel(FS + f"/fiches/{ent2_uid}", jeton=jeton)[0] == 200, "fiche publique après validation"
+        assert appel(FS + "/fiches", jeton=jeton)[0] == 403, "liste des fiches (après validation)"
+    assert fiche({**FICHE, "presentation": FICHE["presentation"] + " Dépannage 7 j/7."}, nouveau=False) == 200, "fiche modifiée"
+    assert appel(FS + f"/fiches/{ent2_uid}")[0] == 403, "fiche modifiée : de nouveau en attente"
+    assert appel(FS + f"/fiches/{ent2_uid}", jeton=ent2_jeton, methode="DELETE")[0] == 200, "l'entreprise retire sa fiche"
+
     # « Ma demande est pourvue » : l'auteur seulement, un booléen, sur une demande publiée ; plus aucune réponse ensuite
     assert maj("demandes/ok1", ent_jeton, {"pourvue": True}) == 403, "pourvue par une entreprise"
     assert maj("demandes/ok1", None, {"pourvue": True}) == 403, "pourvue sans connexion"
@@ -484,6 +532,7 @@ def main():
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
           f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus ; "
           f"partenaires : {len(refus_partenaire) + 17} refus, lus par l'admin seulement ; "
+          f"fiches : {len(refus_fiche) + 20} refus, publiques après validation seulement, jamais listées ; "
           f"photos : {len(refus_photos) + 6} refus, publiques après validation seulement)")
 
     for _, u in autres[:4]:

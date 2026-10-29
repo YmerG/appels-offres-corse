@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fiche entreprise · Appels d'offres Corse</title>
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0e1c28">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e1c28'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23d6b46e' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preload" href="polices/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><a class="lien-compte" href="compte.html">Compte</a></p>
+      <h1 id="e-nom">Fiche entreprise</h1>
+      <p class="chapo" id="e-chapo">Entreprise de travaux en Corse</p>
+    </div>
+  </header>
+
+  <main class="cadre page-texte">
+    <p class="bandeau-test bandeau-test-fort">Version de test&nbsp;: les fiches affichées sont des essais.</p>
+    <p id="e-etat" role="status">Chargement de la fiche…</p>
+
+    <div id="e-fiche" hidden>
+      <p class="haut" id="e-etiquettes"></p>
+      <h2>Présentation</h2>
+      <p class="fiche-texte" id="e-texte"></p>
+
+      <h2>Ce que nous avons vérifié</h2>
+      <ul>
+        <li>Le <strong>SIRET</strong> <span id="e-siret"></span> figure dans l'annuaire officiel des entreprises&nbsp;: nous l'avons vérifié avant de mettre cette fiche en ligne. <a id="e-annuaire" rel="noopener">Voir sa fiche dans l'annuaire</a>.</li>
+        <li>Son <strong>adresse e-mail</strong> est vérifiée.</li>
+        <li>Cette présentation est <strong>écrite par l'entreprise</strong> et relue par nous avant sa mise en ligne (dernière mise à jour le <span id="e-maj"></span>).</li>
+      </ul>
+      <h2>Ce que vous devez vérifier</h2>
+      <ul>
+        <li>Nous ne vérifions ni les assurances ni la qualité du travail. Avant de signer, demandez son <strong>attestation d'assurance décennale</strong> et un <strong>devis écrit</strong>.</li>
+        <li>Ses coordonnées ne sont pas affichées ici&nbsp;: nous vous les transmettons quand elle répond à votre demande de travaux.</li>
+      </ul>
+    </div>
+
+    <p><a class="bouton-sortir" href="comment-ca-marche.html">Comment ça marche</a></p>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p><a href="index.html">Appels d'offres Corse</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a></p>
+      <p>Prototype, version de test. Aucun cookie.</p>
+    </div>
+  </footer>
+
+  <script src="entreprise.js"></script>
+</body>
+</html>
