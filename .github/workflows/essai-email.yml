@@ -1,0 +1,29 @@
+# Temporaire : envoie UNE alerte d'exemple à l'adresse donnée (supprimé après l'essai)
+name: Essai e-mail
+on:
+  workflow_dispatch:
+    inputs:
+      adresse: {required: true, type: string}
+permissions:
+  contents: read
+jobs:
+  essai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cd outils && python3 - <<'PY'
+          import os
+          from datetime import datetime, timedelta, timezone
+          from envoyer_emails import message, envoyer_brevo
+          site = "https://ymerg.github.io/appels-offres-corse/"
+          d = {"id": "essai", "titre": "[ESSAI] Rénovation salle de bains", "commune": "Corte", "departement": "2B",
+               "metier": next(iter(__import__("envoyer_emails").METIERS)), "budget": 8000,
+               "delai": datetime.now(timezone.utc) + timedelta(days=14)}
+          s, t, p = message("alerte:essai", d, None, "Rémy", site)
+          print(envoyer_brevo(os.environ["K"], os.environ["E"], os.environ["A"], "Rémy", s, t, p, site, True))
+          PY
+        env:
+          K: ${{ secrets.BREVO_API_KEY }}
+          E: ${{ vars.EXPEDITEUR }}
+          A: ${{ inputs.adresse }}
