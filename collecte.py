@@ -459,6 +459,9 @@ def carte_resultat(a):
             f'<p class="limite">Résultat publié le <time datetime="{e(a["publie"])}">{date_fr(a["publie"], heure=False)}</time></p></div></article>')
 
 
+GARDE = ' class="garde"'
+
+
 def carte(a):
     e = html.escape
     d = datetime.fromisoformat(a["date_limite"]).astimezone(PARIS)
@@ -470,7 +473,9 @@ def carte(a):
     if a.get("duree"):
         infos.append(("Durée", e(a["duree"])))
     infos.append(("Procédure" if a["lien"] else "Demande", e(a["procedure"])))
-    dl = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in infos)
+    # vue compacte (style.css) : seuls le lieu et le montant restent, ou la procédure s'il n'y a pas de montant
+    garde = (0, 1 if a["montant"] else len(infos) - 1)
+    dl = "".join(f'<div{GARDE if i in garde else ""}><dt>{k}</dt><dd>{v}</dd></div>' for i, (k, v) in enumerate(infos))
     rectif = '<span class="rectif">Rectifié</span>' if a["rectifie"] else ""
     source = a.get("source", "public")
     # les exemples n'ont pas d'avis officiel : titre sans lien ; cachés sans JS (ils ne se montrent que dans leur onglet)

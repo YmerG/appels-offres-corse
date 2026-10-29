@@ -51,6 +51,12 @@ assert dossier({"communication": {"urlDocConsul": "https://www.klekoon.com"}}) =
 assert [taille(p) for p in ("Marchés <90 k€ (MAPA)", "Marchés entre 90 k€ et seuils européens", "Marchés européens",
                             "Délégation de service public")] == ["petit", "moyen", "europeen", ""]
 assert 'data-taille="petit"' in html_dce
+# vue compacte : lieu + procédure sans montant ; lieu + montant sinon (même avec une durée)
+assert re.findall(r'<div class="garde"><dt>([^<]+)', html_dce) == ["Lieu", "Procédure"]
+html_m = carte({"objet": "X", "acheteur": "A", "lieu": "Bastia", "departement": "2B", "metiers": ["services"], "montant": 180000,
+                "montant_type": "estimé", "duree": "12 mois", "date_limite": "2026-11-20T12:00:00+01:00", "publie": "", "procedure": "MAPA",
+                "rectifie": False, "lien": "", "source": "prive"})
+assert re.findall(r'<div class="garde"><dt>([^<]+)', html_m) == ["Lieu", "Montant estimé"], html_m
 assert 'data-id="26-1"' in html_dce and 'href="https://a.fr/?a=1&amp;b=2"' in html_dce and "Dossier de consultation" in html_dce
 
 assert lieu_texte("Lieu(x) d'exécution : voir lot") is None and lieu_texte("FRM01") is None

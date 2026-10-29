@@ -23,8 +23,8 @@
     a.dataset.publie = d.cree ? d.cree.toDate().toISOString().slice(0, 10) : '';
     a.dataset.montant = d.budget || 0;
     a.style.setProperty('--c', coul);
-    var infos = '<div><dt>Lieu</dt><dd>' + esc(d.commune) + '</dd></div>';
-    if (d.budget) infos += '<div><dt>Budget indicatif</dt><dd>' + euros(d.budget) + (d.type === 'particulier' ? ' TTC' : ' HT') + '</dd></div>';
+    var infos = '<div class="garde"><dt>Lieu</dt><dd>' + esc(d.commune) + '</dd></div>'; // garde : gardé en vue compacte
+    if (d.budget) infos += '<div class="garde"><dt>Budget indicatif</dt><dd>' + euros(d.budget) + (d.type === 'particulier' ? ' TTC' : ' HT') + '</dd></div>';
     var h = limite.getHours();
     a.innerHTML =
       '<div class="echeance" aria-hidden="true"><span class="jour">' + limite.getDate() + '</span>' +

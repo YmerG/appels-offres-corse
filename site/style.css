@@ -362,9 +362,19 @@ html:not(.js) .vue { display: none; }
 .vue[aria-pressed="true"] { color: #f4f1ea; background: var(--encre); border-color: var(--encre); }
 /* Vue compacte : l'essentiel de chaque avis, deux à trois cartes par écran de téléphone */
 .compacte .avis { grid-template-columns: 50px 1fr; gap: 12px; padding: 14px 16px; }
-/* lieu + montant gardés (ou la procédure si le montant manque) : ce que l'artisan regarde en premier (INTERFACE.md n° 9) */
-.compacte .infos > div:nth-child(n+3), .compacte .description { display: none; }
+/* lieu + montant gardés (ou la procédure si le montant manque, marquée .garde par collecte.py et demandes.js) : ce que l'artisan regarde en premier (INTERFACE.md n° 9) */
+.compacte .infos > div:not(.garde), .compacte .description { display: none; }
 .compacte .infos { margin-bottom: 8px; }
+/* petit téléphone : « Bastia · 180 000 € HT » sur une ligne (petits titres lus seulement par les lecteurs d'écran), carte resserrée
+   pour que les 4 boutons ronds de 44 px tiennent sur une ligne (rapport 38) */
+@media (max-width: 359px) {
+  .compacte .infos { display: block; }
+  .compacte .infos > .garde, .compacte .infos dd { display: inline; }
+  .compacte .infos dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .compacte .infos > .garde + .garde::before { content: " · "; color: var(--doux); }
+  .compacte .avis { gap: 10px; padding: 14px 12px; }
+  .compacte .actions { gap: 5px; }
+}
 .compacte .avis h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1.02rem; margin-bottom: 4px; }
 .compacte .acheteur { margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .compacte .haut { margin-bottom: 6px; }
