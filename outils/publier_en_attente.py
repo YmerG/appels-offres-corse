@@ -55,7 +55,9 @@ def main():
     code, res = appel(f"{fs}:runQuery", q, jeton)
     if code != 200:
         sys.exit(f"Lecture refusée ({code}) : ce compte est-il bien dans config/admins ?")
-    docs = [x["document"] for x in res if "document" in x]
+    # avis d'acheteur public (lot 19) : jamais publiés en bloc, chacun se valide à la main dans admin.html
+    docs = [x["document"] for x in res if "document" in x
+            and x["document"].get("fields", {}).get("type", {}).get("stringValue") != "public"]
     print(f"{len(docs)} demande(s) en attente.")
     for d in docs:
         i = d["name"].rsplit("/", 1)[1]

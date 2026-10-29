@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acheteurs publics : publiez vos avis gratuitement · Appels d'offres Corse</title>
+  <meta name="description" content="Mairies, communautés de communes, syndicats : publiez gratuitement vos avis de marché auprès des entreprises corses, en 1 minute, avec le lien vers votre avis officiel.">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icones/favicon-16.png">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html"><picture><source srcset="icones/logo-sombre.png" media="(prefers-color-scheme: dark)"><img class="logo" src="icones/logo-clair.png" alt="AO Corse, appels d'offres en Corse" width="122" height="32"></picture></a><span class="proto">Test</span><a class="lien-compte" href="compte.html">Compte</a></p>
+      <h1>Acheteur public&nbsp;? Publiez vos avis gratuitement</h1>
+      <p class="chapo">Mairies, communautés de communes, syndicats, offices publics&nbsp;: faites connaître vos marchés aux entreprises corses, en 1&nbsp;minute.</p>
+    </div>
+  </header>
+
+  <main class="cadre page-form page-texte">
+    <p class="bandeau-test bandeau-test-fort">Version de test : ne publiez pas de vraies coordonnées.</p>
+
+    <ol class="parcours">
+      <li><strong>Gratuit, sans abonnement.</strong> Ni commission, ni crédits à acheter.</li>
+      <li><strong>Plus de réponses d'entreprises corses.</strong> Votre avis apparaît dans l'onglet Public, à côté de ceux du BOAMP, et les entreprises de votre métier en Corse reçoivent une alerte par e-mail.</li>
+      <li><strong>Votre procédure ne change pas.</strong> Vous donnez le lien de votre avis officiel (votre plateforme ou un PDF)&nbsp;: les entreprises y retirent le dossier et y répondent. Nous vérifions l'avis avant de le mettre en ligne, en général sous 48&nbsp;h. Il disparaît du site à sa date limite.</li>
+    </ol>
+
+    <div class="merci" id="garde" role="status"><p id="garde-texte">Vérification de votre compte…</p></div>
+
+    <form id="form" novalidate hidden>
+      <fieldset>
+        <legend>Votre avis</legend>
+        <label for="acheteur">Nom de l'acheteur</label>
+        <input id="acheteur" name="acheteur" required minlength="2" maxlength="120" placeholder="Ex. : Commune de Corte" autocomplete="organization">
+
+        <label for="titre">Objet du marché</label>
+        <input id="titre" name="titre" required minlength="5" maxlength="200" placeholder="Ex. : réfection de la voirie communale" autocomplete="off">
+
+        <fieldset class="dep-form">
+          <legend>Métier</legend>
+          <div class="cases pastilles">
+            <label><input type="radio" name="metier" value="gros-oeuvre" required> Gros œuvre, bâtiment</label>
+            <label><input type="radio" name="metier" value="second-oeuvre"> Second œuvre, finitions</label>
+            <label><input type="radio" name="metier" value="electricite"> Électricité, éclairage</label>
+            <label><input type="radio" name="metier" value="plomberie-cvc"> Plomberie, chauffage, clim</label>
+            <label><input type="radio" name="metier" value="voirie-vrd"> Voirie, réseaux (VRD)</label>
+            <label><input type="radio" name="metier" value="espaces-verts"> Espaces verts</label>
+            <label><input type="radio" name="metier" value="nettoyage"> Nettoyage, déchets</label>
+            <label><input type="radio" name="metier" value="informatique"> Informatique, télécoms</label>
+            <label><input type="radio" name="metier" value="etudes"> Études, maîtrise d'œuvre</label>
+            <label><input type="radio" name="metier" value="restauration"> Restauration, alimentation</label>
+            <label><input type="radio" name="metier" value="services"> Services</label>
+            <label><input type="radio" name="metier" value="fournitures"> Fournitures, équipements</label>
+          </div>
+        </fieldset>
+
+        <div class="deux-col">
+          <div>
+            <label for="commune">Commune</label>
+            <input id="commune" name="commune" required minlength="2" maxlength="60" placeholder="Ex. : Corte" autocomplete="address-level2" list="communes">
+          </div>
+          <fieldset class="dep-form">
+            <legend>Département</legend>
+            <div class="choix-2">
+              <label><input type="radio" name="departement" value="2A" required> 2A</label>
+              <label><input type="radio" name="departement" value="2B"> 2B</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="deux-col">
+          <div>
+            <label for="budget">Montant estimé (€ HT) <span class="aide">facultatif</span></label>
+            <input id="budget" name="budget" type="number" inputmode="numeric" min="0" max="500000000" step="1" placeholder="Ex. : 250000">
+          </div>
+          <div>
+            <label for="delai">Date limite de réponse</label>
+            <input id="delai" name="delai" type="date" required>
+          </div>
+        </div>
+        <label for="heure">Heure limite</label>
+        <input id="heure" name="heure" type="time" required value="12:00">
+
+        <label for="lien">Lien vers l'avis ou le dossier officiel</label>
+        <input id="lien" name="lien" type="url" required maxlength="500" pattern="https://[^ <>&quot;]+" placeholder="https://…" autocomplete="url" aria-describedby="lien-aide">
+        <p class="aide-bloc" id="lien-aide">L'adresse de votre avis sur votre plateforme (marches-publics.info, achatspublicscorse.com…) ou d'un PDF en ligne. Elle doit commencer par https://.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Contact du service marchés <span class="aide">jamais publié</span></legend>
+        <p class="aide-bloc">Seul l'administrateur du site le voit, pour vérifier l'avis avec vous si besoin. Un téléphone ou un e-mail suffit.</p>
+        <label for="nom">Service ou personne à contacter</label>
+        <input id="nom" name="nom" required minlength="2" maxlength="80" placeholder="Ex. : service des marchés" autocomplete="name">
+        <label for="telephone">Téléphone</label>
+        <input id="telephone" name="telephone" type="tel" maxlength="20" pattern="[+0-9 .\(\)\-]{6,20}" autocomplete="tel" inputmode="tel">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" maxlength="120" pattern="[^@ ]+@[^@ ]+[.][^@ ]+" autocomplete="email">
+        <!-- champ piège anti-robots : invisible pour les personnes, rempli par les robots -->
+        <div class="piege" aria-hidden="true">
+          <label for="site">Site web</label>
+          <input id="site" name="site" tabindex="-1" autocomplete="off">
+        </div>
+      </fieldset>
+
+      <label class="consentement">
+        <input type="checkbox" id="consentement" name="consentement" required>
+        <span>J'accepte que ce contact soit conservé par le site pour vérifier l'avis, au plus tard 3 mois après la date limite (voir <a href="confidentialite.html">Confidentialité</a>).</span>
+      </label>
+
+      <p class="erreur" id="erreur" role="alert" hidden></p>
+      <div class="nav-etapes">
+        <button type="submit" class="bouton-publier" id="envoyer">Envoyer mon avis</button>
+      </div>
+    </form>
+
+    <div class="merci ok" id="merci" hidden tabindex="-1">
+      <h2>Merci, votre avis est envoyé</h2>
+      <p><strong>La suite :</strong> nous vérifions l'avis et son lien, en général sous 48&nbsp;h. Il apparaît ensuite dans l'onglet Public et les entreprises de votre métier reçoivent une alerte. Il n'est pas encore visible.</p>
+      <p class="actions-admin"><a class="bouton-publier" href="compte.html#mes-demandes">Suivre dans Mes demandes</a>
+        <a class="lien-bouton" href="acheteurs.html">Publier un autre avis</a></p>
+    </div>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p><a href="index.html">Appels d'offres Corse</a> · <a href="comment-ca-marche.html">Comment ça marche</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a></p>
+      <p>Prototype, version de test. Aucun cookie.</p>
+    </div>
+  </footer>
+
+  <script src="communes.js"></script>
+  <script src="acheteurs.js"></script>
+</body>
+</html>

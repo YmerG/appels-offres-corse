@@ -7,13 +7,14 @@
   form.querySelectorAll('[name=metiers]').forEach(function (c) { METIERS[c.value] = c.parentNode.textContent.trim(); });
   var f, moi, profil, typeFige = null, enCours = false;
 
-  // retour après connexion vers la page qui l'a demandée (seulement nos trois formulaires)
+  // retour après connexion vers la page qui l'a demandée (seulement nos formulaires)
   var retour = new URLSearchParams(location.search).get('retour') || '';
-  if (!/^(publier|interesse|partenaire)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$|^discussion\.html\?id=[A-Za-z0-9_-]{1,200}$/.test(retour)) retour = '';
+  if (!/^(publier|interesse|partenaire|acheteurs)\.html(\?(d|type|a)=[A-Za-z0-9_-]{1,64})?$|^discussion\.html\?id=[A-Za-z0-9_-]{1,200}$/.test(retour)) retour = '';
   var pourEntreprise = /^(interesse|partenaire)/.test(retour);
   if (retour) {
     $('raison').textContent = pourEntreprise
       ? (retour.indexOf('partenaire') === 0 ? 'Pour chercher un partenaire' : 'Pour répondre à une demande') + ', connectez-vous avec un compte Entreprise de travaux, ou créez-en un.'
+      : retour === 'acheteurs.html' ? "Pour publier un avis de marché, connectez-vous ou créez un compte (le type « Particulier » convient : il sert seulement à vous connecter)."
       : 'Pour publier une demande de travaux, connectez-vous ou créez un compte (Particulier, ou Entreprise de travaux pour une demande de société).';
     $('raison').hidden = false;
     if (pourEntreprise) form.type.value = 'entreprise';
@@ -423,14 +424,16 @@
   };
 
   // Envoyée → Publiée (dès l'envoi, sauf si l'admin l'a retirée) → Réponses reçues (reponses : nombre transmis par l'admin), et ce qu'il va se passer
+  // avis d'acheteur public (lot 19) : Envoyé → Publié (après validation par l'admin) ; on y répond sur sa plateforme, pas ici
   var ETAPES = ['Envoyée', 'Publiée', 'Réponses reçues'];
   function suivi(d) {
+    var pub = d.type === 'public';
     var n = d.reponses || 0, close = d.delai.toMillis() < Date.now();
     var fin = d.delai.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     var ici = d.statut !== 'validee' ? 0 : n ? 2 : 1;
     var ol = document.createElement('ol');
     ol.className = 'etapes';
-    ETAPES.forEach(function (nom, i) {
+    (pub ? ['Envoyé', 'Publié'] : ETAPES).forEach(function (nom, i) {
       var li = document.createElement('li');
       li.textContent = i === 2 && n ? nom + ' (' + n + ')' : nom;
       if (i <= ici) li.className = 'fait';
@@ -439,7 +442,11 @@
     });
     var p = document.createElement('p');
     p.className = 'suite';
-    p.textContent = d.statut !== 'validee' ? 'Votre demande a été retirée du site : elle n\'est plus visible. Nous vous écrivons si quelque chose doit être corrigé.'
+    p.textContent = pub ? (d.statut !== 'validee' ? "Votre avis attend notre validation (en général sous 48 h) : il n'est pas encore visible. Nous vous écrivons si quelque chose doit être corrigé."
+        : d.pourvue ? "Vous avez retiré votre avis du site : il n'est plus affiché."
+        : close ? 'Clos depuis le ' + fin + " : il n'est plus affiché."
+        : "Votre avis est dans l'onglet Public jusqu'au " + fin + ". Les entreprises répondent sur votre plateforme, par le lien officiel.")
+      : d.statut !== 'validee' ? 'Votre demande a été retirée du site : elle n\'est plus visible. Nous vous écrivons si quelque chose doit être corrigé.'
       : d.pourvue ? "Vous avez indiqué que votre demande est pourvue : elle n'est plus affichée et ne reçoit plus de réponses."
       : n ? (n > 1 ? n + ' entreprises ont répondu : nous vous avons transmis leurs' : 'Une entreprise a répondu : nous vous avons transmis ses') + ' coordonnées. Les messages des entreprises arrivent dans « Mes discussions », plus haut sur cette page : vous pouvez leur répondre.'
       : close ? 'Close depuis le ' + fin + " : elle ne reçoit plus de réponses."
@@ -494,7 +501,8 @@
           var b = document.createElement('button');
           b.type = 'button';
           b.className = 'bouton-sortir';
-          b.textContent = d.pourvue ? 'Rouvrir ma demande' : 'Ma demande est pourvue';
+          b.textContent = d.type === 'public' ? (d.pourvue ? 'Remettre mon avis en ligne' : 'Retirer mon avis du site')
+            : d.pourvue ? 'Rouvrir ma demande' : 'Ma demande est pourvue';
           var err = document.createElement('p');
           err.className = 'erreur';
           err.hidden = true;

@@ -3,6 +3,7 @@ rules_version = '2';
 // ou Entreprise vérifiés (onglet Privé – sociétés seulement).
 // demandes/{id} : la demande, publiée dès sa création (statut « validee », lisible par tous) ; jamais de coordonnées dedans
 // (uid = compte auteur). L'admin peut la retirer (« en_attente » : seuls lui et l'auteur la voient encore, « Mes demandes »).
+// Avis d'acheteurs publics (type « public », lot 19) : même collection, mais créés « en_attente », publiés par l'admin.
 // demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
 // demandes/{id}/photos/{1,2,3} : photos de la demande (JPEG en octets), lisibles comme la demande.
 // demandes/{id}/interets/{uid} : messages « Je suis intéressé » des comptes Entreprise vérifiés (un par entreprise, 5 au plus),
@@ -81,6 +82,25 @@ service cloud.firestore {
         && d.cree == request.time;
     }
 
+    // avis d'un acheteur public (mairie, communauté de communes…) : invisible jusqu'à la validation par l'admin, puis dans l'onglet
+    // Public ; lien obligatoire vers l'avis ou le dossier officiel (les entreprises répondent là-bas, jamais sur le site)
+    function avisPublicValide(d) {
+      return d.keys().hasOnly(['type', 'metier', 'titre', 'acheteur', 'lien', 'commune', 'departement', 'budget', 'delai', 'statut', 'cree', 'uid'])
+        && d.keys().hasAll(['type', 'metier', 'titre', 'acheteur', 'lien', 'commune', 'departement', 'delai', 'statut', 'cree', 'uid'])
+        && d.uid == request.auth.uid
+        && d.type == 'public'
+        && d.metier in metiersConnus()
+        && texte(d.titre, 5, 200)
+        && texte(d.acheteur, 2, 120)
+        && texte(d.lien, 12, 500) && d.lien.matches('https://[^ <>"]+')
+        && texte(d.commune, 2, 60)
+        && d.departement in ['2A', '2B']
+        && (!('budget' in d) || (d.budget is int && d.budget >= 0 && d.budget <= 500000000))
+        && d.delai is timestamp && d.delai > request.time && d.delai < request.time + duration.value(366, 'd')
+        && d.statut == 'en_attente'
+        && d.cree == request.time;
+    }
+
     // nom + téléphone et/ou e-mail + consentement, communs au demandeur et à l'artisan intéressé
     function coordonneesValides(c) {
       return texte(c.nom, 2, 80)
@@ -119,18 +139,20 @@ service cloud.firestore {
       return d.get('nbInterets', 0);
     }
 
-    // ouverte aux réponses : validée, pas close, pas marquée pourvue par son auteur, moins de 5 entreprises
+    // ouverte aux réponses : demande validée (pas un avis public : on y répond sur sa plateforme), pas close, pas marquée pourvue par son auteur, moins de 5 entreprises
     function ouverte(d) {
-      return d.statut == 'validee' && d.delai > request.time && d.get('pourvue', false) == false && nbInterets(d) < 5;
+      return d.statut == 'validee' && d.type != 'public' && d.delai > request.time && d.get('pourvue', false) == false && nbInterets(d) < 5;
     }
 
     match /demandes/{id} {
       allow get, list: if resource.data.statut == 'validee' || estAdmin()
         || (request.auth != null && resource.data.uid == request.auth.uid);
-      // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), publiée tout de suite
-      allow create: if (compteVerifie('particulier') || (compteVerifie('entreprise') && request.resource.data.type == 'prive'))
-        && demandeValide(request.resource.data)
-        && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
+      // la demande et ses coordonnées arrivent ensemble (une seule écriture groupée), publiée tout de suite ;
+      // avis public : depuis tout compte vérifié (la mairie n'a pas de type de compte à elle), en attente de l'admin
+      allow create: if existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact) && (
+        ((compteVerifie('particulier') || (compteVerifie('entreprise') && request.resource.data.type == 'prive'))
+          && demandeValide(request.resource.data))
+        || ((compteVerifie('particulier') || compteVerifie('entreprise')) && avisPublicValide(request.resource.data)));
       // admin : statut (retirer « en_attente » ou republier « validee »), reponses (nombre de réponses transmises au demandeur, étape « Réponses reçues » de Mes demandes),
       // nbInterets (recalculé quand il supprime un message)
       allow update: if (estAdmin()
@@ -156,7 +178,8 @@ service cloud.firestore {
         allow create: if doc == 'contact'
           && contactValide(request.resource.data)
           && !exists(/databases/$(database)/documents/demandes/$(id))
-          && getAfter(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee';
+          && (getAfter(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee'
+            || getAfter(/databases/$(database)/documents/demandes/$(id)).data.type == 'public');
       }
 
       // Photos (1 à 3) : JPEG de 300 Ko au plus réduits dans le navigateur, en octets (pas de Cloud Storage, payant).

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """E-mails automatiques d'Appels d'offres Corse (option B de ETUDE-EMAILS.md), lancé toutes les 30 min par
 .github/workflows/emails.yml :
-  1. au demandeur, quand sa demande est publiée (statut « validee ») ;
+  1. au demandeur, quand sa demande est publiée (statut « validee » ; avis d'acheteur public : quand l'admin le valide) ;
   2. au demandeur, quand l'admin a noté des réponses transmises (champ « reponses ») ;
   3. aux comptes Entreprise qui ont coché les alertes (users/{uid}.alertes == true), pour une demande publiée
      de leur métier et de leur département, encore ouverte.
@@ -68,7 +68,17 @@ def message(cle, d, abonne, nom, site):
     cite = f"« {titre} »"  # espaces insécables : les guillemets restent collés au titre
     fin = date_fr(d["delai"])
     stop = None  # lien de désinscription (alertes seulement)
-    if cle.startswith("validee:"):
+    pub = d.get("type") == "public"  # avis d'acheteur public (lot 19) : on y répond sur sa plateforme, par le lien officiel
+    if cle.startswith("validee:") and pub:
+        sujet = f"Votre avis est publié : {titre}"
+        suite = (f"Il reste affiché jusqu'au {fin}. Les entreprises de ce métier en Corse reçoivent une alerte ; "
+                 "elles répondent sur votre plateforme, par le lien officiel."
+                 if d["delai"] > datetime.now(timezone.utc)
+                 else f"Sa date limite, le {fin}, est passée : il n'est plus affiché.")
+        lignes = [f"Bonjour {nom},", f"Votre avis {cite}, à {lieu}, est publié dans l'onglet Public d'Appels d'offres Corse.", suite,
+                  ("Suivre mon avis", f"{site}compte.html#mes-demandes")]
+        pourquoi = "Vous recevez cet e-mail parce que vous avez publié cet avis sur Appels d'offres Corse."
+    elif cle.startswith("validee:"):
         sujet = f"Votre demande est publiée : {titre}"
         suite = (f"Les entreprises peuvent y répondre jusqu'au {fin}. Leurs messages arriveront dans « Mes discussions », sur le site,"
                  " et nous vous transmettons leurs coordonnées dès qu'elles répondent."
@@ -87,6 +97,16 @@ def message(cle, d, abonne, nom, site):
                   f"{'leur' if n > 1 else 'lui'} répondre.",
                   ("Lire leurs messages" if n > 1 else "Lire son message", f"{site}compte.html#discussions")]
         pourquoi = "Vous recevez cet e-mail parce que vous avez publié cette demande sur Appels d'offres Corse."
+    elif pub:
+        metier = METIERS.get(d["metier"], (d["metier"],))[0]
+        sujet = f"Nouvel appel d'offres public ({metier}) : {titre}"
+        budget = f" Montant estimé : {d['budget']:,} € HT.".replace(",", " ") if d.get("budget") else ""
+        acheteur = d["acheteur"].replace("\n", " ").replace("\r", " ")
+        lignes = [f"Bonjour {nom},", f"{acheteur} publie un marché qui correspond à vos métiers : {cite}, à {lieu}.{budget}",
+                  f"Réponses jusqu'au {fin}, sur la plateforme de l'acheteur.",
+                  ("Voir l'avis officiel", d["lien"])]
+        pourquoi = "Vous recevez cette alerte parce que vous l'avez demandée dans votre compte Entreprise."
+        stop = f"{site}compte.html?alertes=non#alertes"
     else:
         metier = METIERS.get(d["metier"], (d["metier"],))[0]
         sujet = f"Nouvelle demande ({metier}) : {titre}"

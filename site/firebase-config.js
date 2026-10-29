@@ -181,6 +181,29 @@ window.AOC_FB = {
     return window.AOC_FB.ouvrir(true).then(function (f) { return f.au.signOut(f.auth); })
       .then(function () { location.href = 'index.html?deconnecte'; });
   },
+  // avis d'acheteur (lot 19) déjà au BOAMP. a = l'avis d'acheteur (Firestore : acheteur, titre, delai) ; b = un avis de data.json
+  // (acheteur, objet, date_limite), lu tel quel par l'accueil et par l'admin. Même jour limite (à Paris),
+  // même acheteur (ses mots se retrouvent tous dans l'autre) et objets proches, sans compter les mots de l'acheteur
+  // (2 mots en commun au moins, et la moitié des mots du plus court). Un même acheteur a souvent plusieurs marchés aux
+  // mots voisins (rapport 50) : la date limite les sépare.
+  // shortcut: rapprochement par les mots ; un doublon qui passe quand même, l'admin le retire à la main (« Retirer »)
+  doublon: function (a, b) {
+    function jour(x) { return new Date(x).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }); }
+    if (!a.delai || !b.date_limite || jour(a.delai.toDate()) !== jour(b.date_limite)) return false;
+    var VIDES = ['commune', 'mairie', 'ville', 'communaute', 'communes', 'des', 'les', 'pour', 'sur', 'dans', 'avec',
+      'travaux', 'marche', 'marches', 'prestations', 'fourniture', 'fournitures'];
+    function mots(s) {
+      return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[^a-z0-9]+/)
+        .filter(function (m) { return m.length > 2 && VIDES.indexOf(m) === -1; });
+    }
+    function inclus(x, y) { return x.length > 0 && x.every(function (m) { return y.indexOf(m) !== -1; }); }
+    var a1 = mots(a.acheteur), b1 = mots(b.acheteur);
+    if (!inclus(a1, b1) && !inclus(b1, a1)) return false;
+    var nom = function (m) { return a1.indexOf(m) === -1 && b1.indexOf(m) === -1; };
+    var a2 = mots(a.titre).filter(nom), b2 = mots(b.objet).filter(nom);
+    var communs = a2.filter(function (m, i) { return a2.indexOf(m) === i && b2.indexOf(m) !== -1; }).length;
+    return communs >= 2 && communs * 2 >= Math.min(a2.length, b2.length);
+  },
   // compte connecté et son profil (users/{uid}) : { f, user, profil } ; user et profil à null si personne n'est connecté
   moi: function () {
     return window.AOC_FB.ouvrir(true).then(function (f) {

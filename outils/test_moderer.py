@@ -87,10 +87,12 @@ assert M.valeur({"stringValue": "Bastia"}) == "Bastia" and M.valeur({"integerVal
 
 # un passage complet : seules les nouvelles sont vérifiées, chaque problème signalé une seule fois, avec le lien admin
 demandes = [dict(PROPRE, id="a"), dict(PROPRE, id="b", photos=1), dict(PROPRE, id="c", commune="Nice"),
-            dict(PROPRE, id="d", titre="Fuite 0612345678"), dict(PROPRE, id="v", titre="Déjà vue 0612345678")]
+            dict(PROPRE, id="d", titre="Fuite 0612345678"), dict(PROPRE, id="v", titre="Déjà vue 0612345678"),
+            # avis d'acheteur public (lot 19) : validé à la main dans l'admin, sans description ; jamais signalé
+            {"id": "p", "type": "public", "titre": "Voirie communale, tranche 2", "commune": "Corte", "departement": "2B"}]
 messages = []
 garder = M.moderer(demandes, {"v", "supprimee"}, False, lambda t: messages.append(t) or True)
-assert garder == {"a", "b", "c", "d", "v"}, garder
+assert garder == {"a", "b", "c", "d", "v", "p"}, garder
 assert messages == [f"Demande à vérifier : Remplacement d'un chauffe-eau électrique — photos à regarder — {M.ADMIN}#d-b",
                     f"Demande à vérifier : Remplacement d'un chauffe-eau électrique — commune inconnue en Corse — {M.ADMIN}#d-c",
                     f"Demande à vérifier : Fuite [masqué] — numéro de téléphone — {M.ADMIN}#d-d"], messages
@@ -99,7 +101,7 @@ assert M.moderer(demandes, garder, False, lambda t: messages.append(t) or True) 
 # message pas parti : la demande sera revue au passage suivant
 assert M.moderer(demandes[1:2], set(), False, lambda t: False) == set()
 # essai : rien noté, rien envoyé
-assert M.moderer(demandes, set(), True, lambda t: messages.append(t) or True) == {"a"} and not messages
+assert M.moderer(demandes, set(), True, lambda t: messages.append(t) or True) == {"a", "p"} and not messages
 # messages des discussions (lot 18.6) : pas les coordonnées (normales en privé), mais insultes, pub, répétitions, majuscules
 assert M.verifier_message("Je peux passer mardi, appelez-moi au 06 12 34 56 78.") == []
 assert M.verifier_message("Espèce de connard") == ["mot grossier"]

@@ -46,6 +46,14 @@ d4 = next(d for d in demandes if d["id"] == "d4")
 assert "est passée" in E.message("validee:d4", d4, None, "Paul", "https://s/")[1]
 assert "peuvent y répondre" in texte
 assert "Mes discussions" in texte
+# avis d'acheteur public (lot 19) : e-mail « avis publié », alerte avec le lien officiel (échappé), pas de « Mes discussions »
+pub = dict(d2, id="p9", type="public", reponses=0, acheteur="Commune <de> Corte", lien="https://exemple.invalid/avis?a=1&b=2", budget=250000)
+assert [c for c, _, _ in E.a_envoyer([pub], abonnes, set(), maintenant)] == ["validee:p9", "alerte:p9:e3"]
+sujet, texte_pub, _ = E.message("validee:p9", pub, None, "Service des marchés", "https://s/")
+assert sujet.startswith("Votre avis est publié") and "onglet Public" in texte_pub and "Mes discussions" not in texte_pub
+sujet, texte_pub, page_pub = E.message("alerte:p9:e3", pub, abonnes[0], "Élec", "https://s/")
+assert sujet.startswith("Nouvel appel d'offres public") and "250 000 € HT" in texte_pub and "alertes=non" in texte_pub
+assert 'href="https://exemple.invalid/avis?a=1&amp;b=2"' in page_pub and "Commune &lt;de&gt; Corte" in page_pub
 # adresse du demandeur : celle du compte vérifié, pas l'e-mail tapé dans la demande
 assert source.contact(d1) == ("jeanne.compte@exemple.invalid", "Jeanne Exemple")
 

@@ -633,6 +633,65 @@ def main():
     for chemin in ("ph1/photos/1", "ph1/prive/contact", "ph1"):
         appel(FS + f"/demandes/{chemin}", jeton="owner", methode="DELETE")
 
+    # avis d'acheteur public (lot 19) : tout compte vérifié, créé en attente avec le contact du service marchés, lien https obligatoire ;
+    # invisible jusqu'à la validation par l'admin, puis public ; jamais de « Je suis intéressé » (on répond sur sa plateforme)
+    AVIS_PUBLIC = {"type": "public", "metier": "voirie-vrd", "titre": "Réfection de la voirie communale, tranche 2",
+                   "acheteur": "Commune de Corte", "lien": "https://www.marches-publics.info/avis/123", "commune": "Corte",
+                   "departement": "2B", "budget": 250000, "delai": dans(30), "statut": "en_attente", "cree": True, "uid": part_uid}
+    MARCHES = {"nom": "Service des marchés", "email": "marches@mairie.test", "consentement": True, "cree": True}
+
+    def avis_public(i, champs=None, jeton=part_jeton, avec_contact=True, enlever=None):
+        a = {**AVIS_PUBLIC, **(champs or {})}
+        w = [ecriture(f"demandes/{i}", sans(a, enlever) if enlever else a)]
+        if avec_contact:
+            w.append(ecriture(f"demandes/{i}/prive/contact", MARCHES))
+        return commit(w, jeton)
+
+    assert avis_public("pub1") == 200
+    assert avis_public("pub2", {"uid": ent_uid}, jeton=ent_jeton) == 200, "avis public depuis un compte Entreprise"
+    assert avis_public("pub3", enlever="budget") == 200, "montant facultatif"
+    refus_public = {
+        "sans connexion": dict(jeton=None),
+        "compte sans profil": dict(jeton=intrus_jeton, champs={"uid": intrus_uid}),
+        "e-mail pas vérifié": dict(jeton=ent_nv_jeton, champs={"uid": ent_nv_uid}),
+        "uid d'un autre": dict(champs={"uid": ent_uid}),
+        "sans contact": dict(avec_contact=False),
+        "publié sans validation": dict(champs={"statut": "validee"}),
+        "sans lien": dict(enlever="lien"),
+        "lien http": dict(champs={"lien": "http://www.exemple.fr/avis"}),
+        "lien javascript": dict(champs={"lien": "javascript:alert(1)//https://x.fr"}),
+        "lien avec espace": dict(champs={"lien": "https://www.exemple.fr/a b"}),
+        "lien trop long": dict(champs={"lien": "https://www.exemple.fr/" + "a" * 500}),
+        "sans acheteur": dict(enlever="acheteur"),
+        "acheteur trop long": dict(champs={"acheteur": "a" * 121}),
+        "objet trop long": dict(champs={"titre": "t" * 201}),
+        "description en trop": dict(champs={"description": "Texte libre qui n'a pas sa place ici."}),
+        "photos": dict(champs={"photos": 1}),
+        "métier inconnu": dict(champs={"metier": "astrologie"}),
+        "département": dict(champs={"departement": "13"}),
+        "montant texte": dict(champs={"budget": "beaucoup"}),
+        "délai passé": dict(champs={"delai": dans(-1)}),
+        "délai trop loin": dict(champs={"delai": dans(400)}),
+    }
+    for nom, k in refus_public.items():
+        assert avis_public("refus-pub", **k) == 403, f"avis public : {nom}"
+    # en attente : seuls l'auteur et l'admin le voient ; l'auteur ne le publie pas lui-même
+    for jeton in (None, ent_jeton, intrus_jeton):
+        assert appel(FS + "/demandes/pub1", jeton=jeton)[0] == 403, "avis public en attente visible"
+    assert appel(FS + "/demandes/pub1", jeton=part_jeton)[0] == 200
+    code, res = appel(FS + ":runQuery", requete("statut", "validee"))
+    assert code == 200 and "pub1" not in ids(res)
+    assert maj("demandes/pub1", part_jeton, {"statut": "validee"}) == 403, "avis publié par son auteur"
+    # validé par l'admin : public, le contact du service marchés reste privé
+    assert maj("demandes/pub1", admin_jeton, {"statut": "validee"}) == 200
+    assert appel(FS + "/demandes/pub1")[0] == 200
+    assert appel(FS + "/demandes/pub1/prive/contact")[0] == 403
+    assert appel(FS + "/demandes/pub1/prive/contact", jeton=admin_jeton)[0] == 200
+    assert interet({**INTERET, "uid": ent2_uid}, d="pub1", jeton=ent2_jeton) == 403, "« Je suis intéressé » sur un avis public"
+    for i in ("pub1", "pub2", "pub3"):
+        appel(FS + f"/demandes/{i}/prive/contact", jeton="owner", methode="DELETE")
+        appel(FS + f"/demandes/{i}", jeton="owner", methode="DELETE")
+
     print(f"OK : règles Firestore (profils : {len(refus_profil) + 16} refus de création, lecture et modification, "
           f"décennale : {len(refus_dec) + 3} refus ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
@@ -640,7 +699,8 @@ def main():
           f"partenaires : {len(refus_partenaire) + 17} refus, lus par l'admin seulement ; "
           f"fiches : {len(refus_fiche) + 20} refus, publiques après validation seulement, jamais listées ; "
           f"photos : {len(refus_photos) + 7} refus, cachées quand la demande est retirée ; "
-          f"discussions : {len(refus_ouverture) + len(refus_message) + 21} refus, lues par les 2 participants et l'admin ; jetons : 7 refus)")
+          f"discussions : {len(refus_ouverture) + len(refus_message) + 21} refus, lues par les 2 participants et l'admin ; jetons : 7 refus ; "
+          f"avis publics : {len(refus_public) + 5} refus, invisibles avant validation par l'admin)")
 
     for _, u in autres[:4]:
         appel(FS + f"/demandes/cap/interets/{u}", jeton="owner", methode="DELETE")

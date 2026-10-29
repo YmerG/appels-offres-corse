@@ -81,7 +81,7 @@
     agenda.setAttribute('aria-label', 'Ajouter la date limite à mon agenda : ' + titre);
     p.insertBefore(agenda, p.firstChild);
     p.insertBefore(suivre, p.firstChild);
-    if (c.dataset.source !== 'public') return;
+    if (c.dataset.source !== 'public' || c.classList.contains('demande')) return; // avis d'acheteur (lot 19) : pas de n° BOAMP
     // groupement : l'admin met en relation les entreprises qui cherchent un partenaire sur le même avis (partenaire.html)
     var partenaire = document.createElement('a');
     partenaire.className = 'action partenaire'; partenaire.textContent = 'Partenaire';

@@ -10,6 +10,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var f;
   var profils = {}; // users/{uid}, pour la décennale des entreprises qui répondent
+  var boamp = []; // avis du BOAMP (data.json), pour repérer un avis d'acheteur déjà publié là-bas
 
   function el(tag, cls, texte) {
     var e = document.createElement(tag);
@@ -71,17 +72,39 @@
 
   function carte(l, auteur) {
     var ref = l.ref, d = l.d, c = l.c;
+    var pub = d.type === 'public'; // avis d'acheteur public (lot 19) : en attente jusqu'à « Valider et publier »
     var a = el('article', 'avis avis-admin');
     a.id = 'd-' + ref.id; // admin.html#d-<id> : lien envoyé par outils/moderer.py
     var corps = el('div', 'corps');
     var haut = el('p', 'haut');
     haut.append(el('span', 'metier autres', METIERS[d.metier] || d.metier), el('span', 'dep', d.departement),
-      el('span', 'dep', d.type === 'particulier' ? 'Particulier' : 'Société'),
+      el('span', 'dep', d.type === 'particulier' ? 'Particulier' : pub ? 'Acheteur public' : 'Société'),
       el('span', 'dep', !auteur ? 'Compte supprimé' : auteur.type === 'entreprise' ? 'Compte Entreprise' : 'Compte Particulier'));
     if (echue(d)) haut.append(el('span', 'dep echue', 'Échue : à supprimer'));
     if (d.pourvue) haut.append(el('span', 'dep', 'Pourvue (par le demandeur)'));
     if ((d.nbInterets || 0) >= 5) haut.append(el('span', 'dep', 'Complète : 5 entreprises'));
-    corps.append(haut, el('h3', '', d.titre), el('p', 'description description-entiere', d.description));
+    corps.append(haut, el('h3', '', d.titre));
+    if (!pub) corps.append(el('p', 'description description-entiere', d.description));
+    if (pub) {
+      // à vérifier avant de publier : le lien mène bien à cet avis, sur la plateforme de l'acheteur ou un PDF officiel
+      var officiel = el('a', '', d.lien);
+      officiel.href = d.lien;
+      officiel.target = '_blank';
+      officiel.rel = 'noopener noreferrer';
+      var lp = el('p', 'aide-bloc', 'Lien officiel à vérifier : ');
+      lp.append(officiel);
+      corps.append(el('p', 'acheteur', d.acheteur), lp);
+      // déjà au BOAMP : l'accueil le cache tout seul ; s'il n'est pas encore publié, inutile de le valider
+      boamp.filter(function (b) { return AOC_FB.doublon(d, b); }).forEach(function (b) {
+        var vu = el('p', 'aide-bloc doublon-boamp', 'Peut-être déjà au BOAMP (avis ' + b.id + ', ' + b.acheteur + ') : ');
+        var lb = el('a', '', b.objet);
+        lb.href = b.lien;
+        lb.target = '_blank';
+        lb.rel = 'noopener';
+        vu.append(lb, ". Si c'est le même, il est caché de l'accueil : inutile de le publier.");
+        corps.append(vu);
+      });
+    }
     // photos : publiques une fois la demande validée, à regarder avant (visages, plaques, adresses)
     if (l.photos.length) {
       var galerie = el('div', 'galerie galerie-admin');
@@ -100,7 +123,7 @@
       corps.append(galerie);
     }
     var dl = el('dl', 'infos');
-    [['Lieu', d.commune], ['Budget', d.budget ? d.budget.toLocaleString('fr-FR') + ' €' : '–'],
+    [['Lieu', d.commune], [pub ? 'Montant estimé' : 'Budget', d.budget ? d.budget.toLocaleString('fr-FR') + ' €' : '–'],
       ['Réponses avant le', date(d.delai)], ['Reçue le', date(d.cree)]].forEach(function (kv) {
       var div = el('div');
       div.append(el('dt', '', kv[0]), el('dd', '', kv[1]));
@@ -108,7 +131,7 @@
     });
     corps.append(dl);
     var co = el('div', 'contact-prive');
-    co.append(el('p', 'titre-outil', 'Coordonnées (privées)'), el('p', '', c ? c.nom : '(introuvables)'));
+    co.append(el('p', 'titre-outil', pub ? 'Contact du service marchés (privé)' : 'Coordonnées (privées)'), el('p', '', c ? c.nom : '(introuvables)'));
     if (c) lien(co, c);
     if (auteur && auteur.type === 'entreprise') {
       var societe = el('p', '', 'Compte : ' + auteur.nom + ' · ');
@@ -116,7 +139,7 @@
       co.append(societe);
     }
     corps.append(co);
-    if (d.statut === 'validee') {
+    if (d.statut === 'validee' && !pub) {
       var it = el('div', 'interets');
       it.append(el('p', 'titre-outil', l.interets.length ? 'Artisans intéressés (' + l.interets.length + ') : à transmettre au demandeur'
         : 'Aucun artisan intéressé pour le moment'));
@@ -164,7 +187,7 @@
     var actions = el('p', 'actions-admin');
     // Retirer : cachée du site (« en_attente »), gardée dans « Retirées, pas visibles » ; Republier : de nouveau en ligne
     var publiee = d.statut === 'validee';
-    var bascule = el('button', publiee ? 'bouton-sortir' : 'bouton-publier', publiee ? 'Retirer' : 'Republier');
+    var bascule = el('button', publiee ? 'bouton-sortir' : 'bouton-publier', publiee ? 'Retirer' : pub ? 'Valider et publier' : 'Republier');
     bascule.type = 'button';
     bascule.dataset.bascule = '';
     // Retirer ferme aussi ses discussions ouvertes, dans la même écriture (sinon l'entreprise pourrait encore écrire) ; définitif.
@@ -335,8 +358,10 @@
     var lire = function (nom) {
       return f.fs.getDocs(f.fs.collection(f.db, nom)).catch(function (e) { console.warn(nom + ' illisibles :', e && e.code); return { docs: [] }; });
     };
-    return Promise.all([comptes(), lire('partenaires'), lire('fiches')]).then(function (r) {
+    var avisBoamp = fetch('data.json').then(function (rep) { return rep.json(); }).then(function (j) { return j.avis; }, function () { return []; });
+    return Promise.all([comptes(), lire('partenaires'), lire('fiches'), avisBoamp]).then(function (r) {
       auteurs = profils = r[0];
+      boamp = r[3];
       recherches = r[1].docs;
       fiches(r[2].docs);
       return f.fs.getDocs(f.fs.collection(f.db, 'demandes'));
@@ -351,7 +376,7 @@
       lignes.sort(function (x, y) { return ms(y) - ms(x); });
       var t = function (s) { return s.data().cree ? s.data().cree.toMillis() : 0; };
       lignes.forEach(function (l) { l.interets.sort(function (x, y) { return t(x) - t(y); }); });
-      ['attente', 'publiees'].forEach(function (id) { $(id).textContent = ''; });
+      ['a-valider', 'attente', 'publiees'].forEach(function (id) { $(id).textContent = ''; });
       // un lot Firestore = 500 suppressions au plus ; le reste partira au clic suivant
       var n = 0;
       echues = lignes.filter(function (l) { return echue(l.d); }).map(aSupprimer)
@@ -361,8 +386,10 @@
       $('purger').textContent = 'Supprimer les demandes et recherches échues (' + echues.length + ')';
       partenaires(recherches);
       lignes.forEach(function (l) {
-        $(l.d.statut === 'validee' ? 'publiees' : 'attente').append(carte(l, auteurs[l.d.uid]));
+        $(l.d.statut === 'validee' ? 'publiees' : l.d.type === 'public' ? 'a-valider' : 'attente').append(carte(l, auteurs[l.d.uid]));
       });
+      $('nb-a-valider').textContent = $('a-valider').children.length;
+      if (!$('a-valider').children.length) $('a-valider').append(el('p', 'vide', "Aucun avis d'acheteur à valider."));
       $('nb-attente').textContent = $('attente').children.length;
       $('nb-publiees').textContent = $('publiees').children.length;
       if (!$('attente').children.length) $('attente').append(el('p', 'vide', 'Aucune demande retirée.'));

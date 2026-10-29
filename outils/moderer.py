@@ -177,7 +177,7 @@ def publiees():
     q = {"structuredQuery": {
         "from": [{"collectionId": "demandes"}],
         "where": {"fieldFilter": {"field": {"fieldPath": "statut"}, "op": "EQUAL", "value": {"stringValue": "validee"}}},
-        "select": {"fields": [{"fieldPath": c} for c in ("titre", "description", "commune", "departement", "photos")]}}}
+        "select": {"fields": [{"fieldPath": c} for c in ("titre", "description", "commune", "departement", "photos", "type")]}}}
     req = urllib.request.Request(REQUETE, data=json.dumps(q).encode(), headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         res = json.loads(r.read())
@@ -197,6 +197,10 @@ def moderer(demandes, vues, essai, signaler):
         if d["id"] in vues:
             continue
         bilan["nouvelles"] += 1
+        if d.get("type") == "public":  # avis d'acheteur (lot 19) : relu dans admin.html avant d'être publié
+            print(f"{d['id']} : avis d'acheteur, déjà validé à la main")
+            garder.add(d["id"])
+            continue
         raisons = verifier(d)
         if not raisons:
             print(f"{d['id']} : rien à signaler")
