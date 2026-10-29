@@ -308,6 +308,11 @@ def resultat(donnees):
     () si aucun lot n'a de gagnant (infructueux, sans suite)."""
     nr = chercher(donnees, "NoticeResult")
     if not isinstance(nr, dict):
+        # ancien format : écarté si l'avis entier, ou chacun de ses lots, est déclaré infructueux ou sans suite (rapport 34)
+        t = chercher(donnees, "attributionMarche")
+        if isinstance(t, str) and all(re.search(r"(?i)déclarée? (infructueu|sans suite)", p)
+                                      for p in re.split(r"(?im)^lot n°", t) if p.strip()):
+            return ()
         return None
     prix = {texte(t, "ID"): nombre(texte(t, "LegalMonetaryTotal", "PayableAmount") or 0) or 0 for t in liste(sous(nr, "LotTender"))}
     gagnes, offres, somme = 0, [], 0

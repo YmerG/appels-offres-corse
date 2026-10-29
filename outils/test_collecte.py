@@ -135,6 +135,11 @@ assert resultat(avis_res({**deux_lots, "cbc:TotalAmount": {"#text": "1400"}})) =
 assert resultat(avis_res({**deux_lots, "efbc:OverallMaximumFrameworkContractsAmount": {"#text": "9000"}}))[:2] == (9000, "max")
 assert resultat(avis_res({"efac:LotResult": lot("clos-nw", "0")})) == ()  # infructueux : écarté
 assert resultat(FNS) is None
+ancien = lambda t: {"FNSimple": {"attribution": {"attributionMarche": t}}}
+assert resultat(ancien("Cet avis a été déclaré Sans Suite.\nRenseignements complémentaires : …")) == ()
+assert resultat(ancien("Procédure de passation déclarée infructueuse par décision du 20/04/2026.")) == ()
+assert resultat(ancien("Lot N° 01 - Aéroport\nCe lot a été déclaré Infructueux.\nLot N° 02 - Port\nCe lot a été déclaré Infructueux")) == ()
+assert resultat(ancien("Lot N° 1 - Lot n°1 - Vrd\nCe lot a été déclaré Infructueux.\nLot N° 2 - Peinture\nMontant Ht : 30 370,00 Euros")) is None
 brut = [{"idweb": "26-7", "objet": "TRAVAUX DE VOIRIE", "nomacheteur": "Commune de Corte", "code_departement": ["20B"], "dateparution": "2026-10-16",
          "famille_libelle": "Marchés européens", "type_marche": ["TRAVAUX"], "donnees": json.dumps(avis_res(deux_lots)), "titulaire": ["Jean Dupont"]},
         {"idweb": "26-8", "objet": "Sans suite", "nomacheteur": "X", "code_departement": ["20A"], "dateparution": "2026-10-20",

@@ -293,6 +293,11 @@
         });
       }
       var ent = profil.type === 'entreprise';
+      // bouton « Mes métiers » de l'accueil (app.js) : métiers et zone seulement, dans ce navigateur ; effacé à la déconnexion
+      try {
+        if (ent) localStorage.setItem('aoc-mes-metiers', JSON.stringify({ metiers: profil.metiers, zone: profil.zone }));
+        else localStorage.removeItem('aoc-mes-metiers');
+      } catch (e) { /* navigation privée : pas de raccourci */ }
       // publier : tous les comptes (entreprise : onglet Privé – sociétés) ; répondre, chercher un partenaire : comptes Entreprise
       var bonType = !pourEntreprise || ent;
       if (retour && u.emailVerified && bonType) return location.replace(retour);
@@ -534,7 +539,10 @@
         return lot.commit();
       })
       .then(function () { enCours = true; return f.au.deleteUser(u); })
-      .then(function () { montrer('supprime'); $('supprime').focus(); }, function (err) { enCours = false; dire('s-erreur', messageAuth(err)); });
+      .then(function () {
+        try { localStorage.removeItem('aoc-mes-metiers'); } catch (e) { /* rien de gardé */ }
+        montrer('supprime'); $('supprime').focus();
+      }, function (err) { enCours = false; dire('s-erreur', messageAuth(err)); });
   });
 
   AOC_FB.ouvrir(true).then(function (r) {

@@ -2,6 +2,7 @@
 (function () {
   // après « Se déconnecter » (index.html?deconnecte) : message, puis adresse nettoyée pour qu'un rechargement ne le remontre pas
   if (/[?&]deconnecte\b/.test(location.search)) {
+    try { localStorage.removeItem('aoc-mes-metiers'); } catch (e) { /* rien de gardé */ }
     document.getElementById('deconnecte').textContent = 'Déconnexion réussie. Pour publier ou répondre, reconnectez-vous depuis « Compte ».';
     history.replaceState(null, '', location.pathname + location.hash);
   }
@@ -12,11 +13,25 @@
   var vide = document.getElementById('vide');
   var bandeau = document.getElementById('bandeau');
   var publier = document.getElementById('publier');
+  // « Mes métiers » : métiers et zone d'une entreprise, gardés par compte.js quand elle ouvre son compte sur ce navigateur
+  var mes = null;
+  try { mes = JSON.parse(localStorage.getItem('aoc-mes-metiers')); } catch (e) { /* navigation privée */ }
+  var boutonMes = document.querySelector('.filtre[data-mes]'); // absent : ancienne page encore en cache
+  if (boutonMes && mes && mes.metiers && mes.metiers.length && mes.zone) {
+    boutonMes.hidden = false;
+    if (mes.zone.length === 1) boutonMes.firstChild.textContent = 'Mes métiers en ' + mes.zone[0] + ' ';
+  } else if (boutonMes) {
+    boutonMes.remove(); // sans profil, #mes=1 dans l'adresse est ignoré
+    boutonMes = null;
+  }
+  function dansMes(c) {
+    return mes.zone.indexOf(c.dataset.dep) !== -1 && c._metiers.some(function (m) { return mes.metiers.indexOf(m) !== -1; });
+  }
   var filtres = Array.prototype.slice.call(document.querySelectorAll('.filtre'));
   var taille = document.getElementById('taille'); // absent : ancienne page encore en cache
-  var CLES = ['onglet', 'metier', 'dep', 'suivi', 'taille'];
-  var DEFAUT = { onglet: 'public', metier: '', dep: '', suivi: '', taille: '' };
-  var choix = { onglet: 'public', metier: '', dep: '', suivi: '', taille: '' };
+  var CLES = ['onglet', 'metier', 'dep', 'suivi', 'taille', 'mes'];
+  var DEFAUT = { onglet: 'public', metier: '', dep: '', suivi: '', taille: '', mes: '' };
+  var choix = { onglet: 'public', metier: '', dep: '', suivi: '', taille: '', mes: '' };
   var JOUR = 864e5;
   var maintenant = new Date();
   var aujourdhui = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
@@ -120,6 +135,7 @@
     var nbSuivis = cartes.filter(function (c) { return suivis.indexOf(c.dataset.id) !== -1; }).length;
     boutonSuivis.querySelector('.nb').textContent = nbSuivis;
     boutonSuivis.hidden = !nbSuivis && !choix.suivi;
+    if (boutonMes) boutonMes.querySelector('.nb').textContent = ici.filter(dansMes).length;
     filtres.forEach(function (b) {
       if (!('metier' in b.dataset)) return;
       var n = b.dataset.metier ? ici.filter(function (c) { return c._metiers.indexOf(b.dataset.metier) !== -1; }).length : ici.length;
@@ -136,11 +152,14 @@
     bandeau.hidden = choix.onglet === 'public' || !!choix.suivi;
     document.getElementById('autres-sources').hidden = choix.onglet !== 'public' || !!choix.suivi;
     filtres.forEach(function (b) { if (b.dataset.onglet) b.setAttribute('aria-pressed', String(!choix.suivi && b.dataset.onglet === choix.onglet)); });
+    // avec « Mes métiers », ni « Tous les métiers » ni « Tous » (départements) ne sont marqués
+    filtres.forEach(function (b) { var k = cle(b); if (k === 'metier' || k === 'dep') b.setAttribute('aria-pressed', String(!choix.mes && b.dataset[k] === choix[k])); });
     publier.href = 'publier.html?type=' + choix.onglet;
     cartes.forEach(function (c) {
       // « Mes avis suivis » montre les avis suivis de tous les onglets
       var ok = (choix.suivi ? suivis.indexOf(c.dataset.id) !== -1 : c.dataset.source === choix.onglet) &&
         (!choix.metier || c._metiers.indexOf(choix.metier) !== -1) &&
+        (!choix.mes || dansMes(c)) &&
         (!choix.dep || c.dataset.dep === choix.dep) &&
         // taille : avis du BOAMP seulement (les demandes privées n'en ont pas)
         (!choix.taille || c.dataset.source !== 'public' || c.dataset.taille === choix.taille) &&
@@ -156,7 +175,7 @@
     if (taille) document.getElementById('bloc-taille').hidden = choix.onglet !== 'public' && !choix.suivi;
     var filtre = mots.length || choix.metier || choix.dep || (choix.taille && (choix.onglet === 'public' || choix.suivi));
     var ex = cartes.filter(function (c) { return !c.hidden && c.querySelector('.exemple'); }).length;
-    etat.textContent = choix.suivi ? n + (n > 1 ? ' avis suivis' : ' avis suivi') : n + ' avis ' + (filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours'
+    etat.textContent = choix.suivi ? n + (n > 1 ? ' avis suivis' : ' avis suivi') : n + ' avis ' + (choix.mes ? 'dans vos métiers' : filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours'
       : ex === n ? "d'exemple" : 'en cours' + (ex ? ', dont ' + ex + " d'exemple" : ''));
     vide.hidden = n > 0;
     // l'adresse garde le choix : un artisan peut l'enregistrer (#onglet=prive&metier=electricite&dep=2B)
@@ -184,8 +203,11 @@
   filtres.forEach(function (b) {
     b.addEventListener('click', function () {
       var k = cle(b);
-      choisir(k, k === 'suivi' && choix.suivi ? '' : b.dataset[k]);
+      choisir(k, (k === 'suivi' || k === 'mes') && choix[k] ? '' : b.dataset[k]);
       if (k === 'onglet') choisir('suivi', '');
+      // « Mes métiers » remplace le choix du métier et du département (et inversement), et ne se combine pas avec les suivis
+      if (k === 'mes' && choix.mes) { choisir('metier', ''); choisir('dep', ''); choisir('suivi', ''); }
+      if (k === 'metier' || k === 'dep' || (k === 'suivi' && choix.suivi)) choisir('mes', '');
       appliquer();
     });
   });
@@ -221,6 +243,7 @@
     choisir('dep', '');
     choisir('suivi', '');
     choisir('taille', '');
+    choisir('mes', '');
     appliquer();
     etat.focus();
   });

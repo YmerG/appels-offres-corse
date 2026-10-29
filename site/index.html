@@ -37,12 +37,13 @@
     <button type="button" class="filtre" data-onglet="prive" aria-pressed="false">Privé – sociétés <span class="nb"></span></button>
     <button type="button" class="filtre" data-onglet="particulier" aria-pressed="false">Particuliers <span class="nb"></span></button>
   </nav>
+  <div class="cadre"><p class="info-sortie" id="deconnecte" role="status"></p></div>
 
   <main id="contenu" class="cadre grille">
     <aside class="panneau" aria-label="Rechercher et filtrer">
       <label class="titre-outil" for="q">Rechercher</label>
       <input id="q" type="search" placeholder="Toiture, Bastia, assurance…" autocomplete="off">
-      <p class="ligne-suivis"><button type="button" class="filtre suivis" data-suivi="1" aria-pressed="false" hidden>Mes avis suivis <span class="nb">0</span></button></p>
+      <p class="ligne-suivis"><button type="button" class="filtre mes" data-mes="1" aria-pressed="false" hidden>Mes métiers <span class="nb">0</span></button><button type="button" class="filtre suivis" data-suivi="1" aria-pressed="false" hidden>Mes avis suivis <span class="nb">0</span></button></p>
 
       <p class="titre-outil" id="t-metier">Métier</p>
       <div class="metiers" role="group" aria-labelledby="t-metier">
@@ -80,7 +81,7 @@
     </aside>
 
     <section class="liste" aria-labelledby="etat">
-      <p class="autres-sources" id="autres-sources"><strong>Les petits marchés ne sont pas tous ici.</strong> Sous 90&nbsp;000&nbsp;€, l'acheteur n'est pas obligé de publier au BOAMP. Beaucoup d'acheteurs corses publient sur <a href="https://www.marches-publics.info/" rel="noopener">marches-publics.info</a> ou <a href="https://www.achatspublicscorse.com/publisher_portail/public/inscription/inscriptionOrganisation.jsp" rel="noopener">achatspublicscorse.com</a> : créez aussi leur alerte gratuite.</p>
+      <details class="autres-sources" id="autres-sources"><summary><strong>Les petits marchés ne sont pas tous ici.</strong> Où les trouver&nbsp;?</summary><p>Sous 90&nbsp;000&nbsp;€, l'acheteur n'est pas obligé de publier au BOAMP. Beaucoup d'acheteurs corses publient sur <a href="https://www.marches-publics.info/" rel="noopener">marches-publics.info</a> ou <a href="https://www.achatspublicscorse.com/publisher_portail/public/inscription/inscriptionOrganisation.jsp" rel="noopener">achatspublicscorse.com</a> : créez aussi leur alerte gratuite.</p></details>
       <div class="bandeau-prive" id="bandeau" hidden>
         <p class="bandeau-exemple"><strong>Avis fictifs pour la démonstration.</strong> Les annonces marquées « Exemple » ne sont pas réelles. Les autres sont publiées par des sociétés ou des particuliers, après vérification.</p>
         <a class="bouton-publier" id="publier" href="publier.html">Publier une demande de travaux</a>
@@ -207,7 +208,7 @@
   <footer class="pied">
     <div class="cadre">
       <p class="source">Données BOAMP (licence ouverte)</p>
-      <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <time datetime="2026-10-29T03:11:36+00:00">29/10/2026 à 04 h 11</time>.</p>
+      <p>Avis issus du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <time datetime="2026-10-29T03:21:02+00:00">29/10/2026 à 04 h 21</time>.</p>
       <p>Seul l'avis officiel fait foi : vérifiez toujours la date limite et le dossier de consultation sur la plateforme de l'acheteur. Les petits marchés publiés seulement sur le site de l'acheteur, sans passer par le BOAMP, n'apparaissent pas ici.</p>
       <p>Dans les onglets « Privé – sociétés » et « Particuliers », les avis marqués « Exemple » sont fictifs. Les demandes publiées par les visiteurs y apparaissent après vérification, sans leurs coordonnées.</p>
       <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun cookie. <a href="comment-ca-marche.html">Comment ça marche</a> · <a href="resultats.html">Marchés attribués</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a>. Prototype, version de test.</p>

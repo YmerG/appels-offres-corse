@@ -128,6 +128,8 @@ html:not(.js) .onglets { display: none; }
 .bandeau-exemple { margin: 20px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--exemple-fond); border: 1px solid var(--exemple-filet); color: var(--texte); font-size: .9rem; }
 .bandeau-exemple strong { color: var(--exemple); }
 .autres-sources { margin: 20px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--tuile); border: 1px solid var(--filet); font-size: .9rem; overflow-wrap: anywhere; }
+.autres-sources summary { cursor: pointer; padding: 2px 0; }
+.autres-sources p { margin: 8px 0 0; }
 .exemple { font-size: .68rem; font-weight: 700; line-height: 1; padding: 5px 8px; border-radius: 99px; letter-spacing: .1em; text-transform: uppercase; color: var(--exemple); background: var(--exemple-fond); box-shadow: inset 0 0 0 1px var(--exemple-filet); }
 .avis:has(.exemple) { border-style: dashed; }
 .bandeau-prive { display: grid; gap: 12px; justify-items: start; margin-top: 20px; }
@@ -322,9 +324,8 @@ button.lien-compte { border: 0; cursor: pointer; }
 .places::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 8px 2px 0; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 .avis-admin .corps > .bouton-sortir { margin-top: 14px; }
 .avis-admin .corps > .erreur { margin-top: 10px; }
-.ligne-suivis { margin: 12px 0 0; }
-.ligne-suivis:has(> [hidden]) { display: none; }
-.filtre.suivis::before { content: "★"; color: var(--accent); }
+.ligne-suivis { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ligne-suivis:not(:has(> :not([hidden]))) { display: none; }.filtre.suivis::before { content: "★"; color: var(--accent); }
 .filtre.suivis[aria-pressed="true"]::before { color: currentColor; }
 /* Comment ça marche : étapes numérotées et questions fréquentes */
 .parcours { list-style: none; counter-reset: etape; padding: 0; margin: 18px 0 8px; display: grid; gap: 14px; }
