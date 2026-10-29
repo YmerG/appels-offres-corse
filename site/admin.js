@@ -47,6 +47,8 @@
       el('span', 'dep', d.type === 'particulier' ? 'Particulier' : 'Société'),
       el('span', 'dep', !auteur ? 'Compte supprimé' : auteur.type === 'entreprise' ? 'Compte Entreprise' : 'Compte Particulier'));
     if (echue(d)) haut.append(el('span', 'dep echue', 'Échue : à supprimer'));
+    if (d.pourvue) haut.append(el('span', 'dep', 'Pourvue (par le demandeur)'));
+    if ((d.nbInterets || 0) >= 5) haut.append(el('span', 'dep', 'Complète : 5 entreprises'));
     corps.append(haut, el('h3', '', d.titre), el('p', 'description description-entiere', d.description));
     var dl = el('dl', 'infos');
     [['Lieu', d.commune], ['Budget', d.budget ? d.budget.toLocaleString('fr-FR') + ' €' : '–'],
@@ -77,7 +79,16 @@
         bloc.append(el('p', 'description description-entiere', i.message));
         var sup = el('button', 'lien-bouton', 'Supprimer ce message');
         sup.type = 'button';
-        sup.onclick = function () { if (confirm('Supprimer définitivement ce message et ses coordonnées ?')) agir(f.fs.deleteDoc(s.ref)); };
+        // le compteur public (5 entreprises au plus) suit : une place se libère
+        sup.onclick = function () {
+          if (!confirm('Supprimer définitivement ce message et ses coordonnées ?')) return;
+          var lot = f.fs.writeBatch(f.db);
+          lot.delete(s.ref);
+          // -1 à partir de la valeur en base (pas de la liste affichée, qui peut dater) ; les anciens messages
+          // à identifiant au hasard n'ont jamais été comptés
+          if (s.id === i.uid) lot.update(ref, { nbInterets: f.fs.increment(-1) });
+          agir(lot.commit());
+        };
         bloc.append(sup);
         it.append(bloc);
       });

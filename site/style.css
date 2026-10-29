@@ -229,7 +229,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 #alertes .etat { margin: 0 0 14px; }
 #alertes .aide-bloc { margin-top: 10px; padding-left: 34px; }
 .supprimer-compte { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--filet); }
-.supprimer-compte summary { cursor: pointer; color: var(--urgent); font-weight: 600; padding: 6px 0; }
+.supprimer-compte summary { cursor: pointer; color: var(--urgent); font-weight: 600; padding: 10px 0; } /* 44 px de haut */
 .comptes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .comptes li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 12px 14px; background: var(--carte); border: 1px solid var(--filet); border-radius: 14px; overflow-wrap: anywhere; }
 .comptes .aide { margin-left: 0; }
@@ -295,6 +295,62 @@ button.lien-compte { border: 0; cursor: pointer; }
 .urgent .limite::before { color: var(--urgent); }
 .limite time { color: var(--texte); font-weight: 600; }
 .badge { font-size: .66rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #fff; background: var(--urgent); padding: 4px 8px; border-radius: 99px; margin-right: 4px; }
+/* Actions d'une carte : Suivre, Agenda, Dossier (au-dessus du lien qui couvre la carte) */
+.actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.action { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 14px; font: 600 .84rem/1.2 var(--sans); color: var(--texte); background: var(--carte); border: 1px solid var(--filet); border-radius: 99px; text-decoration: none; cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .25s var(--doux-mvt); }
+.action:hover { border-color: var(--accent); }
+.action:active { transform: scale(.97); }
+.action::before { content: ""; flex: none; width: 1.05em; height: 1.05em; background: currentColor; -webkit-mask: var(--i) center/contain no-repeat; mask: var(--i) center/contain no-repeat; }
+.suivre { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linejoin='round'%3E%3Cpath d='M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z'/%3E%3C/svg%3E"); }
+.suivre[aria-pressed="true"] { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000' stroke='%23000' stroke-width='1.7' stroke-linejoin='round'%3E%3Cpath d='M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z'/%3E%3C/svg%3E"); color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--carte)); }
+.suivre[aria-pressed="true"]::before { animation: pop .35s var(--doux-mvt); }
+.agenda { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Crect x='4' y='5.5' width='16' height='14.5' rx='2.5'/%3E%3Cpath d='M4 10h16M8.5 3.5v4M15.5 3.5v4'/%3E%3C/svg%3E"); }
+.dossier { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 3.5h7.5l4.5 4.5v12.5h-12zM14 3.5V8h4.5M9.5 12.5h6M9.5 16h6'/%3E%3C/svg%3E"); }
+.nouveau { font-size: .66rem; font-weight: 700; line-height: 1; letter-spacing: .1em; text-transform: uppercase; padding: 5px 8px; border-radius: 99px; color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+/* demande : places restantes (5 entreprises au plus) ; « Ma demande est pourvue » dans Mes demandes */
+.places { margin: 12px 0 0; font-size: .84rem; color: var(--doux); }
+.places::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 8px 2px 0; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.avis-admin .corps > .bouton-sortir { margin-top: 14px; }
+.avis-admin .corps > .erreur { margin-top: 10px; }
+.ligne-suivis { margin: 12px 0 0; }
+.ligne-suivis:has(> [hidden]) { display: none; }
+.filtre.suivis::before { content: "★"; color: var(--accent); }
+.filtre.suivis[aria-pressed="true"]::before { color: currentColor; }
+/* Comment ça marche : étapes numérotées et questions fréquentes */
+.parcours { list-style: none; counter-reset: etape; padding: 0; margin: 18px 0 8px; display: grid; gap: 14px; }
+.parcours li { counter-increment: etape; position: relative; margin: 0; padding: 16px 18px 16px 62px; background: var(--carte); border: 1px solid var(--filet); border-radius: 18px; box-shadow: var(--ombre); }
+.parcours li::before { content: counter(etape); position: absolute; left: 16px; top: 15px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font: 600 1rem/1 var(--serif); font-variant-numeric: lining-nums; color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.parcours li strong { display: block; margin-bottom: 2px; }
+.faq { border-bottom: 1px solid var(--filet); }
+.faq summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 8px 0; font-weight: 600; cursor: pointer; list-style: none; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; font: 400 1.4rem/1 var(--sans); color: var(--accent); transition: transform .3s var(--doux-mvt); }
+.faq[open] summary::after { transform: rotate(45deg); }
+.faq p { margin: 0 0 16px; color: var(--doux); }
+.lien-clair { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; color: var(--or); font-weight: 600; font-size: .92rem; text-underline-offset: 4px; }
+.lien-clair::after { content: "→"; margin-left: 6px; transition: transform .25s var(--doux-mvt); }
+.lien-clair:hover::after { transform: translateX(3px); }
+
+/* En-tête de la liste : nombre d'avis et bouton « Vue compacte » */
+.tete-liste { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 30px 0 14px; }
+.tete-liste .etat { margin: 0; }
+html:not(.js) .vue { display: none; }
+.vue { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M4 6h16M4 12h16M4 18h16'/%3E%3C/svg%3E"); }
+.vue[aria-pressed="true"] { color: #f4f1ea; background: var(--encre); border-color: var(--encre); }
+/* Vue compacte : l'essentiel de chaque avis, deux à trois cartes par écran de téléphone */
+.compacte .avis { grid-template-columns: 50px 1fr; gap: 12px; padding: 14px 16px; }
+.compacte .infos, .compacte .description { display: none; }
+.compacte .avis h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1.02rem; margin-bottom: 4px; }
+.compacte .acheteur { margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compacte .haut { margin-bottom: 6px; }
+.compacte .limite { padding-top: 8px; }
+.compacte .actions { margin-top: 10px; }
+.compacte .echeance { padding: 8px 0 7px; }
+.compacte .echeance .jour { font-size: 1.35rem; }
+.compacte .avis .interesse { margin-top: 10px; }
+/* téléphone, vue compacte : boutons réduits à leur icône (le texte reste lu par les lecteurs d’écran) */
+@media (max-width: 599px) { .compacte .action:not(.vue) { font-size: 0; gap: 0; width: 44px; padding: 0; justify-content: center; } .compacte .action:not(.vue)::before { width: 18px; height: 18px; } }
+@media (min-width: 900px) { .tete-liste { margin-top: 34px; } .compacte .avis { grid-template-columns: 64px 1fr; padding: 16px 22px; } .compacte .echeance .jour { font-size: 1.6rem; } }
 .vide { text-align: center; padding: 44px 18px; background: var(--carte); border: 1px dashed var(--filet); border-radius: 20px; color: var(--doux); }
 .vide button { font: inherit; font-weight: 600; color: var(--bouton-texte); background: var(--bouton); border: 0; border-radius: 99px; padding: 11px 20px; cursor: pointer; }
 
@@ -306,7 +362,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 .pied a:hover { color: var(--or); }
 
 @media (prefers-color-scheme: dark) {
-  .filtre[aria-pressed="true"], .segments .filtre[aria-pressed="true"] { background: var(--or); border-color: var(--or); color: var(--encre); }
+  .filtre[aria-pressed="true"], .segments .filtre[aria-pressed="true"], .vue[aria-pressed="true"] { background: var(--or); border-color: var(--or); color: var(--encre); }
   .filtre[aria-pressed="true"] .nb { color: rgba(14, 28, 40, .7); }
   .metier { color: color-mix(in srgb, var(--c) 45%, #fff); background: color-mix(in srgb, var(--c) 24%, transparent); }
   .rectif { color: #f0c36d; background: #3a2e14; }

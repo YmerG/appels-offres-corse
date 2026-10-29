@@ -182,6 +182,26 @@ def analyser(donnees):
     return list(dict.fromkeys(cpv_haut + cpv_lots)), montant, next((nom_lieu(l) for l in lieux if l and nom_lieu(l)), None)
 
 
+def dossier(donnees):
+    """Adresse du dossier de consultation (DCE) écrite dans l'avis, sinon celle de la plateforme de l'acheteur : (url, "dce" | "profil") ou None."""
+    dce, profil = [], []
+    for chemin, v in feuilles(donnees):
+        v = html.unescape(str(v).strip())  # « &amp;type=DCE » dans certains avis
+        if v.lower().startswith("www."):
+            v = "https://" + v
+        if not re.fullmatch(r"https?://[^\s\"'<>]+", v):
+            continue
+        est_dce = chemin[-1] == "URI" and "CallForTendersDocumentReference" in chemin or chemin[-1] in ("urlDocConsul", "urlDocument")
+        # une adresse sans chemin ni paramètre (https://www.marches-publics.gouv.fr) n'est que l'accueil de la plateforme
+        accueil = bool(re.fullmatch(r"https?://[^/?#]+/?", v))
+        if est_dce and not accueil:
+            dce.append(v)
+        elif est_dce or chemin[-1] in ("BuyerProfileURI", "urlProfilAch", "urlProfilAcheteur"):
+            profil.append((accueil, v))
+    # plateforme : une adresse précise avant un simple accueil (tri stable : sinon, l'ordre de l'avis)
+    return (dce[0], "dce") if dce else (sorted(profil, key=lambda p: p[0])[0][1], "profil") if profil else None
+
+
 def metiers_de(r, cpvs):
     texte = normal(" ".join(r.get("descripteur_libelle") or []))
     descr = [k for k, motif in DESCRIPTEURS if re.search(motif, texte)]
@@ -223,7 +243,8 @@ def avis_de(brut, maintenant):
         limite = date_limite(r)
         if r["idweb"] in remplaces or not limite or limite < maintenant:
             continue
-        cpvs, montant, lieu = analyser(json.loads(r.get("donnees") or "{}"))
+        donnees = json.loads(r.get("donnees") or "{}")
+        cpvs, montant, lieu = analyser(donnees)
         if lieu and normal(lieu) == normal(r.get("nomacheteur") or ""):
             lieu = None  # le « lieu » recopie parfois le nom de l'acheteur
         deps = [DEPARTEMENTS[c] for c in (r.get("code_departement") or []) if c in DEPARTEMENTS]
@@ -243,6 +264,7 @@ def avis_de(brut, maintenant):
             "procedure": r.get("famille_libelle") or "",
             "rectifie": r.get("etat") == "RECTIFICATIF",
             "lien": r.get("url_avis") or f"https://www.boamp.fr/pages/avis/?q=idweb:{r['idweb']}",
+            "dossier": dossier(donnees),
         }
     return sorted(gardes.values(), key=lambda a: a["date_limite"])
 
@@ -302,7 +324,15 @@ def carte(a):
     # les exemples n'ont pas d'avis officiel : titre sans lien ; cachés sans JS (ils ne se montrent que dans leur onglet)
     exemple = '<span class="exemple">Exemple</span>' if source != "public" else ""
     titre = f'<a href="{e(a["lien"])}" rel="noopener">{e(a["objet"])}</a>' if a["lien"] else e(a["objet"])
-    return (f'<article class="avis" data-source="{source}" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" '
+    # boutons Suivre et Agenda ajoutés par app.js (ils ne servent qu'avec JS) ; le lien du dossier marche sans
+    actions = ""
+    if a.get("dossier"):
+        url, genre = a["dossier"]
+        nom = "Dossier de consultation" if genre == "dce" else "Plateforme de l'acheteur"
+        actions = (f'<p class="actions"><a class="action dossier" href="{e(url)}" rel="noopener" target="_blank" '
+                   f'aria-label="{nom} (nouvel onglet) : {e(a["objet"])}">{nom}</a></p>')
+    ident = f' data-id="{e(a["id"])}"' if a.get("id") else ""
+    return (f'<article class="avis"{ident} data-source="{source}" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" '
             f'data-limite="{e(a["date_limite"])}" data-publie="{e(a["publie"] or "")}" data-montant="{round(a["montant"] or 0)}" style="--c:{METIERS[a["metiers"][0]][1]}"'
             f'{" hidden" if exemple else ""}>'
             f'<div class="echeance" aria-hidden="true"><span class="jour">{d.day}</span><span class="mois">{MOIS[d.month - 1]}</span>'
@@ -311,7 +341,7 @@ def carte(a):
             f'<h3>{titre}</h3>'
             f'<p class="acheteur">{e(a["acheteur"])}</p><dl class="infos">{dl}</dl>'
             f'<p class="limite"><span class="badge" hidden>Bientôt clos</span>Réponse avant le '
-            f'<time datetime="{e(a["date_limite"])}">{date_fr(a["date_limite"])}</time></p></div></article>')
+            f'<time datetime="{e(a["date_limite"])}">{date_fr(a["date_limite"])}</time></p>{actions}</div></article>')
 
 
 def main():

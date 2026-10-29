@@ -42,6 +42,8 @@
     texte.textContent = d.commune + ' (' + d.departement + ') · réponses avant le ' +
       limite.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) +
       (limite.getHours() ? ', ' + limite.getHours() + ' h' : '');
+    var nb = d.nbInterets || 0;
+    if (nb) texte.append(' · ' + nb + (nb > 1 ? ' entreprises ont' : ' entreprise a') + ' déjà répondu (5 au plus)');
     if (limite < new Date()) { texte.append(document.createElement('br'), 'Cette demande est close : elle ne reçoit plus de réponses.'); return; }
     var lien = document.createElement('a');
     lien.href = 'compte.html?retour=' + encodeURIComponent('interesse.html?d=' + id);
@@ -55,10 +57,16 @@
       lien.textContent = 'Renvoyer le lien';
       return texte.append(document.createElement('br'), "Vérifiez d'abord votre e-mail : cliquez sur le lien reçu à l'inscription. ", lien);
     }
-    form.nom.value = m.profil.nom;
-    form.telephone.value = m.profil.telephone || '';
-    form.email.value = m.user.email;
-    form.hidden = false;
+    // une seule réponse par entreprise : son message porte l'identifiant de son compte
+    return f.fs.getDoc(f.fs.doc(f.db, 'demandes', id, 'interets', m.user.uid)).then(function (deja) {
+      if (deja.exists()) return texte.append(document.createElement('br'), 'Vous avez déjà répondu à cette demande : nous transmettons votre message au demandeur.');
+      if (d.pourvue) return texte.append(document.createElement('br'), 'Le demandeur a trouvé son entreprise : cette demande ne reçoit plus de réponses.');
+      if (nb >= 5) return texte.append(document.createElement('br'), 'Cette demande a déjà reçu 5 réponses, le maximum : elle ne reçoit plus de réponses.');
+      form.nom.value = m.profil.nom;
+      form.telephone.value = m.profil.telephone || '';
+      form.email.value = m.user.email;
+      form.hidden = false;
+    });
   }).catch(function (e) {
     if (e && e.code === 'redirection') return;
     console.warn('Demande indisponible :', e && (e.message || e.code));
@@ -94,10 +102,14 @@
     var interet = { nom: v('nom'), message: v('message'), consentement: true, cree: f.fs.serverTimestamp(), uid: m.user.uid };
     if (v('telephone')) interet.telephone = v('telephone');
     if (v('email')) interet.email = v('email');
-    f.fs.addDoc(f.fs.collection(f.db, 'demandes', id, 'interets'), interet).then(merci, function (err) {
+    // le message et le compteur de la demande (5 entreprises au plus) dans la même écriture : les règles vérifient les deux
+    var lot = f.fs.writeBatch(f.db);
+    lot.set(f.fs.doc(f.db, 'demandes', id, 'interets', m.user.uid), interet);
+    lot.update(f.fs.doc(f.db, 'demandes', id), { nbInterets: f.fs.increment(1) });
+    lot.commit().then(merci, function (err) {
       console.warn('Envoi refusé :', err && err.message);
       dire(err && err.code === 'permission-denied'
-        ? "Votre message n'a pas été accepté : vérifiez l'e-mail et le téléphone. Si c'est bon, la demande vient peut-être d'être close ou retirée."
+        ? "Votre message n'a pas été accepté : vérifiez l'e-mail et le téléphone. Si c'est bon, la demande vient peut-être d'être close, pourvue ou complète (5 réponses), ou vous y avez déjà répondu."
         : "L'envoi n'a pas abouti. Vérifiez votre connexion et réessayez dans un instant.");
     });
   });

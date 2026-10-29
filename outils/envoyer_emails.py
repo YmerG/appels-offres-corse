@@ -53,7 +53,8 @@ def a_envoyer(demandes, abonnes, deja, maintenant):
         if n:
             out.append((f"reponses:{i}:{n}", d, None))
         # alertes : une seule tournée par demande, au moment où elle est publiée (pas aux abonnés arrivés après)
-        if f"alertes:{i}" not in deja and d["delai"] > maintenant:
+        # (pas pour une demande déjà pourvue ou complète : 5 entreprises au plus)
+        if f"alertes:{i}" not in deja and d["delai"] > maintenant and not d.get("pourvue") and (d.get("nbInterets") or 0) < 5:
             for a in abonnes:
                 if a["uid"] != d["uid"] and d["metier"] in a["metiers"] and d["departement"] in a["zone"]:
                     out.append((f"alerte:{i}:{a['uid']}", d, a))

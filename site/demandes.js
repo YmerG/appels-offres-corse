@@ -15,6 +15,7 @@
     var limite = d.delai.toDate();
     var a = document.createElement('article');
     a.className = 'avis demande';
+    a.dataset.id = 'd-' + id;
     a.dataset.source = d.type;
     a.dataset.metiers = d.metier;
     a.dataset.dep = d.departement;
@@ -36,6 +37,8 @@
       '<dl class="infos">' + infos + '</dl>' +
       '<p class="limite"><span class="badge" hidden>Bientôt clos</span>Réponse avant le ' +
       '<time datetime="' + a.dataset.limite + '">' + limite.toLocaleDateString('fr-FR', JOUR_FR) + (h ? ', ' + h + ' h' : '') + '</time></p>' +
+      '<p class="places">' + (d.nbInterets ? d.nbInterets + ' entreprise' + (d.nbInterets > 1 ? 's' : '') + ' sur 5 ' +
+        (d.nbInterets > 1 ? 'ont' : 'a') + ' déjà répondu' : 'Aucune réponse pour le moment : 5 entreprises au plus') + '</p>' +
       '<p class="interesse"><a class="bouton-publier" href="interesse.html?d=' + encodeURIComponent(id) +
       '" aria-label="Je suis intéressé : ' + esc(d.titre) + '">Je suis intéressé</a></p></div>';
     return a;
@@ -53,11 +56,13 @@
     f = r;
     return f.fs.getDocs(f.fs.query(f.fs.collection(f.db, 'demandes'), f.fs.where('statut', '==', 'validee')));
   }).then(function (res) {
-    var cartes = res.docs.map(function (d) { return carte(d.data(), d.id); });
+    // pourvue (par son auteur) ou complète (5 entreprises) : elle ne reçoit plus de réponses, on ne l'affiche plus
+    var docs = res.docs.filter(function (d) { return !d.data().pourvue && (d.data().nbInterets || 0) < 5; });
+    var cartes = docs.map(function (d) { return carte(d.data(), d.id); });
     window.ajouterAvis(cartes);
     if (f.auth) return f.auth.authStateReady().then(function () {
       var u = f.auth.currentUser;
-      if (u) res.docs.forEach(function (d, i) {
+      if (u) docs.forEach(function (d, i) {
         if (d.data().uid === u.uid) cartes[i].querySelector('.interesse').innerHTML = '<a class="lien-bouton" href="compte.html#mes-demandes">Votre demande : suivre dans Mes demandes</a>';
       });
     });

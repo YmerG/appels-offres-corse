@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-10-28T19:59:50+00:00",
+ "genere_le": "2026-10-29T01:01:01+00:00",
  "source": "BOAMP (DILA), Licence Ouverte 2.0",
  "metiers": {
   "gros-oeuvre": "Gros œuvre, bâtiment",
@@ -36,7 +36,11 @@
    "publie": "2026-09-28",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93354"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93354",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1865659",
+    "dce"
+   ]
   },
   {
    "id": "26-83829",
@@ -54,7 +58,11 @@
    "publie": "2026-08-27",
    "procedure": "Marchés <90 k€ (MAPA)",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-83829"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-83829",
+   "dossier": [
+    "https://api.publication.marchesonline.com/externe/apc-consultation-access?consultation_id=4041578",
+    "profil"
+   ]
   },
   {
    "id": "26-88111",
@@ -74,7 +82,11 @@
    "publie": "2026-09-11",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-88111"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-88111",
+   "dossier": [
+    "https://www.achatspublicscorse.com",
+    "profil"
+   ]
   },
   {
    "id": "26-90453",
@@ -101,7 +113,11 @@
    "publie": "2026-09-20",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-90453"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-90453",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1876622",
+    "dce"
+   ]
   },
   {
    "id": "26-93441",
@@ -127,7 +143,11 @@
    "publie": "2026-09-30",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93441"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93441",
+   "dossier": [
+    "https://www.achatpublic.com/sdm/ent/gen/ent_detail.do?PCSLID=CSL_2026_PiaahkR9IX",
+    "dce"
+   ]
   },
   {
    "id": "26-93664",
@@ -147,7 +167,11 @@
    "publie": "2026-09-30",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93664"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93664",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1881323",
+    "dce"
+   ]
   },
   {
    "id": "26-95642",
@@ -167,7 +191,11 @@
    "publie": "2026-10-02",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95642"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95642",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1883793",
+    "dce"
+   ]
   },
   {
    "id": "26-95985",
@@ -187,7 +215,11 @@
    "publie": "2026-10-05",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95985"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95985",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1874768",
+    "dce"
+   ]
   },
   {
    "id": "26-97596",
@@ -207,7 +239,11 @@
    "publie": "2026-10-08",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-97596"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-97596",
+   "dossier": [
+    "https://mairie-prunellidifiumorbo.e-marchespublics.com/pack/annonce_marche_public_29751_1186437.html",
+    "profil"
+   ]
   },
   {
    "id": "26-93409",
@@ -231,7 +267,11 @@
    "publie": "2026-09-30",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93409"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93409",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1880897",
+    "dce"
+   ]
   },
   {
    "id": "26-83815",
@@ -249,7 +289,11 @@
    "publie": "2026-08-27",
    "procedure": "Marchés <90 k€ (MAPA)",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-83815"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-83815",
+   "dossier": [
+    "https://api.publication.marchesonline.com/externe/apc-consultation-access?consultation_id=4041475",
+    "profil"
+   ]
   },
   {
    "id": "26-93488",
@@ -280,7 +324,11 @@
    "publie": "2026-09-28",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93488"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93488",
+   "dossier": [
+    "https://www.achatpublic.com/sdm/ent/gen/ent_detail.do?PCSLID=CSL_2026_TxoAR5dGIp",
+    "profil"
+   ]
   },
   {
    "id": "26-93802",
@@ -300,7 +348,11 @@
    "publie": "2026-09-30",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93802"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93802",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1881487",
+    "dce"
+   ]
   },
   {
    "id": "26-100019",
@@ -321,7 +373,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100019"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100019",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1889700",
+    "dce"
+   ]
   },
   {
    "id": "26-92291",
@@ -342,7 +398,11 @@
    "publie": "2026-09-25",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-92291"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-92291",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise",
+    "profil"
+   ]
   },
   {
    "id": "26-98598",
@@ -360,7 +420,11 @@
    "publie": "2026-10-12",
    "procedure": "Marchés <90 k€ (MAPA)",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98598"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98598",
+   "dossier": [
+    "https://www.marches-publics.info",
+    "profil"
+   ]
   },
   {
    "id": "26-93406",
@@ -378,7 +442,11 @@
    "publie": "2026-09-28",
    "procedure": "Marchés <90 k€ (MAPA)",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93406"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93406",
+   "dossier": [
+    "http://www.isula.corsica",
+    "profil"
+   ]
   },
   {
    "id": "26-99315",
@@ -398,7 +466,11 @@
    "publie": "2026-10-13",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99315"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99315",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1888719",
+    "dce"
+   ]
   },
   {
    "id": "26-95562",
@@ -418,7 +490,11 @@
    "publie": "2026-10-02",
    "procedure": "Délégation de service public",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95562"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95562",
+   "dossier": [
+    "https://www.achatspublicscorse.com:443/3792",
+    "profil"
+   ]
   },
   {
    "id": "26-99749",
@@ -438,7 +514,11 @@
    "publie": "2026-10-14",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99749"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99749",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1889253",
+    "dce"
+   ]
   },
   {
    "id": "26-94802",
@@ -460,7 +540,11 @@
    "publie": "2026-10-02",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-94802"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-94802",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise/consultation/3077794?orgAcronyme=d4t",
+    "dce"
+   ]
   },
   {
    "id": "26-96121",
@@ -480,7 +564,11 @@
    "publie": "2026-10-05",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96121"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96121",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1884264",
+    "dce"
+   ]
   },
   {
    "id": "26-100301",
@@ -500,7 +588,11 @@
    "publie": "2026-10-17",
    "procedure": "Marchés européens",
    "rectifie": true,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100301"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100301",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1876798",
+    "dce"
+   ]
   },
   {
    "id": "26-92059",
@@ -529,7 +621,11 @@
    "publie": "2026-09-23",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-92059"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-92059",
+   "dossier": [
+    "https://www.achatspublicscorse.com/",
+    "profil"
+   ]
   },
   {
    "id": "26-95123",
@@ -549,7 +645,11 @@
    "publie": "2026-10-04",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95123"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95123",
+   "dossier": [
+    "https://www.achatspublicscorse.com/publisher_portail/public/annonce/consulterDCEHorsIdentification.jsp?iIdAffaire=3790",
+    "dce"
+   ]
   },
   {
    "id": "26-100536",
@@ -569,7 +669,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100536"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100536",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1877911",
+    "dce"
+   ]
   },
   {
    "id": "26-96745",
@@ -596,7 +700,11 @@
    "publie": "2026-10-07",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96745"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96745",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1885024",
+    "dce"
+   ]
   },
   {
    "id": "26-100010",
@@ -616,7 +724,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100010"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100010",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1887207",
+    "dce"
+   ]
   },
   {
    "id": "26-100647",
@@ -636,7 +748,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100647"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100647",
+   "dossier": [
+    "https://www.achatpublic.com/sdm/ent/gen/ent_detail.do?PCSLID=CSL_2026_gMP5mh1gtV",
+    "profil"
+   ]
   },
   {
    "id": "26-102439",
@@ -656,7 +772,11 @@
    "publie": "2026-10-21",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102439"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102439",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1892814",
+    "dce"
+   ]
   },
   {
    "id": "26-96375",
@@ -676,7 +796,11 @@
    "publie": "2026-10-07",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96375"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96375",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1884922",
+    "dce"
+   ]
   },
   {
    "id": "26-96589",
@@ -696,7 +820,11 @@
    "publie": "2026-10-08",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96589"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96589",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1885095",
+    "dce"
+   ]
   },
   {
    "id": "26-98675",
@@ -720,7 +848,11 @@
    "publie": "2026-10-12",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98675"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98675",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1887570",
+    "dce"
+   ]
   },
   {
    "id": "26-95573",
@@ -742,7 +874,11 @@
    "publie": "2026-10-04",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95573"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-95573",
+   "dossier": [
+    "https://cc-ile-rousse-balagne.e-marchespublics.com/pack/annonce_marche_public_29077_1185417.html",
+    "dce"
+   ]
   },
   {
    "id": "26-103474",
@@ -763,7 +899,11 @@
    "publie": "2026-10-23",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103474"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103474",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1894206",
+    "dce"
+   ]
   },
   {
    "id": "26-98660",
@@ -784,7 +924,11 @@
    "publie": "2026-10-12",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98660"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98660",
+   "dossier": [
+    "https://www.achatspublicscorse.com",
+    "profil"
+   ]
   },
   {
    "id": "26-96490",
@@ -807,7 +951,11 @@
    "publie": "2026-10-07",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96490"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96490",
+   "dossier": [
+    "https://www.achatspublicscorse.com/publisher_portail/public/annonce/consulterDCEHorsIdentification.jsp?iIdAffaire=3793",
+    "dce"
+   ]
   },
   {
    "id": "26-98259",
@@ -828,7 +976,11 @@
    "publie": "2026-10-11",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98259"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-98259",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1887098",
+    "dce"
+   ]
   },
   {
    "id": "26-99019",
@@ -848,7 +1000,11 @@
    "publie": "2026-10-14",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99019"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99019",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1888377",
+    "dce"
+   ]
   },
   {
    "id": "26-103835",
@@ -868,7 +1024,11 @@
    "publie": "2026-10-26",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103835"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103835",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1894574",
+    "dce"
+   ]
   },
   {
    "id": "26-101062",
@@ -895,7 +1055,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101062"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101062",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr",
+    "profil"
+   ]
   },
   {
    "id": "26-100860",
@@ -915,7 +1079,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100860"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100860",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1890921",
+    "dce"
+   ]
   },
   {
    "id": "26-101011",
@@ -935,7 +1103,11 @@
    "publie": "2026-10-18",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101011"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101011",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise",
+    "profil"
+   ]
   },
   {
    "id": "26-99987",
@@ -957,7 +1129,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99987"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99987",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise",
+    "profil"
+   ]
   },
   {
    "id": "26-96581",
@@ -985,7 +1161,11 @@
    "publie": "2026-10-08",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96581"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96581",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1884847",
+    "dce"
+   ]
   },
   {
    "id": "26-99420",
@@ -1005,7 +1185,11 @@
    "publie": "2026-10-14",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99420"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99420",
+   "dossier": [
+    "https://albitreccia.e-marchespublics.com/pack/annonce_marche_public_8860_1186890.html",
+    "profil"
+   ]
   },
   {
    "id": "26-99558",
@@ -1025,7 +1209,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99558"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99558",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1888195",
+    "dce"
+   ]
   },
   {
    "id": "26-100837",
@@ -1050,7 +1238,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100837"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100837",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1889906",
+    "dce"
+   ]
   },
   {
    "id": "26-100589",
@@ -1077,7 +1269,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100589"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100589",
+   "dossier": [
+    "https://mairie-prunellidifiumorbo.e-marchespublics.com/pack/annonce_marche_public_29751_1187624.html",
+    "profil"
+   ]
   },
   {
    "id": "26-101468",
@@ -1099,7 +1295,11 @@
    "publie": "2026-10-19",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101468"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101468",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1891567",
+    "dce"
+   ]
   },
   {
    "id": "26-102550",
@@ -1121,7 +1321,11 @@
    "publie": "2026-10-21",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102550"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102550",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1892797",
+    "dce"
+   ]
   },
   {
    "id": "26-101225",
@@ -1141,7 +1345,11 @@
    "publie": "2026-10-19",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101225"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101225",
+   "dossier": [
+    "https://www.klekoon.com",
+    "profil"
+   ]
   },
   {
    "id": "26-100197",
@@ -1161,7 +1369,11 @@
    "publie": "2026-10-17",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100197"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100197",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1889344",
+    "dce"
+   ]
   },
   {
    "id": "26-96811",
@@ -1186,7 +1398,11 @@
    "publie": "2026-10-08",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96811"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-96811",
+   "dossier": [
+    "https://bonifacio.e-marchespublics.com",
+    "profil"
+   ]
   },
   {
    "id": "26-102804",
@@ -1207,7 +1423,11 @@
    "publie": "2026-10-22",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102804"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102804",
+   "dossier": [
+    "https://www.achatspublicscorse.com",
+    "profil"
+   ]
   },
   {
    "id": "26-101638",
@@ -1235,7 +1455,11 @@
    "publie": "2026-10-19",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101638"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101638",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise/consultation/3072989?orgAcronyme=g7h",
+    "dce"
+   ]
   },
   {
    "id": "26-101179",
@@ -1255,7 +1479,11 @@
    "publie": "2026-10-20",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101179"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101179",
+   "dossier": [
+    "https://www.achatspublicscorse.com/publisher_portail/public/annonce/consulterDCEHorsIdentification.jsp?iIdAffaire=3800",
+    "dce"
+   ]
   },
   {
    "id": "26-100287",
@@ -1276,7 +1504,11 @@
    "publie": "2026-10-17",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100287"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100287",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1890022",
+    "dce"
+   ]
   },
   {
    "id": "26-101804",
@@ -1296,7 +1528,11 @@
    "publie": "2026-10-21",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101804"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101804",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1892016",
+    "dce"
+   ]
   },
   {
    "id": "26-102451",
@@ -1319,7 +1555,11 @@
    "publie": "2026-10-23",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102451"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102451",
+   "dossier": [
+    "https://www.achatpublic.com/sdm/ent/gen/ent_detail.do?PCSLID=CSL_2026_pYE00Z4GMW",
+    "dce"
+   ]
   },
   {
    "id": "26-103246",
@@ -1339,7 +1579,11 @@
    "publie": "2026-10-25",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103246"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103246",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1893976",
+    "dce"
+   ]
   },
   {
    "id": "26-99993",
@@ -1359,7 +1603,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99993"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99993",
+   "dossier": [
+    "https://www.achatpublic.com/sdm/ent/gen/ent_detail.do?PCSLID=CSL_2026_s5DYYBuW5u",
+    "profil"
+   ]
   },
   {
    "id": "26-102720",
@@ -1380,7 +1628,11 @@
    "publie": "2026-10-23",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102720"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102720",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1892863",
+    "dce"
+   ]
   },
   {
    "id": "26-102680",
@@ -1405,7 +1657,11 @@
    "publie": "2026-10-23",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102680"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-102680",
+   "dossier": [
+    "https://www.marches-securises.fr",
+    "profil"
+   ]
   },
   {
    "id": "26-103320",
@@ -1425,7 +1681,11 @@
    "publie": "2026-10-25",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103320"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103320",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1891489",
+    "dce"
+   ]
   },
   {
    "id": "26-103379",
@@ -1445,7 +1705,11 @@
    "publie": "2026-10-25",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103379"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103379",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1894107",
+    "dce"
+   ]
   },
   {
    "id": "26-103921",
@@ -1465,7 +1729,11 @@
    "publie": "2026-10-27",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103921"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103921",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr",
+    "profil"
+   ]
   },
   {
    "id": "26-104006",
@@ -1485,7 +1753,11 @@
    "publie": "2026-10-27",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104006"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104006",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise/consultation/3087394?orgAcronyme=d4t",
+    "dce"
+   ]
   },
   {
    "id": "26-104269",
@@ -1510,7 +1782,11 @@
    "publie": "2026-10-28",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104269"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104269",
+   "dossier": [
+    "https://www.klekoon.com",
+    "profil"
+   ]
   },
   {
    "id": "26-93240",
@@ -1533,7 +1809,11 @@
    "publie": "2026-09-29",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93240"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-93240",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise/consultation/3060874?orgAcronyme=g6l",
+    "dce"
+   ]
   },
   {
    "id": "26-103884",
@@ -1553,7 +1833,11 @@
    "publie": "2026-10-27",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103884"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103884",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1894684",
+    "dce"
+   ]
   },
   {
    "id": "26-99099",
@@ -1573,7 +1857,11 @@
    "publie": "2026-10-14",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99099"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99099",
+   "dossier": [
+    "https://www.achatspublicscorse.com/publisher_portail/public/annonce/consulterDCEHorsIdentification.jsp?iIdAffaire=3795",
+    "dce"
+   ]
   },
   {
    "id": "26-99888",
@@ -1593,7 +1881,11 @@
    "publie": "2026-10-16",
    "procedure": "Marchés européens",
    "rectifie": true,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99888"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99888",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1859993",
+    "dce"
+   ]
   },
   {
    "id": "26-103564",
@@ -1613,7 +1905,11 @@
    "publie": "2026-10-23",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103564"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103564",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematent.login&type=Dce&Idm=1894252",
+    "dce"
+   ]
   },
   {
    "id": "26-99395",
@@ -1643,7 +1939,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99395"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99395",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise",
+    "profil"
+   ]
   },
   {
    "id": "26-101536",
@@ -1667,7 +1967,11 @@
    "publie": "2026-10-21",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101536"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-101536",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1891060",
+    "dce"
+   ]
   },
   {
    "id": "26-105069",
@@ -1687,7 +1991,11 @@
    "publie": "2026-10-28",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-105069"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-105069",
+   "dossier": [
+    "https://www.achatpublic.com/sdm/ent2/gen/ficheCsl.action?PCSLID=CSL_2026_Ox0GX8Yh1X",
+    "profil"
+   ]
   },
   {
    "id": "26-104024",
@@ -1709,7 +2017,11 @@
    "publie": "2026-10-26",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104024"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104024",
+   "dossier": [
+    "https://commune-de-sotta.e-marchespublics.com",
+    "profil"
+   ]
   },
   {
    "id": "26-104326",
@@ -1732,7 +2044,11 @@
    "publie": "2026-10-28",
    "procedure": "Marchés européens",
    "rectifie": true,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104326"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-104326",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1892813",
+    "dce"
+   ]
   },
   {
    "id": "26-99523",
@@ -1756,7 +2072,11 @@
    "publie": "2026-10-15",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99523"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-99523",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise/consultation/3068204?orgAcronyme=g6l",
+    "dce"
+   ]
   },
   {
    "id": "26-103872",
@@ -1777,7 +2097,11 @@
    "publie": "2026-10-26",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103872"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-103872",
+   "dossier": [
+    "https://bonifacio.e-marchespublics.com",
+    "profil"
+   ]
   },
   {
    "id": "26-100583",
@@ -1799,7 +2123,11 @@
    "publie": "2026-10-18",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100583"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-100583",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr/entreprise/consultation/3083979?orgAcronyme=g6l",
+    "dce"
+   ]
   },
   {
    "id": "25-71746",
@@ -1819,7 +2147,11 @@
    "publie": "2025-06-25",
    "procedure": "Marchés entre 90 k€ et seuils européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:25-71746"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:25-71746",
+   "dossier": [
+    "https://www.marches-publics.gouv.fr",
+    "profil"
+   ]
   },
   {
    "id": "26-23849",
@@ -1842,7 +2174,11 @@
    "publie": "2026-03-10",
    "procedure": "Marchés européens",
    "rectifie": true,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-23849"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:26-23849",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1404484",
+    "dce"
+   ]
   },
   {
    "id": "24-92596",
@@ -1866,7 +2202,11 @@
    "publie": "2024-08-08",
    "procedure": "Marchés européens",
    "rectifie": false,
-   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:24-92596"
+   "lien": "https://www.boamp.fr/pages/avis/?q=idweb:24-92596",
+   "dossier": [
+    "https://www.marches-publics.info/mpiaws/index.cfm?fuseaction=dematEnt.login&type=DCE&IDM=1495592",
+    "dce"
+   ]
   }
  ]
 }

@@ -25,6 +25,10 @@ assert not E.a_envoyer(demandes, abonnes, cles | {"alertes:d1", "alertes:d2", "a
 # nouvelles réponses transmises : un nouvel e-mail
 d1 = dict(next(d for d in demandes if d["id"] == "d1"), reponses=3)
 assert [c for c, _, _ in E.a_envoyer([d1], [], {"validee:d1", "reponses:d1:2"}, maintenant)] == ["reponses:d1:3"]
+# demande pourvue ou complète (5 entreprises) : pas d'alerte, mais toujours l'e-mail au demandeur
+for fermee in ({"pourvue": True}, {"nbInterets": 5}):
+    d5 = dict(next(d for d in demandes if d["id"] == "d5"), **fermee)
+    assert [c for c, _, _ in E.a_envoyer([d5], abonnes, set(), maintenant)] == ["validee:d5"], fermee
 
 # contenu : HTML échappé, accord singulier / pluriel, lien de désinscription dans les alertes seulement
 _, texte, page = E.message("validee:d1", d1, None, "Jeanne", "https://site.invalid/")

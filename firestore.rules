@@ -4,7 +4,8 @@ rules_version = '2';
 // demandes/{id} : la demande, lisible par tous UNIQUEMENT une fois validée ; jamais de coordonnées dedans (uid = compte auteur).
 // Son auteur la voit aussi en attente (« Mes demandes »).
 // demandes/{id}/prive/contact : nom, téléphone, e-mail, lisibles par l'administrateur seulement.
-// demandes/{id}/interets/{iid} : messages « Je suis intéressé » des comptes Entreprise vérifiés, lisibles par l'administrateur seulement.
+// demandes/{id}/interets/{uid} : messages « Je suis intéressé » des comptes Entreprise vérifiés (un par entreprise, 5 au plus),
+// lisibles par l'administrateur seulement (l'entreprise peut seulement voir que le sien existe).
 // users/{uid} : profil du compte (particulier ou entreprise de travaux), lisible par son titulaire et l'admin seulement.
 // types/{uid} : type du compte, figé pour toujours (même si le profil est supprimé puis recréé).
 // config/admins : { uids: [...] }, créé à la main dans la console Firebase (aucune écriture possible depuis le site).
@@ -90,6 +91,16 @@ service cloud.firestore {
         && texte(i.message, 10, 1000);
     }
 
+    // au plus 5 entreprises par demande (nbInterets, tenu à jour avec chaque message « Je suis intéressé »)
+    function nbInterets(d) {
+      return d.get('nbInterets', 0);
+    }
+
+    // ouverte aux réponses : validée, pas close, pas marquée pourvue par son auteur, moins de 5 entreprises
+    function ouverte(d) {
+      return d.statut == 'validee' && d.delai > request.time && d.get('pourvue', false) == false && nbInterets(d) < 5;
+    }
+
     match /demandes/{id} {
       allow get, list: if resource.data.statut == 'validee' || estAdmin()
         || (request.auth != null && resource.data.uid == request.auth.uid);
@@ -97,12 +108,24 @@ service cloud.firestore {
       allow create: if (compteVerifie('particulier') || (compteVerifie('entreprise') && request.resource.data.type == 'prive'))
         && demandeValide(request.resource.data)
         && existsAfter(/databases/$(database)/documents/demandes/$(id)/prive/contact);
-      // reponses : nombre de réponses d'artisans que l'admin a transmises au demandeur (étape « Réponses reçues » de Mes demandes)
-      allow update: if estAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'reponses'])
-        && request.resource.data.statut in ['en_attente', 'validee']
-        && (!('reponses' in request.resource.data)
-          || (request.resource.data.reponses is int && request.resource.data.reponses >= 0 && request.resource.data.reponses <= 1000));
+      // admin : statut, reponses (nombre de réponses transmises au demandeur, étape « Réponses reçues » de Mes demandes),
+      // nbInterets (recalculé quand il supprime un message)
+      allow update: if (estAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'reponses', 'nbInterets'])
+          && request.resource.data.statut in ['en_attente', 'validee']
+          && (!('reponses' in request.resource.data)
+            || (request.resource.data.reponses is int && request.resource.data.reponses >= 0 && request.resource.data.reponses <= 1000))
+          && (nbInterets(request.resource.data) is int && nbInterets(request.resource.data) >= 0 && nbInterets(request.resource.data) <= 5))
+        // auteur : « Ma demande est pourvue » (ou la rouvrir), sur une demande publiée
+        || (request.auth != null && resource.data.uid == request.auth.uid && resource.data.statut == 'validee'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pourvue'])
+          && request.resource.data.pourvue is bool)
+        // entreprise : +1 au compteur, dans la même écriture que son message (interets/{son uid}, contrôlé plus bas)
+        || (request.auth != null
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbInterets'])
+          && request.resource.data.nbInterets == nbInterets(resource.data) + 1
+          && !exists(/databases/$(database)/documents/demandes/$(id)/interets/$(request.auth.uid))
+          && existsAfter(/databases/$(database)/documents/demandes/$(id)/interets/$(request.auth.uid)));
       allow delete: if estAdmin();
 
       match /prive/{doc} {
@@ -114,13 +137,16 @@ service cloud.firestore {
       }
 
       // « Je suis intéressé » : message d'un artisan, lisible par l'admin seulement, qui le transmet au demandeur.
-      // Seulement sur une demande validée, pas encore close, et pas sur sa propre demande.
+      // Un seul par entreprise (identifiant = son uid ; elle peut voir qu'elle a déjà répondu), sur une demande ouverte,
+      // pas sur sa propre demande, avec le compteur de la demande augmenté de 1 dans la même écriture.
       match /interets/{iid} {
-        allow get, list, delete: if estAdmin();
-        allow create: if compteVerifie('entreprise') && interetValide(request.resource.data)
-          && get(/databases/$(database)/documents/demandes/$(id)).data.statut == 'validee'
-          && get(/databases/$(database)/documents/demandes/$(id)).data.delai > request.time
-          && get(/databases/$(database)/documents/demandes/$(id)).data.uid != request.auth.uid;
+        allow get: if estAdmin() || connecte(iid);
+        allow list, delete: if estAdmin();
+        allow create: if iid == request.auth.uid && compteVerifie('entreprise') && interetValide(request.resource.data)
+          && ouverte(get(/databases/$(database)/documents/demandes/$(id)).data)
+          && get(/databases/$(database)/documents/demandes/$(id)).data.uid != request.auth.uid
+          && nbInterets(getAfter(/databases/$(database)/documents/demandes/$(id)).data)
+            == nbInterets(get(/databases/$(database)/documents/demandes/$(id)).data) + 1;
       }
     }
 

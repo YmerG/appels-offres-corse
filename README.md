@@ -13,6 +13,20 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
 - Le choix reste dans l'adresse : `index.html#metier=electricite&dep=2B` affiche directement l'électricité en Haute-Corse. Un artisan peut l'enregistrer dans ses favoris.
 - Téléphone d'abord, mode sombre automatique, aucune autre dépendance.
 - Style « luxe épuré » (refonte v11) : ivoire, encre profonde #0e1c28, or patiné (#7d5f24 pour le texte, #d6b46e sur fond sombre) ; titres en Playfair Display hébergée sur le site (gratuite, licence OFL), texte en police du système ; animations douces (cartes qui apparaissent, chiffres qui montent, pastilles qui réagissent), coupées si le téléphone demande « réduire les animations ». Captures : `outils/captures_refonte.js` (Playwright, sans serveur).
+- **Outils de l'artisan (v12, lot 1)**, sous chaque carte :
+  - **« Dossier de consultation »** : lien direct vers le DCE lu dans l'avis (`collecte.py`, fonction `dossier`), sinon « Plateforme de l'acheteur ». Environ 3 avis sur 4 ont le vrai lien.
+  - **« Suivre »** : l'avis est gardé dans ce navigateur (rien n'est envoyé) ; le bouton « Mes avis suivis » au-dessus des filtres les montre, tous onglets confondus (`index.html#suivi=1`).
+  - **« Agenda »** : un fichier .ics avec la date limite et un rappel 2 jours avant (à essayer sur iPhone et Android une fois en ligne).
+  - Pastille **« Nouveau »** sur les avis publiés depuis la visite précédente (jour de visite gardé dans le navigateur).
+  - Étude des concurrents : `captures/VEILLE-CONCURRENCE.md`.
+- **5 entreprises au plus par demande (v12, lot 3)** :
+  - chaque entreprise ne répond qu'une fois à une demande (son message porte l'identifiant de son compte) ; la carte affiche « 2 entreprises sur 5 ont déjà répondu » ;
+  - dans « Mes demandes », le demandeur peut cliquer **« Ma demande est pourvue »** (et la rouvrir) ;
+  - une demande pourvue ou complète disparaît de la liste, ne reçoit plus de réponses et ne déclenche plus d'alertes ; l'admin la voit marquée « Pourvue » ou « Complète » ;
+  - les règles Firestore l'imposent (compteur `nbInterets` augmenté dans la même écriture que le message) ; l'admin recalcule le compteur quand il supprime un message.
+- **Interface (v12, lot 2)** :
+  - bouton **« Vue compacte »** à côté du nombre d'avis : seulement l'essentiel de chaque carte (sur téléphone, environ 250 px au lieu de 540, boutons réduits à leur icône) ; le choix est gardé dans le navigateur ;
+  - page **`comment-ca-marche.html`** (lien sous les chiffres de l'en-tête et dans le pied de page) : parcours entreprise et particulier en 3 étapes, « Combien ça coûte ? » (gratuit pendant la version de test, **à décider par Rémy pour la suite**), ce qui est vérifié et ce qu'il faut vérifier soi-même (décennale, devis écrit), questions fréquentes.
 - Mention « Données BOAMP (licence ouverte) » dans le pied de page, avec le rappel que seul l'avis officiel fait foi.
 - **Aucune donnée personnelle** : les avis contiennent des noms, téléphones et courriels de correspondants, qui ne sont jamais repris.
 

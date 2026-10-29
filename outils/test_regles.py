@@ -267,51 +267,103 @@ def main():
     assert appel(FS + "/demandes/ok2/prive/contact", jeton=admin_jeton, methode="DELETE")[0] == 200
     assert appel(FS + "/demandes/ok2", jeton=admin_jeton, methode="DELETE")[0] == 200
 
-    # « Je suis intéressé » : seulement par un compte Entreprise vérifié, sur une demande validée et pas close ; aucune lecture publique
+    # « Je suis intéressé » : seulement par un compte Entreprise vérifié, sur une demande ouverte ; aucune lecture publique.
+    # Un message par entreprise (identifiant = son uid), avec nbInterets + 1 dans la même écriture (comme interesse.js) ; 5 entreprises au plus.
     INTERET["uid"] = ent_uid
-    interet = lambda i, champs, d="ok1", jeton=ent_jeton: commit([ecriture(f"demandes/{d}/interets/{i}", champs)], jeton)
-    assert interet("i1", INTERET) == 200
-    assert interet("i2", {**sans(INTERET, "email"), "telephone": "06 11 22 33 44"}) == 200
+    autres = []  # 5 autres comptes Entreprise vérifiés, pour le plafond
+    for n in range(2, 7):
+        j, u = compte(f"entreprise{n}@test.local", "entreprise-1234", verifie=True)
+        assert profil(u, PROFIL_E, j) == 200
+        autres.append((j, u))
+    (ent2_jeton, ent2_uid), (ent3_jeton, ent3_uid) = autres[:2]
+    qui = {ent_jeton: ent_uid, intrus_jeton: intrus_uid, ent_nv_jeton: ent_nv_uid, part_jeton: part_uid, ent2_jeton: ent2_uid, ent3_jeton: ent3_uid}
+
+    def plus(d, n=1):
+        return {"update": {"name": f"projects/{PROJET}/databases/(default)/documents/demandes/{d}", "fields": {}},
+                "updateMask": {"fieldPaths": []}, "currentDocument": {"exists": True},
+                "updateTransforms": [{"fieldPath": "nbInterets", "increment": valeur(n)}]}
+
+    def interet(champs, d="ok1", jeton=ent_jeton, i=None, n=1, nouveau=True):
+        w = [ecriture(f"demandes/{d}/interets/{i or qui.get(jeton, 'anonyme')}", champs, nouveau)]
+        return commit(w + [plus(d, n)] if n else w, jeton)
+
+    assert interet(INTERET) == 200
+    assert interet({**sans(INTERET, "email"), "telephone": "06 11 22 33 44", "uid": ent2_uid}, jeton=ent2_jeton) == 200
+    code, doc = appel(FS + "/demandes/ok1")
+    assert code == 200 and doc["fields"]["nbInterets"] == valeur(2), "compteur public à 2"
+    I3 = {**INTERET, "uid": ent3_uid}
     refus_interet = {
         "sans connexion": (INTERET, None),
         "compte sans profil": ({**INTERET, "uid": intrus_uid}, intrus_jeton),
         "e-mail pas vérifié": ({**INTERET, "uid": ent_nv_uid}, ent_nv_jeton),
         "compte particulier": ({**INTERET, "uid": part_uid}, part_jeton),
-        "uid d'un autre": ({**INTERET, "uid": part_uid}, ent_jeton),
-        "sans uid": (sans(INTERET, "uid"), ent_jeton),
-        "sans message": (sans(INTERET, "message"), ent_jeton),
-        "message trop court": ({**INTERET, "message": "dispo"}, ent_jeton),
-        "message trop long": ({**INTERET, "message": "m" * 1001}, ent_jeton),
-        "ni téléphone ni e-mail": (sans(INTERET, "email"), ent_jeton),
-        "e-mail faux": ({**INTERET, "email": "jean@test"}, ent_jeton),
-        "téléphone bizarre": ({**INTERET, "telephone": "<b>"}, ent_jeton),
-        "nom trop long": ({**INTERET, "nom": "n" * 81}, ent_jeton),
-        "sans consentement": ({**INTERET, "consentement": False}, ent_jeton),
-        "champ en trop": ({**INTERET, "site": "http://spam"}, ent_jeton),
+        "uid d'un autre": ({**INTERET, "uid": part_uid}, ent3_jeton),
+        "sans uid": (sans(I3, "uid"), ent3_jeton),
+        "sans message": (sans(I3, "message"), ent3_jeton),
+        "message trop court": ({**I3, "message": "dispo"}, ent3_jeton),
+        "message trop long": ({**I3, "message": "m" * 1001}, ent3_jeton),
+        "ni téléphone ni e-mail": (sans(I3, "email"), ent3_jeton),
+        "e-mail faux": ({**I3, "email": "jean@test"}, ent3_jeton),
+        "téléphone bizarre": ({**I3, "telephone": "<b>"}, ent3_jeton),
+        "nom trop long": ({**I3, "nom": "n" * 81}, ent3_jeton),
+        "sans consentement": ({**I3, "consentement": False}, ent3_jeton),
+        "champ en trop": ({**I3, "site": "http://spam"}, ent3_jeton),
     }
     for nom, (champs, jeton) in refus_interet.items():
-        assert interet("r", champs, jeton=jeton) == 403, nom
-    assert interet("r", INTERET, "x1") == 403, "demande en attente"
-    assert interet("r", INTERET, "inconnue") == 403, "demande inexistante"
+        assert interet(champs, jeton=jeton) == 403, nom
+    refus_compteur = {
+        "sans le compteur": dict(n=0),
+        "compteur + 2": dict(n=2),
+        "identifiant d'un autre": dict(i="i9"),
+    }
+    for nom, k in refus_compteur.items():
+        assert interet(I3, jeton=ent3_jeton, **k) == 403, nom
+    assert commit([plus("ok1")], ent3_jeton) == 403, "compteur seul, sans message"
+    assert interet(INTERET, nouveau=False) == 403, "écrasement de son message"
+    assert interet(INTERET) != 200, "deuxième message de la même entreprise"
+    assert maj("demandes/ok1", ent3_jeton, {"nbInterets": 0}) == 403, "compteur remis à zéro par une entreprise"
+    assert interet(I3, "x1", ent3_jeton) == 403, "demande en attente"
+    assert interet(I3, "inconnue", ent3_jeton) == 403, "demande inexistante"
     assert commit([ecriture("demandes/vieille", {**DEMANDE, "statut": "validee", "delai": dans(-1)})], "owner") == 200
-    assert interet("r", INTERET, "vieille") == 403, "demande close"
-    w = ecriture("demandes/ok1/interets/i3", INTERET)
+    assert interet(I3, "vieille", ent3_jeton) == 403, "demande close"
+    w = ecriture(f"demandes/ok1/interets/{ent3_uid}", I3)
     del w["updateTransforms"]
     w["update"]["fields"]["cree"] = valeur(dans(-30))
-    assert commit([w], ent_jeton) == 403, "date imposée (intérêt)"
-    assert commit([ecriture("demandes/ok1/interets/i1", INTERET, nouveau=False)], ent_jeton) == 403, "écrasement"
-    for jeton in (None, intrus_jeton, ent_jeton, part_jeton):
-        assert appel(FS + "/demandes/ok1/interets/i1", jeton=jeton)[0] == 403
+    assert commit([w, plus("ok1")], ent3_jeton) == 403, "date imposée (intérêt)"
+    # lecture : l'entreprise voit seulement que son message existe ; personne d'autre que l'admin ne lit, ne liste ni ne supprime
+    assert appel(FS + f"/demandes/ok1/interets/{ent_uid}", jeton=ent_jeton)[0] == 200
+    for jeton in (None, intrus_jeton, ent3_jeton, part_jeton):
+        assert appel(FS + f"/demandes/ok1/interets/{ent_uid}", jeton=jeton)[0] == 403
         assert appel(FS + "/demandes/ok1/interets", jeton=jeton)[0] == 403
-        assert appel(FS + "/demandes/ok1/interets/i2", jeton=jeton, methode="DELETE")[0] == 403
+        assert appel(FS + f"/demandes/ok1/interets/{ent2_uid}", jeton=jeton, methode="DELETE")[0] == 403
     tous = {"structuredQuery": {"from": [{"collectionId": "interets", "allDescendants": True}]}}
     assert appel(FS + ":runQuery", tous)[0] == 403, "recherche sur tous les intérêts"
     code, res = appel(FS + "/demandes/ok1/interets", jeton=admin_jeton)
     assert code == 200 and len(res["documents"]) == 2
-    assert appel(FS + "/demandes/ok1/interets/i2", jeton=admin_jeton, methode="DELETE")[0] == 200
+    # l'admin supprime un message (spam) et recalcule le compteur, entre 0 et 5
+    assert commit([{"delete": f"projects/{PROJET}/databases/(default)/documents/demandes/ok1/interets/{ent2_uid}"}, plus("ok1", -1)], admin_jeton) == 200
+    assert maj("demandes/ok1", admin_jeton, {"nbInterets": 6}) == 403
+    assert maj("demandes/ok1", admin_jeton, {"nbInterets": "1"}) == 403
+    assert maj("demandes/ok1", admin_jeton, {"nbInterets": 1}) == 200
     appel(FS + "/demandes/vieille", jeton="owner", methode="DELETE")
     assert maj("demandes/e1", admin_jeton, {"statut": "validee"}) == 200
-    assert interet("r", INTERET, "e1") == 403, "sa propre demande"
+    assert interet({**INTERET}, "e1") == 403, "sa propre demande"
+
+    # « Ma demande est pourvue » : l'auteur seulement, un booléen, sur une demande publiée ; plus aucune réponse ensuite
+    assert maj("demandes/ok1", ent_jeton, {"pourvue": True}) == 403, "pourvue par une entreprise"
+    assert maj("demandes/ok1", None, {"pourvue": True}) == 403, "pourvue sans connexion"
+    assert maj("demandes/ok1", part_jeton, {"pourvue": "oui"}) == 403, "pourvue pas booléen"
+    assert maj("demandes/ok1", part_jeton, {"pourvue": True, "titre": "Autre titre"}) == 403, "pourvue + titre"
+    assert maj("demandes/x1", part_jeton, {"pourvue": True}) == 403, "pourvue avant publication"
+    assert maj("demandes/ok1", part_jeton, {"pourvue": True}) == 200
+    assert interet(I3, jeton=ent3_jeton) == 403, "demande pourvue"
+    assert maj("demandes/ok1", part_jeton, {"pourvue": False}) == 200, "rouverte"
+    # plafond : 5 entreprises, la 6e est refusée
+    assert commit([ecriture("demandes/cap", {**DEMANDE, "statut": "validee"})], "owner") == 200
+    for j, u in autres[:4]:
+        assert interet({**INTERET, "uid": u}, "cap", j, u) == 200, "entreprises 1 à 4"
+    assert interet(INTERET, "cap") == 200, "5e entreprise"
+    assert interet({**INTERET, "uid": autres[4][1]}, "cap", autres[4][0], autres[4][1]) == 403, "6e entreprise"
 
     # suppression du compte : son profil seulement
     assert appel(FS + f"/users/{part_nv_uid}", jeton=intrus_jeton, methode="DELETE")[0] == 403
@@ -325,17 +377,21 @@ def main():
     assert commit([ecriture(f"users/{part_nv_uid}", PROFIL_P)], part_nv_jeton) == 200, "recréé avec le même type"
     print(f"OK : règles Firestore (profils : {len(refus_profil) + 16} refus de création, lecture et modification ; "
           f"demandes : {len(refus_compte) + len(refus) + 3} refus de création, lecture, Mes demandes, modération, suppression ; "
-          f"intérêts : {len(refus_interet) + 6} refus, aucune lecture publique)")
+          f"intérêts : {len(refus_interet) + len(refus_compteur) + 11} refus, aucune lecture publique, plafond de 5 ; pourvue : 6 refus)")
 
+    for _, u in autres[:4]:
+        appel(FS + f"/demandes/cap/interets/{u}", jeton="owner", methode="DELETE")
+    appel(FS + f"/demandes/cap/interets/{ent_uid}", jeton="owner", methode="DELETE")
+    appel(FS + "/demandes/cap", jeton="owner", methode="DELETE")
     if "--demo" in sys.argv:  # ok1 validée avec 1 artisan intéressé, x1 en attente (compte particulier) ; e1 validée (compte entreprise)
         print(f"Démo prête : admin {ADMIN[0]} / {ADMIN[1]} ; particulier {PART[0]} / {PART[1]} ; entreprise {ENT[0]} / {ENT[1]}"
-              " (e-mails vérifiés)")
+              " (e-mails vérifiés) ; entreprise2 à entreprise6@test.local, même mot de passe")
     else:
-        appel(FS + "/demandes/ok1/interets/i1", jeton="owner", methode="DELETE")
+        appel(FS + f"/demandes/ok1/interets/{ent_uid}", jeton="owner", methode="DELETE")
         for i in ("ok1", "x1", "e1"):
             appel(FS + f"/demandes/{i}/prive/contact", jeton="owner", methode="DELETE")
             appel(FS + f"/demandes/{i}", jeton="owner", methode="DELETE")
-        for uid in (part_uid, ent_uid, part_nv_uid, ent_nv_uid):
+        for uid in [part_uid, ent_uid, part_nv_uid, ent_nv_uid] + [u for _, u in autres]:
             appel(FS + f"/users/{uid}", jeton="owner", methode="DELETE")
             appel(FS + f"/types/{uid}", jeton="owner", methode="DELETE")
 

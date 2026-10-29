@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from collecte import (METIERS, analyser, avis_de, carte, date_limite, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
+from collecte import (METIERS, analyser, avis_de, carte, date_limite, dossier, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
                       metiers_de, nom_lieu, propre)
 
 # métiers par préfixe CPV, le plus long l'emporte
@@ -34,6 +34,20 @@ EF = {"EFORMS": {"ContractNotice": {
                                     "cac:RequestedTenderTotal": {"cbc:EstimatedOverallContractAmount": {"#text": "1000000"}}}},
         {"cac:ProcurementProject": {"cac:RequestedTenderTotal": {"cbc:EstimatedOverallContractAmount": {"#text": "500000"}}}}]}}}
 assert analyser(EF) == (["90910000"], (1500000.0, "estimé"), "Bastia"), analyser(EF)
+
+# dossier de consultation : celui de l'avis d'abord, sinon la plateforme de l'acheteur ; adresses douteuses ignorées
+assert dossier(EF) is None
+assert dossier({"cac:CallForTendersDocumentReference": {"cac:Attachment": {"cac:ExternalReference": {"cbc:URI": "https://a.fr/dce?x=1&amp;y=2"}}},
+                "cbc:BuyerProfileURI": "https://profil.fr"}) == ("https://a.fr/dce?x=1&y=2", "dce")
+assert dossier({"communication": {"urlProfilAch": "www.achatspublicscorse.com", "urlDocConsul": "javascript:alert(1)"}}) == \
+    ("https://www.achatspublicscorse.com", "profil")
+html_dce = carte({"id": "26-1", "objet": "X", "acheteur": "A", "lieu": "Bastia", "departement": "2B", "metiers": ["services"], "montant": None,
+                  "date_limite": "2026-11-20T12:00:00+01:00", "publie": "2026-10-28", "procedure": "MAPA", "rectifie": False,
+                  "lien": "https://boamp.fr/1", "dossier": ("https://a.fr/?a=1&b=2", "dce")})
+assert dossier({"communication": {"urlDocConsul": "https://www.marches-publics.gouv.fr/", "urlProfilAch": "https://p.fr/acheteur/12"}}) == \
+    ("https://p.fr/acheteur/12", "profil"), "accueil de plateforme : pas un dossier"
+assert dossier({"communication": {"urlDocConsul": "https://www.klekoon.com"}}) == ("https://www.klekoon.com", "profil")
+assert 'data-id="26-1"' in html_dce and 'href="https://a.fr/?a=1&amp;b=2"' in html_dce and "Dossier de consultation" in html_dce
 
 assert lieu_texte("Lieu(x) d'exécution : voir lot") is None and lieu_texte("FRM01") is None
 assert propre("MISE EN \x9cUVRE DES TRAVAUX") == "Mise en œuvre des travaux"

@@ -349,16 +349,18 @@
     var p = document.createElement('p');
     p.className = 'suite';
     p.textContent = d.statut !== 'validee' ? 'La suite : nous vérifions votre demande, en général sous 48 h, puis elle est publiée.'
+      : d.pourvue ? "Vous avez indiqué que votre demande est pourvue : elle n'est plus affichée et ne reçoit plus de réponses."
       : n ? (n > 1 ? n + ' entreprises ont répondu : nous vous avons transmis leurs' : 'Une entreprise a répondu : nous vous avons transmis ses') + ' coordonnées par e-mail ou par téléphone.'
       : close ? 'Close depuis le ' + fin + " : elle ne reçoit plus de réponses."
-      : 'La suite : les entreprises peuvent répondre jusqu\'au ' + fin + '. Nous vous transmettons leurs coordonnées dès qu\'elles répondent.';
+      : (d.nbInterets || 0) >= 5 ? '5 entreprises ont répondu, le maximum : la demande n\'est plus affichée. Nous vous transmettons leurs coordonnées.'
+      : 'La suite : les entreprises peuvent répondre jusqu\'au ' + fin + ' (5 au plus). Nous vous transmettons leurs coordonnées dès qu\'elles répondent.';
     return [ol, p];
   }
 
   function mesDemandes() {
     var liste = $('liste-mes');
     var q = f.fs.query(f.fs.collection(f.db, 'demandes'), f.fs.where('uid', '==', moi.uid));
-    f.fs.getDocs(q).then(function (res) {
+    return f.fs.getDocs(q).then(function (res) {
       liste.textContent = '';
       var ms = function (s) { return s.data().cree ? s.data().cree.toMillis() : 0; };
       var docs = res.docs.slice().sort(function (a, b) { return ms(b) - ms(a); });
@@ -377,6 +379,7 @@
         var d = s.data();
         var a = document.createElement('article');
         a.className = 'avis avis-admin';
+        a.dataset.id = s.id;
         var corps = document.createElement('div');
         corps.className = 'corps';
         var haut = document.createElement('p');
@@ -395,6 +398,30 @@
         h.textContent = d.titre;
         corps.append(haut, h);
         corps.append.apply(corps, suivi(d));
+        // « Ma demande est pourvue » : elle disparaît de la liste publique et ne reçoit plus de réponses (réversible)
+        if (d.statut === 'validee' && d.delai.toMillis() > Date.now()) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'bouton-sortir';
+          b.textContent = d.pourvue ? 'Rouvrir ma demande' : 'Ma demande est pourvue';
+          var err = document.createElement('p');
+          err.className = 'erreur';
+          err.hidden = true;
+          b.onclick = function () {
+            b.disabled = true;
+            // liste redessinée : le focus revient sur le bouton de la même demande (clavier, lecteur d'écran)
+            f.fs.updateDoc(s.ref, { pourvue: !d.pourvue }).then(mesDemandes).then(function () {
+              var nb = liste.querySelector('[data-id="' + s.id + '"] .bouton-sortir');
+              if (nb) nb.focus();
+            }, function (e) {
+              console.warn('Pourvue :', e && e.code);
+              b.disabled = false;
+              err.textContent = "Le changement n'a pas été enregistré. Réessayez dans un instant.";
+              err.hidden = false;
+            });
+          };
+          corps.append(b, err);
+        }
         a.append(corps);
         liste.append(a);
       });
