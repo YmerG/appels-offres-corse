@@ -44,7 +44,8 @@ service cloud.firestore {
     function profilValide(p) {
       return telephoneValide(p) && texte(p.nom, 2, 80) && (
         (p.type == 'particulier' && p.keys().hasOnly(['type', 'nom', 'commune', 'telephone', 'cree']) && texte(p.commune, 2, 60))
-        || (p.type == 'entreprise' && p.keys().hasOnly(['type', 'nom', 'siret', 'metiers', 'zone', 'telephone', 'cree'])
+        || (p.type == 'entreprise' && p.keys().hasOnly(['type', 'nom', 'siret', 'metiers', 'zone', 'telephone', 'cree', 'alertes'])
+          && (!('alertes' in p) || p.alertes is bool) // alertes e-mail par métier (outils/envoyer_emails.py), cochées dans compte.html
           && p.siret is string && p.siret.matches('[0-9]{14}')
           && p.metiers is list && p.metiers.size() >= 1 && p.metiers.size() <= 12 && p.metiers.toSet().size() == p.metiers.size()
           && p.metiers.hasOnly(metiersConnus())

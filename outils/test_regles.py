@@ -159,6 +159,16 @@ def main():
     assert maj(f"users/{part_uid}", intrus_jeton, {"commune": "Calvi"}) == 403, "profil d'un autre modifié"
     assert maj(f"users/{ent_uid}", ent_jeton, {"siret": "123"}) == 403, "SIRET faux à la modification"
     assert maj(f"users/{ent_uid}", ent_jeton, {"zone": ["2A", "2B"]}) == 200
+    # alertes par métier : un booléen, sur son profil Entreprise seulement
+    assert maj(f"users/{ent_uid}", ent_jeton, {"alertes": True}) == 200
+    assert maj(f"users/{ent_uid}", ent_jeton, {"alertes": False}) == 200
+    assert maj(f"users/{ent_uid}", ent_jeton, {"alertes": "oui"}) == 403, "alertes pas booléen"
+    assert maj(f"users/{ent_uid}", ent_jeton, {"alertes": 1}) == 403, "alertes nombre"
+    assert maj(f"users/{ent_uid}", intrus_jeton, {"alertes": True}) == 403, "alertes d'un autre"
+    assert maj(f"users/{ent_uid}", part_jeton, {"alertes": True}) == 403, "alertes d'un autre (particulier)"
+    assert maj(f"users/{ent_uid}", None, {"alertes": True}) == 403, "alertes sans connexion"
+    assert maj(f"users/{part_uid}", part_jeton, {"alertes": True}) == 403, "alertes sur un profil Particulier"
+    assert profil(intrus_uid, {**PROFIL_E, "alertes": "oui"}, intrus_jeton) == 403, "alertes pas booléen (création)"
 
     # publication : par un compte Particulier vérifié, ou Entreprise vérifié (onglet Privé – sociétés seulement),
     # demande + coordonnées ensemble, toujours en attente

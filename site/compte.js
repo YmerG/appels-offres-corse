@@ -17,6 +17,12 @@
     $('raison').hidden = false;
     if (retour.indexOf('interesse') === 0) form.type.value = 'entreprise';
   }
+  // lien « Ne plus recevoir ces alertes » des e-mails (outils/envoyer_emails.py) : décoché et enregistré après connexion
+  var stopAlertes = new URLSearchParams(location.search).get('alertes') === 'non';
+  if (stopAlertes && !retour) {
+    $('raison').textContent = 'Pour ne plus recevoir les alertes par e-mail, connectez-vous : elles seront arrêtées tout de suite.';
+    $('raison').hidden = false;
+  }
 
   // SIRET : 14 chiffres et clé de Luhn (La Poste, SIREN 356000000 : somme des chiffres multiple de 5)
   function siretValide(s) {
@@ -290,9 +296,40 @@
       $('r-action').href = ent ? 'index.html#onglet=particulier' : 'publier.html';
       $('mes-demandes').hidden = false;
       mesDemandes();
-      if (location.hash === '#mes-demandes') $('mes-demandes').scrollIntoView();
+      $('alertes').hidden = !ent;
+      if (ent) {
+        $('alertes-case').checked = profil.alertes === true;
+        $('alertes-mail').textContent = u.email;
+        dire('alertes-ok', '');
+        dire('alertes-erreur', '');
+        if (stopAlertes) {
+          stopAlertes = false;
+          history.replaceState(null, '', location.pathname + location.hash); // un rechargement ne redécoche pas
+          $('alertes-case').checked = false;
+          ecrireAlertes(false);
+        }
+      }
+      if (location.hash === '#mes-demandes' || (ent && location.hash === '#alertes')) $(location.hash.slice(1)).scrollIntoView();
     });
   }
+
+  // alertes par métier : users/{uid}.alertes, lu par outils/envoyer_emails.py ; enregistré dès qu'on coche ou décoche
+  function ecrireAlertes(oui) {
+    var c = $('alertes-case');
+    c.disabled = true;
+    dire('alertes-ok', '');
+    dire('alertes-erreur', '');
+    f.fs.updateDoc(f.fs.doc(f.db, 'users', moi.uid), { alertes: oui }).then(function () {
+      profil.alertes = oui;
+      dire('alertes-ok', oui ? "C'est noté : vous recevrez par e-mail les nouvelles demandes de vos métiers en " + profil.zone.join(' et ') + ', à ' + moi.email + '.'
+        : "C'est noté : vous ne recevrez plus ces alertes. Vous pouvez les réactiver ici quand vous voulez.");
+    }, function (e) {
+      console.warn('Alertes :', e && e.code);
+      c.checked = profil.alertes === true;
+      dire('alertes-erreur', "Le choix n'a pas été enregistré. Réessayez dans un instant.");
+    }).then(function () { c.disabled = false; });
+  }
+  $('alertes-case').onchange = function () { ecrireAlertes(this.checked); };
 
   // Envoyée → En vérification → Publiée → Réponses reçues (reponses : nombre transmis par l'admin), et ce qu'il va se passer
   var ETAPES = ['Envoyée', 'En vérification', 'Publiée', 'Réponses reçues'];

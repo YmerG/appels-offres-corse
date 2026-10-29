@@ -146,6 +146,17 @@
         </p>
       </div>
 
+      <section id="alertes" hidden>
+        <h2 class="etat">Alertes par e-mail</h2>
+        <label class="consentement">
+          <input type="checkbox" id="alertes-case">
+          <span>Recevoir par e-mail les nouvelles demandes de mes métiers dans ma zone</span>
+        </label>
+        <p class="aide-bloc">À l'adresse de ce compte (<span id="alertes-mail"></span>), une fois par demande publiée. Pour arrêter : décochez la case, ou suivez le lien en bas de chaque alerte (il demande de vous connecter).</p>
+        <p class="info-ok" id="alertes-ok" role="status" hidden></p>
+        <p class="erreur" id="alertes-erreur" role="alert" hidden></p>
+      </section>
+
       <section id="mes-demandes" hidden>
         <h2 class="etat">Mes demandes <span class="nb" id="nb-mes"></span> <span class="pastille-neuf" id="neuf-mes" hidden></span></h2>
         <div class="avis-liste" id="liste-mes"></div>
