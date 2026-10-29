@@ -93,10 +93,10 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
 .panneau { padding: 22px 0 6px; }
 .titre-outil { display: block; margin: 18px 0 8px; font-size: .68rem; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: var(--doux); }
 .panneau > .titre-outil:first-child { margin-top: 0; }
-#q, #tri, #taille { width: 100%; font: inherit; color: inherit; background: var(--carte); border: 1px solid var(--filet); border-radius: 14px; padding: 12px 14px; transition: border-color .2s, box-shadow .2s; }
+#q, #tri, #taille, #metier-res { width: 100%; font: inherit; color: inherit; background: var(--carte); border: 1px solid var(--filet); border-radius: 14px; padding: 12px 14px; transition: border-color .2s, box-shadow .2s; }
 #q { padding-left: 42px; background: var(--carte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23998a6a' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") 14px 50%/18px no-repeat; }
-#q:focus, #tri:focus, #taille:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
-#tri, #taille { appearance: none; padding-right: 36px; background: var(--carte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23998a6a' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 12px center/16px no-repeat; }
+#q:focus, #tri:focus, #taille:focus, #metier-res:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
+#tri, #taille, #metier-res { appearance: none; padding-right: 36px; background: var(--carte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23998a6a' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 12px center/16px no-repeat; }
 
 /* Métiers : une ligne qui défile sur téléphone, une liste sur ordinateur */
 .metiers { display: flex; gap: 8px; overflow-x: auto; scroll-padding: 0 20px; margin: 0 -20px; padding: 4px 20px 10px; scrollbar-width: none; }
@@ -110,6 +110,8 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
 .pastille { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 16%, transparent); }
 .ligne-outils { display: grid; grid-template-columns: auto 1fr; gap: 14px; }
 #bloc-taille { grid-column: 1 / -1; order: 1; }
+/* Sous 360 px, « Trier par » prend sa ligne (sinon « Date lim… » coupé) */
+@media (max-width: 359px) { .ligne-outils { grid-template-columns: 1fr; gap: 0; } }
 .segments { display: flex; background: var(--carte); border: 1px solid var(--filet); border-radius: 14px; padding: 3px; }
 .segments .filtre { border: 0; border-radius: 11px; padding: 9px 13px; background: none; }
 .segments .filtre[aria-pressed="true"] { background: var(--encre); }
@@ -173,7 +175,7 @@ main > .bandeau-test:first-child { margin-top: 22px; }
 .aide { font-weight: 500; font-size: .8rem; color: var(--doux); margin-left: 4px; }
 .aide-bloc { margin: 6px 0 0; font-size: .88rem; color: var(--doux); }
 .choix-2 { display: flex; gap: 8px; margin-top: 6px; }
-#form .choix-2 label { flex: 1; display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--filet); border-radius: 14px; background: var(--fond); cursor: pointer; transition: border-color .2s, box-shadow .2s, background .2s; }
+#form .choix-2 label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--filet); border-radius: 14px; background: var(--fond); cursor: pointer; transition: border-color .2s, box-shadow .2s, background .2s; }
 .choix-2 label:has(:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--carte)); }
 .choix-2 input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
 #form .dep-form { margin: 16px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
@@ -331,6 +333,7 @@ button.lien-compte { border: 0; cursor: pointer; }
 .lien-clair { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; color: var(--or); font-weight: 600; font-size: .92rem; text-underline-offset: 4px; }
 .lien-clair::after { content: "→"; margin-left: 6px; transition: transform .25s var(--doux-mvt); }
 .lien-clair:hover::after { transform: translateX(3px); }
+.lien-clair:not(:last-child) { margin-right: 22px; }
 
 /* En-tête de la liste : nombre d'avis et bouton « Vue compacte » */
 .tete-liste { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 30px 0 14px; }

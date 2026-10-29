@@ -33,7 +33,11 @@ Rien n'est en ligne, il n'y a ni dépôt GitHub ni nom de domaine, et rien n'a �
   - l'admin la voit sous chaque réponse (« EXPIRÉE » si la date est passée) et la transmet au demandeur avec les coordonnées ;
   - « Je suis intéressé » rappelle de la déclarer si elle manque ou si elle est expirée (lien vers le compte dans un nouvel onglet) ; règles Firestore : `decennaleValide` (profil Entreprise seulement).
   - lot 6 : « EXPIRÉE » en rouge et en gras côté admin ; dans « Mon compte », un bandeau prévient l'entreprise si sa décennale est expirée ou expire sous 30 jours (pas d'e-mail).
-- **Filtre « Taille du marché » (v12, lot 7)** : Toutes, moins de 90 000 €, de 90 000 € au seuil européen, marchés européens. Lu dans la famille de procédure du BOAMP (`collecte.py`, fonction `taille`), car le montant manque sur un avis sur deux. Avis publics seulement (caché dans les onglets des demandes), gardé dans l'adresse (`#taille=petit`).
+- **Filtre « Taille du marché » (v12, lot 7)** : Toutes, Petits (moins de 90 000 €), Moyens (dès 90 000 €), Gros (marchés européens). Lu dans la famille de procédure du BOAMP (`collecte.py`, fonction `taille`), car le montant manque sur un avis sur deux. Avis publics seulement (caché dans les onglets des demandes), gardé dans l'adresse (`#taille=petit`).
+- **Page « Marchés attribués » (`resultats.html`, lot 8)** : les résultats de marché corses du BOAMP sur 12 mois (environ 420), du plus récent au plus ancien, avec un filtre par métier. Pour chaque marché : acheteur, lieu, montant attribué (ou maximum d'un accord-cadre), nombre d'offres reçues, lien vers le résultat officiel. Écrite par `collecte.py` (fonctions `resultat`, `resultats_de`, `carte_resultat`) à partir de `modele-resultats.html`. Si l'API ne répond pas, la page précédente est gardée.
+  - Le **nom de l'entreprise retenue n'est pas recopié** : c'est parfois une personne (entrepreneur individuel). Il reste sur l'avis officiel. Décision de Rémy en attente.
+  - Les petits marchés à l'ancien format du BOAMP (environ 3 sur 10) n'ont le prix et le titulaire qu'en texte libre : la fiche renvoie vers l'avis officiel.
+  - Les lots sans gagnant (infructueux, sans suite) sont écartés.
 - **Interface (v12, lot 2)** :
   - bouton **« Vue compacte »** à côté du nombre d'avis : seulement l'essentiel de chaque carte (sur téléphone, environ 250 px au lieu de 540, boutons réduits à leur icône) ; le choix est gardé dans le navigateur ;
   - page **`comment-ca-marche.html`** (lien sous les chiffres de l'en-tête et dans le pied de page) : parcours entreprise et particulier en 3 étapes, « Combien ça coûte ? » (gratuit pendant la version de test, **à décider par Rémy pour la suite**), ce qui est vérifié et ce qu'il faut vérifier soi-même (décennale, devis écrit), questions fréquentes.
@@ -112,7 +116,7 @@ Bon à savoir :
 
 ## Pour aller plus loin (non fait, à décider)
 - Mise en ligne gratuite (Cloudflare Pages comme Nutizie), avec une page de mentions légales. **Accord de Rémy nécessaire.**
-- Alerte par courriel ou flux RSS par métier, pages par métier pour Google, avis attribués (DECP). Comptes et dépôt de chantiers par les particuliers : étape suivante.
+- Alerte par courriel ou flux RSS par métier, pages par métier pour Google, avis attribués complétés par les DECP (titulaires des petits marchés). Comptes et dépôt de chantiers par les particuliers : étape suivante.
 
 ## Captures
 `captures/v1-*.png` : 390 et 360 px (téléphone), 1440 px (ordinateur), clair et sombre, en haut de page et sur la liste des cartes. Aussi `v1-390-clair-filtre.png` (électricité, 2B).

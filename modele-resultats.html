@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marchés attribués en Corse · Appels d'offres Corse</title>
+  <meta name="description" content="Les marchés publics attribués en Corse depuis 12 mois, par métier : montant, nombre d'offres reçues, acheteur, lien vers le résultat officiel du BOAMP. Pour fixer son prix et jauger la concurrence.">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0e1c28">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e1c28'/%3E%3Cpath d='M9 22l7-13 7 13' stroke='%23d6b46e' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preload" href="polices/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="entete entete-court">
+    <div class="cadre">
+      <p class="marque"><a class="retour" href="index.html"><span class="logo" aria-hidden="true"></span>Appels d'offres <span>Corse</span></a><a class="lien-compte" href="compte.html">Compte</a></p>
+      <h1>Marchés attribués en Corse</h1>
+      <p class="chapo">Ce que les acheteurs publics corses ont attribué depuis 12 mois, à quel prix et face à combien d'offres. De quoi fixer son prix et jauger la concurrence.</p>
+    </div>
+  </header>
+
+  <main class="cadre page-texte">
+    <p class="bandeau-test bandeau-test-fort">Prototype, version de test.</p>
+    <p class="choix-resultats" hidden>
+      <label class="titre-outil" for="metier-res">Métier</label>
+      <select id="metier-res"><option value="">Tous les métiers (<!--NB-->)</option><!--OPTIONS--></select>
+    </p>
+    <h2 class="etat" id="etat" aria-live="polite"><!--NB--> marchés attribués</h2>
+    <div class="avis-liste">
+<!--RESULTATS-->
+    </div>
+    <p><a class="bouton-sortir" href="index.html">Voir les avis en cours</a></p>
+  </main>
+
+  <footer class="pied">
+    <div class="cadre">
+      <p class="source">Données BOAMP (licence ouverte)</p>
+      <p>Résultats de marché du <a href="https://www.boamp.fr/" rel="noopener">Bulletin officiel des annonces des marchés publics</a> (DILA), réutilisés sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noopener">Licence Ouverte 2.0</a>. Dernière mise à jour le <!--MAJ-->.</p>
+      <p>Le nom de l'entreprise retenue figure sur l'avis officiel (cliquez sur le titre). Nous ne le recopions pas, car c'est parfois le nom d'une personne (entrepreneur individuel). Pour un accord-cadre, le montant est le maximum prévu, pas ce qui sera vraiment commandé. Les petits marchés publiés dans l'ancien format du BOAMP n'ont ni montant ni nombre d'offres lisibles ici : voyez l'avis officiel.</p>
+      <p>Site indépendant, sans lien avec le BOAMP ni la DILA. Aucun cookie. <a href="comment-ca-marche.html">Comment ça marche</a> · <a href="confidentialite.html">Confidentialité et données personnelles</a>. Prototype, version de test.</p>
+    </div>
+  </footer>
+
+  <script src="resultats.js"></script>
+</body>
+</html>

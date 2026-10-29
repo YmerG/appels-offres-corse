@@ -269,6 +269,102 @@ def avis_de(brut, maintenant):
     return sorted(gardes.values(), key=lambda a: a["date_limite"])
 
 
+def sous(o, cle):
+    """Valeur de la clé cle juste sous o (préfixe d'espace de noms ignoré) ; dans une liste, la première trouvée."""
+    if isinstance(o, list):
+        return next((t for t in (sous(v, cle) for v in o) if t is not None), None)
+    if not isinstance(o, dict):
+        return None
+    for k, v in o.items():
+        if k.split(":")[-1] == cle:
+            return v
+    return None
+
+
+def chercher(o, cle):
+    """Comme sous, à n'importe quelle profondeur."""
+    t = sous(o, cle)
+    if t is not None or not isinstance(o, (dict, list)):
+        return t
+    return next((t for t in (chercher(v, cle) for v in (o.values() if isinstance(o, dict) else o)) if t is not None), None)
+
+
+def liste(v):
+    return v if isinstance(v, list) else [] if v is None else [v]
+
+
+def texte(o, *cles):
+    for k in cles:
+        o = sous(o, k)
+    return o.get("#text") if isinstance(o, dict) else o
+
+
+def resultat(donnees):
+    """Résultat d'un avis d'attribution eForms : (montant, "attribué" | "max", offres reçues par lot gagné).
+    None pour l'ancien format (petits marchés) : le titulaire et le prix n'y sont qu'en texte libre.
+    () si aucun lot n'a de gagnant (infructueux, sans suite)."""
+    nr = chercher(donnees, "NoticeResult")
+    if not isinstance(nr, dict):
+        return None
+    prix = {texte(t, "ID"): nombre(texte(t, "LegalMonetaryTotal", "PayableAmount") or 0) or 0 for t in liste(sous(nr, "LotTender"))}
+    gagnes, offres, somme = 0, [], 0
+    for lot in liste(sous(nr, "LotResult")):
+        if texte(lot, "TenderResultCode") != "selec-w":
+            continue
+        gagnes += 1
+        stats = {texte(s, "StatisticsCode"): nombre(texte(s, "StatisticsNumeric") or "") for s in liste(sous(lot, "ReceivedSubmissionsStatistics"))}
+        if stats.get("tenders"):
+            offres.append(int(stats["tenders"]))
+        somme += sum(prix.get(texte(t, "ID"), 0) for t in liste(sous(lot, "LotTender")))
+    if not gagnes:
+        return ()
+    # le total déclaré par l'acheteur d'abord : les lots d'un accord-cadre répètent souvent le même maximum
+    for cle, genre in (("TotalAmount", "attribué"), ("OverallMaximumFrameworkContractsAmount", "max")):
+        v = nombre(texte(nr, cle) or "")
+        if v:
+            return v, genre, offres
+    return (somme or None), "attribué", offres
+
+
+def lire_resultats(depuis):
+    """Avis d'attribution de Corse publiés depuis la date donnée (pages de 100)."""
+    tout, offset = [], 0
+    ou = f'code_departement in ("20A","20B") and nature="ATTRIBUTION" and dateparution >= date\'{depuis:%Y-%m-%d}\''
+    while True:
+        url = API + "?" + urlencode({"where": ou, "select": CHAMPS, "order_by": "dateparution desc", "limit": 100, "offset": offset})
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA}), timeout=60) as rep:
+            page = json.load(rep)["results"]
+        tout += page
+        offset += 100
+        if len(page) < 100 or offset >= 9900:
+            return tout
+
+
+def resultats_de(brut):
+    """Marchés attribués, du plus récent au plus ancien. Le nom du titulaire n'est pas repris (souvent un entrepreneur
+    individuel, donc une personne) : il reste sur l'avis officiel."""
+    remplaces = {i for r in brut for i in (r.get("annonce_lie") or [])}
+    sortie = []
+    for r in brut:
+        donnees = json.loads(r.get("donnees") or "{}")
+        res = resultat(donnees)
+        if r["idweb"] in remplaces or res == ():
+            continue
+        cpvs, _, lieu = analyser(donnees)
+        if lieu and normal(lieu) == normal(r.get("nomacheteur") or ""):
+            lieu = None
+        deps = [DEPARTEMENTS[c] for c in (r.get("code_departement") or []) if c in DEPARTEMENTS]
+        sortie.append({
+            "id": r["idweb"], "objet": propre(r.get("objet"), 220),
+            "acheteur": " ".join((r.get("nomacheteur") or "").split()),
+            "lieu": lieu or (deps[0][1] if deps else "Corse"), "departement": deps[0][0] if deps else "",
+            "metiers": metiers_de(r, cpvs), "publie": r.get("dateparution"), "procedure": r.get("famille_libelle") or "",
+            "montant": res[0] if res else None, "montant_type": res[1] if res else None, "offres": res[2] if res else [],
+            "lien": r.get("url_avis") or f"https://www.boamp.fr/pages/avis/?q=idweb:{r['idweb']}",
+        })
+    return sorted(sortie, key=lambda a: a["publie"] or "", reverse=True)
+
+
 def exemples_de(maintenant, chemin=SORTIE / "exemples.json"):
     """Avis FICTIFS des onglets Privé et Particuliers (site/exemples.json, écrit à la main) ; dates recalculées à chaque collecte."""
     if not chemin.exists():
@@ -313,14 +409,40 @@ def taille(procedure):
     return "europeen" if "europeen" in p else ""
 
 
+def etiquettes(metiers):
+    # tous les métiers sont dans la page (2 visibles) : le filtre actif remonte le sien en tête (app.js)
+    noms = "".join(f'<span class="metier" data-m="{m}" style="--c:{METIERS[m][1]}"{" hidden" if i >= 2 else ""}>{METIERS[m][0]}</span>'
+                   for i, m in enumerate(metiers))
+    if len(metiers) > 2:
+        noms += f'<span class="metier autres" title="{html.escape(", ".join(METIERS[m][0] for m in metiers[2:]))}">+{len(metiers) - 2}</span>'
+    return noms
+
+
+def carte_resultat(a):
+    e = html.escape
+    d = datetime.fromisoformat(a["publie"])
+    infos = [("Lieu", e(a["lieu"]))]
+    if a["montant"]:
+        infos.append(("Montant max." if a["montant_type"] == "max" else "Montant attribué", euros(a["montant"]) + " HT"))
+    if a["offres"]:
+        o = sorted(a["offres"])
+        infos.append(("Offres reçues", str(o[0]) if len(o) == 1 else f"{o[0]} par lot" if o[0] == o[-1] else f"{o[0]} à {o[-1]} par lot"))
+    if not a["montant"] and not a["offres"]:
+        infos.append(("Montant, entreprise", "voir l'avis officiel"))
+    infos.append(("Procédure", e(a["procedure"])))
+    dl = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in infos)
+    return (f'<article class="avis" data-metiers="{" ".join(a["metiers"])}" data-dep="{a["departement"]}" style="--c:{METIERS[a["metiers"][0]][1]}">'
+            f'<div class="echeance" aria-hidden="true"><span class="jour">{d.day}</span><span class="mois">{MOIS[d.month - 1]}</span></div>'
+            f'<div class="corps"><p class="haut">{etiquettes(a["metiers"])}<span class="dep">{e(a["departement"])}</span></p>'
+            f'<h3><a href="{e(a["lien"])}" rel="noopener">{e(a["objet"])}</a></h3>'
+            f'<p class="acheteur">{e(a["acheteur"])}</p><dl class="infos">{dl}</dl>'
+            f'<p class="limite">Résultat publié le <time datetime="{e(a["publie"])}">{date_fr(a["publie"], heure=False)}</time></p></div></article>')
+
+
 def carte(a):
     e = html.escape
     d = datetime.fromisoformat(a["date_limite"]).astimezone(PARIS)
-    # tous les métiers sont dans la page (2 visibles) : le filtre actif remonte le sien en tête (app.js)
-    noms = "".join(f'<span class="metier" data-m="{m}" style="--c:{METIERS[m][1]}"{" hidden" if i >= 2 else ""}>{METIERS[m][0]}</span>'
-                   for i, m in enumerate(a["metiers"]))
-    if len(a["metiers"]) > 2:
-        noms += f'<span class="metier autres" title="{e(", ".join(METIERS[m][0] for m in a["metiers"][2:]))}">+{len(a["metiers"]) - 2}</span>'
+    noms = etiquettes(a["metiers"])
     infos = [("Lieu", e(a["lieu"]))]
     if a["montant"]:
         genre = {"max": "Montant max.", "budget": "Budget indicatif"}.get(a["montant_type"], "Montant estimé")
@@ -392,6 +514,27 @@ def main():
     print(f"{len(brut)} avis lus, {len(avis)} en cours (+ {len(exemples)} exemples) -> {SORTIE / 'index.html'}")
     for k, (nom, _) in METIERS.items():
         print(f"  {nb[k]:3d}  {nom}")
+
+    # Marchés attribués depuis 12 mois (page à part) : en cas de panne, la page précédente reste
+    try:
+        resultats = resultats_de(lire_resultats(maintenant - timedelta(days=365)))
+    except Exception as err:
+        print(f"Résultats de marché injoignables ({err}) : resultats.html non modifié.")
+        return
+    if not resultats:
+        print("Aucun résultat de marché trouvé : resultats.html non modifié.")
+        return
+    nb_r = {k: sum(k in a["metiers"] for a in resultats) for k in METIERS}
+    page = (ICI / "modele-resultats.html").read_text(encoding="utf-8")
+    for cle, val in {
+        "<!--OPTIONS-->": "".join(f'<option value="{k}">{nom} ({nb_r[k]})</option>' for k, (nom, _) in METIERS.items() if nb_r[k]),
+        "<!--RESULTATS-->": "\n".join(carte_resultat(a) for a in resultats),
+        "<!--NB-->": str(len(resultats)),
+        "<!--MAJ-->": remplacements["<!--MAJ-->"],
+    }.items():
+        page = page.replace(cle, val)
+    (SORTIE / "resultats.html").write_text(page, encoding="utf-8")
+    print(f"{len(resultats)} marchés attribués -> {SORTIE / 'resultats.html'}")
 
 
 if __name__ == "__main__":

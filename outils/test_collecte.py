@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from collecte import (METIERS, analyser, avis_de, carte, date_limite, dossier, euros, exemples_de, lieu_texte, metier_cpv,  # noqa: E402
-                      metiers_de, nom_lieu, propre, taille)
+                      metiers_de, nom_lieu, propre, carte_resultat, resultat, resultats_de, taille)
 
 # métiers par préfixe CPV, le plus long l'emporte
 assert metier_cpv("45310000") == "electricite"
@@ -114,4 +114,29 @@ debut = regles.index("function metiersConnus()")
 assert re.findall(r"'([\w-]+)'", regles[debut:regles.index("}", debut)]) == list(METIERS)
 admin = (racine / "site" / "admin.js").read_text(encoding="utf-8")
 assert re.findall(r"'?([\w-]+)'?: ['\"]", admin[admin.index("METIERS = {"):admin.index("};")]) == list(METIERS)
-print("OK : lecture des avis, exemples et métiers")
+
+# résultats de marché eForms : total de l'acheteur d'abord, offres des lots gagnés seulement, ancien format sans détail
+def lot(code, offres, *tenders):
+    return {"cbc:TenderResultCode": {"#text": code},
+            "ReceivedSubmissionsStatistics": [{"StatisticsCode": {"#text": "tenders"}, "StatisticsNumeric": offres}, {"StatisticsCode": {"#text": "t-sme"}, "StatisticsNumeric": 9}],
+            "LotTender": [{"ID": {"#text": t}} for t in tenders]}
+def avis_res(nr):
+    return {"EFORMS": {"ContractAwardNotice": {"ext:UBLExtensions": {"ext:UBLExtension": [{"ext:ExtensionContent": {"efext:EformsExtension": {"efac:NoticeResult": nr}}}]}}}}
+tenders = [{"cbc:ID": {"#text": "TEN-1"}, "cac:LegalMonetaryTotal": {"cbc:PayableAmount": {"#text": "1000"}}},
+           {"cbc:ID": {"#text": "TEN-2"}, "cac:LegalMonetaryTotal": {"cbc:PayableAmount": {"#text": "500"}}}]
+deux_lots = {"efac:LotTender": tenders, "efac:LotResult": [lot("selec-w", "3", "TEN-1"), lot("selec-w", "1", "TEN-2"), lot("clos-nw", "0")]}
+assert resultat(avis_res(deux_lots)) == (1500, "attribué", [3, 1])
+assert resultat(avis_res({**deux_lots, "cbc:TotalAmount": {"#text": "1400"}})) == (1400, "attribué", [3, 1])
+assert resultat(avis_res({**deux_lots, "efbc:OverallMaximumFrameworkContractsAmount": {"#text": "9000"}}))[:2] == (9000, "max")
+assert resultat(avis_res({"efac:LotResult": lot("clos-nw", "0")})) == ()  # infructueux : écarté
+assert resultat(FNS) is None
+brut = [{"idweb": "26-7", "objet": "TRAVAUX DE VOIRIE", "nomacheteur": "Commune de Corte", "code_departement": ["20B"], "dateparution": "2026-10-16",
+         "famille_libelle": "Marchés européens", "type_marche": ["TRAVAUX"], "donnees": json.dumps(avis_res(deux_lots)), "titulaire": ["Jean Dupont"]},
+        {"idweb": "26-8", "objet": "Sans suite", "nomacheteur": "X", "code_departement": ["20A"], "dateparution": "2026-10-20",
+         "donnees": json.dumps(avis_res({"efac:LotResult": lot("clos-nw", "0")}))}]
+res = resultats_de(brut)
+assert [a["id"] for a in res] == ["26-7"] and res[0]["departement"] == "2B" and "Jean" not in json.dumps(res)
+html_res = carte_resultat(res[0])
+assert euros(1500) + " HT" in html_res and "1 à 3 par lot" in html_res and "Travaux de voirie" in html_res and "ven. 16 oct. 2026" in html_res
+assert "voir l'avis officiel" in carte_resultat({**res[0], "montant": None, "offres": []})
+print("OK : lecture des avis, résultats de marché, exemples et métiers")
