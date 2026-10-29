@@ -173,7 +173,10 @@
       if (ordre.length > 2) c._ancre.title = ordre.slice(2).map(function (t) { return t.textContent; }).join(', ');
     });
     if (taille) document.getElementById('bloc-taille').hidden = choix.onglet !== 'public' && !choix.suivi;
-    var filtre = mots.length || choix.metier || choix.dep || (choix.taille && (choix.onglet === 'public' || choix.suivi));
+    var tailleActive = choix.taille && (choix.onglet === 'public' || choix.suivi);
+    // replié, une taille choisie resterait un filtre invisible (rapport 37) ; le tri n'est pas compté, il ne cache aucun avis
+    if (plus) plus.textContent = 'Taille et tri' + (tailleActive ? ' (1)' : '');
+    var filtre = mots.length || choix.metier || choix.dep || tailleActive;
     var ex = cartes.filter(function (c) { return !c.hidden && c.querySelector('.exemple'); }).length;
     etat.textContent = choix.suivi ? n + (n > 1 ? ' avis suivis' : ' avis suivi') : n + ' avis ' + (choix.mes ? 'dans vos métiers' : filtre ? (n > 1 ? 'trouvés' : 'trouvé') : choix.onglet === 'public' ? 'en cours'
       : ex === n ? "d'exemple" : 'en cours' + (ex ? ', dont ' + ex + " d'exemple" : ''));
@@ -270,6 +273,8 @@
   // Ligne des métiers sur téléphone : le bouton qui reçoit le focus clavier est recalé entier dans la ligne
   document.querySelector('.metiers').addEventListener('focusin', function (e) { e.target.scrollIntoView({ inline: 'nearest', block: 'nearest' }); });
 
+  var plus = document.getElementById('plus-filtres'); // absent : ancienne page encore en cache ; lu par appliquer()
+
   // Lien direct, à l'ouverture comme sur une page déjà ouverte (favori, lien collé)
   function depuisAdresse() {
     CLES.forEach(function (k) { choisir(k, DEFAUT[k]); });
@@ -286,7 +291,6 @@
   window.addEventListener('hashchange', depuisAdresse);
   depuisAdresse();
   // « Taille et tri » (téléphone seulement, le CSS cache le bouton sur ordinateur) : replié, sauf si l'un des deux est déjà choisi
-  var plus = document.getElementById('plus-filtres'); // absent : ancienne page encore en cache
   function plier(ouvert) {
     plus.parentNode.classList.toggle('replie', !ouvert);
     plus.setAttribute('aria-expanded', String(ouvert));

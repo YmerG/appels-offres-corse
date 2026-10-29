@@ -362,7 +362,9 @@ html:not(.js) .vue { display: none; }
 .vue[aria-pressed="true"] { color: #f4f1ea; background: var(--encre); border-color: var(--encre); }
 /* Vue compacte : l'essentiel de chaque avis, deux à trois cartes par écran de téléphone */
 .compacte .avis { grid-template-columns: 50px 1fr; gap: 12px; padding: 14px 16px; }
-.compacte .infos, .compacte .description { display: none; }
+/* lieu + montant gardés (ou la procédure si le montant manque) : ce que l'artisan regarde en premier (INTERFACE.md n° 9) */
+.compacte .infos > div:nth-child(n+3), .compacte .description { display: none; }
+.compacte .infos { margin-bottom: 8px; }
 .compacte .avis h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1.02rem; margin-bottom: 4px; }
 .compacte .acheteur { margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .compacte .haut { margin-bottom: 6px; }
@@ -385,7 +387,7 @@ html:not(.js) .vue { display: none; }
 .pied a:hover { color: var(--or); }
 
 @media (prefers-color-scheme: dark) {
-  .filtre[aria-pressed="true"], .segments .filtre[aria-pressed="true"], .vue[aria-pressed="true"] { background: var(--or); border-color: var(--or); color: var(--encre); }
+  .filtre[aria-pressed="true"], .segments .filtre[aria-pressed="true"], .vue[aria-pressed="true"], .plus-filtres[aria-expanded="true"] { background: var(--or); border-color: var(--or); color: var(--encre); }
   .filtre[aria-pressed="true"] .nb { color: rgba(14, 28, 40, .7); }
   .metier { color: color-mix(in srgb, var(--c) 45%, #fff); background: color-mix(in srgb, var(--c) 24%, transparent); }
   .rectif { color: #f0c36d; background: #3a2e14; }
